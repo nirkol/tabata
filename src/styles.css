@@ -572,8 +572,17 @@ h2 {
   align-items: center;
   gap: 10px;
 }
+.run-volume-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.run-volume-label {
+  color: var(--muted);
+  font-size: 14px;
+}
 .run-volume {
-  width: 140px;
+  width: 100px;
   accent-color: var(--accent);
 }
 .run-volume.muted {

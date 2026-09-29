@@ -8,29 +8,36 @@ const COLOR_PRESETS = ['#FFFFFF', '#FFD60A', '#30D158', '#64D2FF', '#0A84FF', '#
 
 /** Settings / admin screen (SPEC §6). */
 export function settingsScreen(app: App): Screen {
-  // --- Beep volume: number control + slider + Test beep ---
-  const volumeSlider = h('input', { type: 'range', class: 'slider', min: 0, max: 100, step: 1, 'aria-label': 'Beep volume slider', 'data-testid': 'volume-slider' });
-  const volume = createNumberInput({
-    name: 'volume',
-    label: 'Beep volume',
-    kind: 'int',
-    value: Math.round(app.settings.volume * 100),
-    range: SETTINGS_LIMITS.volumePct,
-    step: 5,
-    suffix: '%',
-    onChange: (v) => {
-      if (v === null) return;
-      volumeSlider.value = String(v);
-      app.updateSettings({ volume: v / 100 });
-    },
-  });
-  volumeSlider.value = String(Math.round(app.settings.volume * 100));
-  volumeSlider.addEventListener('input', () => {
-    const v = Number(volumeSlider.value);
-    volume.setValue(v);
-    app.updateSettings({ volume: v / 100 });
-  });
-  const testBeep = h('button', { type: 'button', class: 'btn', 'data-testid': 'test-beep', onclick: () => app.beeper.test() }, '🔊 Test beep');
+  // --- Beep volumes (work and rest): number control + slider + Test button ---
+  function volumeRow(key: 'volume' | 'restVolume', sound: 'work' | 'rest', label: string): HTMLElement {
+    const slider = h('input', { type: 'range', class: 'slider', min: 0, max: 100, step: 1, 'aria-label': `${label} slider`, 'data-testid': `${key}-slider` });
+    const input = createNumberInput({
+      name: key,
+      label,
+      kind: 'int',
+      value: Math.round(app.settings[key] * 100),
+      range: SETTINGS_LIMITS.volumePct,
+      step: 5,
+      suffix: '%',
+      onChange: (v) => {
+        if (v === null) return;
+        slider.value = String(v);
+        app.updateSettings({ [key]: v / 100 });
+      },
+    });
+    slider.value = String(Math.round(app.settings[key] * 100));
+    slider.addEventListener('input', () => {
+      const v = Number(slider.value);
+      input.setValue(v);
+      app.updateSettings({ [key]: v / 100 });
+    });
+    const test = h('button', { type: 'button', class: 'btn', 'data-testid': sound === 'work' ? 'test-beep' : 'test-beep-rest', onclick: () => app.beeper.test(sound) }, '🔊 Test');
+    // Compact layout: the slider and Test button sit on the same row as the − / + control.
+    input.el.querySelector('.stepper')!.append(slider, test);
+    return input.el;
+  }
+  const workVolume = volumeRow('volume', 'work', 'Work beep volume');
+  const restVolume = volumeRow('restVolume', 'rest', 'Rest beep volume (Get Ready, Rest, Rest between sets)');
 
   const mute = h('input', { type: 'checkbox', class: 'toggle', id: 'mute-toggle', 'data-testid': 'mute-toggle' });
   mute.checked = app.settings.muted;
@@ -102,7 +109,6 @@ export function settingsScreen(app: App): Screen {
   }
 
   // Compact layout: each slider sits on the same row as its − / + control.
-  volume.el.querySelector('.stepper')!.append(volumeSlider, testBeep, h('label', { class: 'toggle-row', for: 'mute-toggle' }, mute, h('span', {}, 'Mute')));
   size.el.querySelector('.stepper')!.append(sizeSlider);
 
   const el = h(
@@ -114,7 +120,13 @@ export function settingsScreen(app: App): Screen {
       h('h1', {}, 'Settings'),
       h('button', { type: 'button', class: 'btn btn-danger-outline', 'data-testid': 'reset-settings', onclick: () => void reset() }, 'Reset to defaults'),
     ),
-    h('div', { class: 'panel' }, h('h2', {}, 'Sound'), volume.el),
+    h(
+      'div',
+      { class: 'panel' },
+      h('div', { class: 'row' }, h('h2', {}, 'Sound'), h('label', { class: 'toggle-row', for: 'mute-toggle' }, mute, h('span', {}, 'Mute all beeps'))),
+      workVolume,
+      restVolume,
+    ),
     h(
       'div',
       { class: 'panel' },

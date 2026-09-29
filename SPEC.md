@@ -111,7 +111,7 @@ This screen is used mid-workout, often from several meters away, so readability 
 
 The bottom row shows the Next phase on the left, and Set remaining next to Total remaining in the center.
 
-The top-right corner has the **volume control**: a mute button, a volume slider (0–100 %, step 5 %) with the current value, and the fullscreen button. Changes apply immediately and are saved to Settings. Moving the slider above 0 % while muted unmutes.
+The top-right corner has the **volume controls**: a mute button, a *Work* and a *Rest* volume slider (0–100 %, step 5 %) with their current values, and the fullscreen button. Changes apply immediately and are saved to Settings. Moving the slider above 0 % while muted unmutes.
 
 ### 4.3 Colors and progress indicator
 - **Every phase uses the same color.** The digit color is the one chosen in Settings (§6). The background and the other elements do not change color between Work, Rest, Set Rest or Get Ready. The phase label text is what tells the phases apart.
@@ -129,8 +129,9 @@ Every phase (Get Ready, Work, Rest, Set Rest) ends with the same **5-beep countd
 
 - The beeps start at the moment the digits turn red (the last 5 seconds) and fall exactly on the second boundaries.
 - If a phase is shorter than 5 s, only the beeps that fit inside it are played, plus the long beep at 0.
+- **Two beep sounds:** countdowns that end a **Work** period use the *work sound* (bright, higher-pitched). Countdowns that end **Get Ready, Rest or Rest between sets** (the ones that lead into Work) use a different *rest sound* (lower, softer). The final "finished" sound uses the work sound. Each sound has its own volume (§6).
 - Beeps are **generated** with the Web Audio API (oscillator), not audio files. This keeps timing sample-accurate.
-- Volume comes from Settings (§6).
+- Volumes come from Settings (§6).
 
 ### 4.5 Controls
 | Control | Behavior | Keyboard |
@@ -197,12 +198,13 @@ The admin area is a plain **Settings screen with no PIN or password**. It holds 
 
 | Setting | Control | Range | Default |
 |---|---|---|---|
-| Beep volume | − / + number control (§5.3, step 5 %) + slider + **"Test beep"** button | 0 – 100 % | 70 % |
+| Work beep volume | − / + number control (§5.3, step 5 %) + slider + **"Test"** button | 0 – 100 % | 70 % |
+| Rest beep volume | Same control as the work beep volume, for the rest sound (Get Ready, Rest, Rest between sets) | 0 – 100 % | 70 % |
 | Counter digit color | Color picker (with a few presets) | any color except red, which is reserved for the last 5 s | White `#FFFFFF` |
 | Counter digit size | − / + number control (§5.3, step 5 %) + slider, with live preview | 10 – 60 % of window height | 40 % |
 | Mute | Toggle, also available on the run screen | on / off | off |
 
-Beep volume and Mute can also be changed from the Run screen (§4.2).
+Both beep volumes and Mute can also be changed from the Run screen (§4.2).
 
 - The Run screen background is dark (near black) so that the digits have high contrast.
 - Settings apply immediately and persist.
@@ -234,6 +236,7 @@ Beep volume and Mute can also be changed from the Run screen (§4.2).
   ],
   "settings": {
     "volume": 0.7,
+    "restVolume": 0.7,
     "muted": false,
     "digitColor": "#FFFFFF",
     "digitSizePct": 40
@@ -310,7 +313,7 @@ Beep volume and Mute can also be changed from the Run screen (§4.2).
 | Max intervals | 20 |
 | Rest between sets | Configurable per routine, 1–300 s (default 60 s); replaces the last Rest of each set except the final set |
 | Number inputs | − / + buttons (with press-and-hold) **and** manual typing for every numeric field |
-| Beeps | 4 short beeps + 1 long 5th beep at the phase change |
+| Beeps | 4 short beeps + 1 long 5th beep at the phase change; rest countdowns use a different sound with its own volume |
 | Colors | Same color for all phases; only the last 5 s turn red |
 | Admin | No PIN |
 | Export / Import | Removed from Settings; routines are not moved between the web version and the Mac app |

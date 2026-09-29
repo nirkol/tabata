@@ -1,4 +1,4 @@
-import type { Beep, BeepKind } from '../timer/engine';
+import type { Beep, BeepKind, BeepSound } from '../timer/engine';
 
 /** The subset of the Web Audio API the beeper uses (lets tests pass a fake). */
 export interface AudioContextLike {
@@ -15,17 +15,26 @@ export type AudioContextFactory = () => AudioContextLike;
 interface Tone {
   freq: number;
   durationSec: number;
+  wave: OscillatorType;
+  /** Envelope peak; softer waveforms get a higher peak to sound about as loud. */
+  peak: number;
 }
 
-/** Short countdown beep and the long phase-change beep (SPEC §4.4). */
-const TONES: Record<Exclude<BeepKind, 'finish'>, Tone> = {
-  short: { freq: 880, durationSec: 0.15 },
-  long: { freq: 1320, durationSec: 0.6 },
+/**
+ * Short countdown beep and the long phase-change beep (SPEC §4.4), in two sounds:
+ * a bright, buzzy "work" beep and a lower, rounder "rest" beep.
+ */
+const TONES: Record<BeepSound, Record<Exclude<BeepKind, 'finish'>, Tone>> = {
+  work: {
+    short: { freq: 880, durationSec: 0.15, wave: 'square', peak: 0.35 },
+    long: { freq: 1320, durationSec: 0.6, wave: 'square', peak: 0.35 },
+  },
+  rest: {
+    short: { freq: 587, durationSec: 0.15, wave: 'triangle', peak: 0.8 },
+    long: { freq: 880, durationSec: 0.6, wave: 'triangle', peak: 0.8 },
+  },
 };
-/** "Finished" sound: three long beeps. */
-const FINISH_TONE: Tone = { freq: 1320, durationSec: 0.6 };
 const FINISH_GAP_SEC = 0.25;
-const PEAK = 0.35;
 const RAMP_SEC = 0.005;
 
 /**
@@ -43,8 +52,10 @@ function defaultFactory(): AudioContextLike {
 
 export class Beeper {
   private ctx: AudioContextLike | null = null;
+  /** Mute switch; the two sound buses feed into it. */
   private master: GainNode | null = null;
-  private volume = 0.7;
+  private buses: Partial<Record<BeepSound, GainNode>> = {};
+  private volumes: Record<BeepSound, number> = { work: 0.7, rest: 0.7 };
   private muted = false;
   private readonly live = new Set<OscillatorNode>();
 
@@ -64,13 +75,19 @@ export class Beeper {
       this.ctx = this.factory();
       this.master = this.ctx.createGain();
       this.master.connect(this.ctx.destination);
+      for (const sound of ['work', 'rest'] as const) {
+        const bus = this.ctx.createGain();
+        bus.connect(this.master);
+        this.buses[sound] = bus;
+      }
       this.applyGain();
     }
     if (this.ctx.state === 'suspended') void this.ctx.resume();
   }
 
-  setVolume(volume: number): void {
-    this.volume = Math.min(1, Math.max(0, volume));
+  /** Volume (0–1) of the work or the rest beeps. */
+  setVolume(sound: BeepSound, volume: number): void {
+    this.volumes[sound] = Math.min(1, Math.max(0, volume));
     this.applyGain();
   }
 
@@ -79,19 +96,24 @@ export class Beeper {
     this.applyGain();
   }
 
-  /** Effective output gain (0 when muted or at 0 % volume). */
-  get outputGain(): number {
-    return this.muted ? 0 : this.volume;
+  /** Effective output gain of a sound (0 when muted or at 0 % volume). */
+  outputGain(sound: BeepSound): number {
+    return this.muted ? 0 : this.volumes[sound];
   }
 
   private applyGain(): void {
-    if (this.master && this.ctx) this.master.gain.setValueAtTime(this.outputGain, this.ctx.currentTime);
+    if (!this.master || !this.ctx) return;
+    const now = this.ctx.currentTime;
+    this.master.gain.setValueAtTime(this.muted ? 0 : 1, now);
+    for (const sound of ['work', 'rest'] as const) this.buses[sound]?.gain.setValueAtTime(this.volumes[sound], now);
   }
 
-  /** Plays one short beep now (the "Test beep" button). */
-  test(): void {
+  /** Plays a short and a long beep of one sound now (the "Test" buttons). */
+  test(sound: BeepSound): void {
     this.unlock();
-    if (this.ctx) this.tone(TONES.short, this.ctx.currentTime);
+    if (!this.ctx) return;
+    this.tone(sound, TONES[sound].short, this.ctx.currentTime);
+    this.tone(sound, TONES[sound].long, this.ctx.currentTime + 0.35);
   }
 
   /**
@@ -119,7 +141,7 @@ export class Beeper {
     while (this.nextIdx < this.beeps.length && this.beeps[this.nextIdx].atMs <= horizon) {
       const beep = this.beeps[this.nextIdx++];
       const when = this.anchorAudioSec + (beep.atMs - this.anchorElapsedMs) / this.speed / 1000;
-      this.play(beep.kind, when);
+      this.play(beep, when);
     }
   }
 
@@ -138,30 +160,33 @@ export class Beeper {
     this.live.clear();
   }
 
-  private play(kind: BeepKind, when: number): void {
-    if (kind === 'finish') {
-      for (let i = 0; i < 3; i++) this.tone(FINISH_TONE, when + i * (FINISH_TONE.durationSec + FINISH_GAP_SEC));
+  private play(beep: Beep, when: number): void {
+    const tones = TONES[beep.sound];
+    if (beep.kind === 'finish') {
+      // "Finished" sound: three long beeps.
+      for (let i = 0; i < 3; i++) this.tone(beep.sound, tones.long, when + i * (tones.long.durationSec + FINISH_GAP_SEC));
     } else {
-      this.tone(TONES[kind], when);
+      this.tone(beep.sound, tones[beep.kind], when);
     }
   }
 
-  private tone(tone: Tone, when: number): void {
+  private tone(sound: BeepSound, tone: Tone, when: number): void {
     const ctx = this.ctx;
-    if (!ctx || !this.master) return;
+    const bus = this.buses[sound];
+    if (!ctx || !bus) return;
     const start = Math.max(when, ctx.currentTime);
     const end = start + tone.durationSec;
     const osc = ctx.createOscillator();
     const env = ctx.createGain();
-    osc.type = 'square';
+    osc.type = tone.wave;
     osc.frequency.setValueAtTime(tone.freq, start);
     // Short attack/release ramps avoid clicks.
     env.gain.setValueAtTime(0, start);
-    env.gain.linearRampToValueAtTime(PEAK, start + RAMP_SEC);
-    env.gain.setValueAtTime(PEAK, end - RAMP_SEC);
+    env.gain.linearRampToValueAtTime(tone.peak, start + RAMP_SEC);
+    env.gain.setValueAtTime(tone.peak, end - RAMP_SEC);
     env.gain.linearRampToValueAtTime(0, end);
     osc.connect(env);
-    env.connect(this.master);
+    env.connect(bus);
     osc.onended = () => {
       this.live.delete(osc);
       osc.disconnect();

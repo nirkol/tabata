@@ -41,15 +41,26 @@ export function runScreen(app: App, routine: Routine): Screen {
   const startOverBtn = h('button', { type: 'button', class: 'btn btn-run btn-primary', 'data-testid': 'start-over', hidden: true, onclick: () => app.startRoutine(routine.id) }, '↻ Start over');
   const stopBtn = h('button', { type: 'button', class: 'btn btn-run', 'data-testid': 'stop', onclick: () => void requestStop() }, '■ STOP');
   const muteBtn = h('button', { type: 'button', class: 'btn btn-icon', 'data-testid': 'run-mute', onclick: () => toggleMute() });
-  const volumeSlider = h('input', { type: 'range', class: 'run-volume', min: 0, max: 100, step: 5, 'aria-label': 'Beep volume', 'data-testid': 'run-volume' });
-  volumeSlider.value = String(Math.round(app.settings.volume * 100));
-  const volumeValue = h('span', { class: 'run-volume-value', 'data-testid': 'run-volume-value' });
-  volumeSlider.addEventListener('input', () => {
-    const v = Number(volumeSlider.value);
-    // Turning the volume up while muted unmutes, so the change is audible.
-    app.updateSettings(v > 0 && app.settings.muted ? { volume: v / 100, muted: false } : { volume: v / 100 });
-    render();
-  });
+  /** A compact volume slider for the work or rest beeps. */
+  function volumeControl(key: 'volume' | 'restVolume', label: string, testId: string) {
+    const slider = h('input', { type: 'range', class: 'run-volume', min: 0, max: 100, step: 5, 'aria-label': `${label} beep volume`, 'data-testid': testId });
+    slider.value = String(Math.round(app.settings[key] * 100));
+    const value = h('span', { class: 'run-volume-value', 'data-testid': `${testId}-value` });
+    slider.addEventListener('input', () => {
+      const v = Number(slider.value) / 100;
+      // Turning a volume up while muted unmutes, so the change is audible.
+      app.updateSettings(v > 0 && app.settings.muted ? { [key]: v, muted: false } : { [key]: v });
+      render();
+    });
+    const el = h('label', { class: 'run-volume-item' }, h('span', { class: 'run-volume-label' }, label), slider, value);
+    const update = () => {
+      value.textContent = `${Math.round(app.settings[key] * 100)}%`;
+      slider.classList.toggle('muted', app.settings.muted);
+    };
+    return { el, update };
+  }
+  const workVolume = volumeControl('volume', 'Work', 'run-volume');
+  const restVolume = volumeControl('restVolume', 'Rest', 'run-volume-rest');
   const fullscreenBtn = h('button', { type: 'button', class: 'btn btn-icon', title: 'Fullscreen (F)', 'aria-label': 'Toggle fullscreen', onclick: () => toggleFullscreen() }, '⛶');
 
   const el = h(
@@ -60,7 +71,7 @@ export function runScreen(app: App, routine: Routine): Screen {
       { class: 'run-top' },
       h('div', { class: 'run-name' }, `Routine: “${routine.name}”`),
       app.speed !== 1 ? h('div', { class: 'speed-badge' }, `×${app.speed} speed (dev)`) : null,
-      h('div', { class: 'run-top-right' }, h('div', { class: 'run-volume-group' }, muteBtn, volumeSlider, volumeValue), fullscreenBtn),
+      h('div', { class: 'run-top-right' }, h('div', { class: 'run-volume-group' }, muteBtn, workVolume.el, restVolume.el), fullscreenBtn),
     ),
     phaseLabel,
     stage,
@@ -110,8 +121,8 @@ export function runScreen(app: App, routine: Routine): Screen {
     totalRemaining.textContent = `Total remaining: ${formatCountdown(s.totalRemainingMs)}`;
     muteBtn.textContent = app.settings.muted ? '🔇' : '🔊';
     muteBtn.setAttribute('aria-label', app.settings.muted ? 'Unmute' : 'Mute');
-    volumeValue.textContent = `${Math.round(app.settings.volume * 100)}%`;
-    volumeSlider.classList.toggle('muted', app.settings.muted);
+    workVolume.update();
+    restVolume.update();
 
     if (s.status !== lastStatus) {
       lastStatus = s.status;

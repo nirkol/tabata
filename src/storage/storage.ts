@@ -1,8 +1,10 @@
 import { isValidRoutine, newId, sampleRoutine, type Routine } from '../routines/model';
 
 export interface Settings {
-  /** 0–1 */
+  /** Work beep volume, 0–1. */
   volume: number;
+  /** Rest beep volume (Get Ready, Rest, Set Rest countdowns), 0–1. */
+  restVolume: number;
   muted: boolean;
   digitColor: string;
   /** Digit height, % of window height (10–60). */
@@ -11,6 +13,7 @@ export interface Settings {
 
 export const DEFAULT_SETTINGS: Settings = {
   volume: 0.7,
+  restVolume: 0.7,
   muted: false,
   digitColor: '#FFFFFF',
   digitSizePct: 40,
@@ -76,6 +79,7 @@ export function sanitizeSettings(value: unknown): Settings {
   if (!value || typeof value !== 'object') return s;
   const v = value as Record<string, unknown>;
   if (typeof v.volume === 'number' && v.volume >= 0 && v.volume <= 1) s.volume = v.volume;
+  if (typeof v.restVolume === 'number' && v.restVolume >= 0 && v.restVolume <= 1) s.restVolume = v.restVolume;
   if (typeof v.muted === 'boolean') s.muted = v.muted;
   if (typeof v.digitColor === 'string' && /^#[0-9a-f]{6}$/i.test(v.digitColor) && !isReddish(v.digitColor)) {
     s.digitColor = v.digitColor.toUpperCase();

@@ -71,17 +71,17 @@ describe('beepSchedule (SPEC §4.4)', () => {
     const beeps = beepSchedule(phases);
     expect(beeps).toEqual([
       // Get Ready (0–5 s): short at 1,2,3,4 s, long at 5 s (Work starts)
-      { atMs: 1000, kind: 'short' },
-      { atMs: 2000, kind: 'short' },
-      { atMs: 3000, kind: 'short' },
-      { atMs: 4000, kind: 'short' },
-      { atMs: 5000, kind: 'long' },
+      { atMs: 1000, kind: 'short', sound: 'rest' },
+      { atMs: 2000, kind: 'short', sound: 'rest' },
+      { atMs: 3000, kind: 'short', sound: 'rest' },
+      { atMs: 4000, kind: 'short', sound: 'rest' },
+      { atMs: 5000, kind: 'long', sound: 'rest' },
       // Work (5–25 s): short at 21..24 s, then the finish sound at the end
-      { atMs: 21000, kind: 'short' },
-      { atMs: 22000, kind: 'short' },
-      { atMs: 23000, kind: 'short' },
-      { atMs: 24000, kind: 'short' },
-      { atMs: 25000, kind: 'finish' },
+      { atMs: 21000, kind: 'short', sound: 'work' },
+      { atMs: 22000, kind: 'short', sound: 'work' },
+      { atMs: 23000, kind: 'short', sound: 'work' },
+      { atMs: 24000, kind: 'short', sound: 'work' },
+      { atMs: 25000, kind: 'finish', sound: 'work' },
     ]);
   });
 
@@ -93,7 +93,16 @@ describe('beepSchedule (SPEC §4.4)', () => {
       expect(inPhase.map((b) => (p.endMs - b.atMs) / 1000)).toEqual([4, 3, 2, 1, 0]);
     }
     expect(beeps.filter((b) => b.kind === 'finish')).toHaveLength(1);
-    expect(beeps.at(-1)).toEqual({ atMs: 225000, kind: 'finish' });
+    expect(beeps.at(-1)).toEqual({ atMs: 225000, kind: 'finish', sound: 'work' });
+  });
+
+  it('uses the rest sound for Get Ready, Rest and Set Rest, the work sound for Work', () => {
+    const phases = buildPhases(base);
+    const beeps = beepSchedule(phases);
+    for (const p of phases) {
+      const sounds = new Set(beeps.filter((b) => b.atMs > p.startMs && b.atMs <= p.endMs).map((b) => b.sound));
+      expect([...sounds]).toEqual([p.kind === 'work' ? 'work' : 'rest']);
+    }
   });
 
   it('only plays the beeps that fit in phases shorter than 5 s', () => {

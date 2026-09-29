@@ -120,11 +120,17 @@ test('run screen: no set counter at the top, volume control works', async ({ pag
   await expect(page.getByTestId('run-mute')).toHaveAttribute('aria-label', 'Unmute');
   await page.getByTestId('run-volume').fill('60');
   await expect(page.getByTestId('run-mute')).toHaveAttribute('aria-label', 'Mute');
+  // Rest beeps have their own slider.
+  await expect(page.getByTestId('run-volume-rest-value')).toHaveText('70%');
+  await page.getByTestId('run-volume-rest').fill('25');
+  await expect(page.getByTestId('run-volume-rest-value')).toHaveText('25%');
+  await expect(page.getByTestId('run-volume-value')).toHaveText('60%');
   // The change is saved to Settings.
   await page.keyboard.press('Escape');
   await page.getByTestId('confirm-yes').click();
   await page.getByTestId('nav-settings').click();
   await expect(page.getByTestId('volume-input')).toHaveValue('60');
+  await expect(page.getByTestId('restVolume-input')).toHaveValue('25');
 });
 
 test('stop asks for confirmation', async ({ page }) => {
@@ -236,6 +242,12 @@ test('settings: color, size and volume apply immediately and persist', async ({ 
   await page.getByTestId('volume-input').fill('30');
   await page.getByTestId('volume-input').press('Enter');
   await expect(page.getByTestId('volume-slider')).toHaveValue('30');
+  // Rest beeps have their own volume.
+  await page.getByTestId('restVolume-minus').click();
+  await expect(page.getByTestId('restVolume-input')).toHaveValue('65');
+  await expect(page.getByTestId('restVolume-slider')).toHaveValue('65');
+  await expect(page.getByTestId('volume-input')).toHaveValue('30');
+  await expect(page.getByTestId('restVolume-input')).toHaveValue('65');
 
   await page.reload();
   await page.getByTestId('nav-settings').click();

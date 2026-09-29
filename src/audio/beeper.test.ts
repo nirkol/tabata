@@ -4,7 +4,7 @@ import { beepSchedule, buildPhases } from '../timer/engine';
 
 /** Records every oscillator the beeper starts/stops on a fake audio clock. */
 function fakeContext() {
-  const started: { freq: number; start: number; stop: number; cancelled: boolean }[] = [];
+  const started: { freq: number; start: number; stop: number; cancelled: boolean; wave: string }[] = [];
   const ctx = {
     currentTime: 100,
     state: 'running',
@@ -18,10 +18,12 @@ function fakeContext() {
       } as unknown as GainNode;
     },
     createOscillator() {
-      const rec = { freq: 0, start: NaN, stop: NaN, cancelled: false };
+      const rec = { freq: 0, start: NaN, stop: NaN, cancelled: false, wave: '' };
       let startCalled = false;
       return {
-        type: 'sine',
+        set type(w: string) {
+          rec.wave = w;
+        },
         frequency: { setValueAtTime: (f: number) => (rec.freq = f) },
         connect() {},
         disconnect() {},
@@ -101,17 +103,33 @@ describe('Beeper', () => {
     expect(new Set(times).size).toBe(times.length);
   });
 
-  it('volume 0 and mute are silent', () => {
+  it('volume 0 and mute are silent; work and rest volumes are separate', () => {
     const { ctx } = fakeContext();
     const b = new Beeper(() => ctx);
-    b.setVolume(0.7);
-    expect(b.outputGain).toBe(0.7);
-    b.setVolume(0);
-    expect(b.outputGain).toBe(0);
-    b.setVolume(0.5);
+    b.setVolume('work', 0.7);
+    b.setVolume('rest', 0.4);
+    expect(b.outputGain('work')).toBe(0.7);
+    expect(b.outputGain('rest')).toBe(0.4);
+    b.setVolume('work', 0);
+    expect(b.outputGain('work')).toBe(0);
+    expect(b.outputGain('rest')).toBe(0.4);
+    b.setVolume('work', 0.5);
     b.setMuted(true);
-    expect(b.outputGain).toBe(0);
+    expect(b.outputGain('work')).toBe(0);
+    expect(b.outputGain('rest')).toBe(0);
     b.setMuted(false);
-    expect(b.outputGain).toBe(0.5);
+    expect(b.outputGain('work')).toBe(0.5);
+  });
+
+  it('uses a different sound for rest beeps than for work beeps', () => {
+    const { ctx, started } = fakeContext();
+    const b = new Beeper(() => ctx);
+    b.startRun(beepSchedule(buildPhases(routine)), 0, 1);
+    // First 5 beeps are Get Ready (rest sound), the next 4 short ones end the first Work.
+    const restShort = started[0];
+    const workShort = started[5];
+    expect(restShort.freq).not.toBe(workShort.freq);
+    expect(restShort.wave).toBe('triangle');
+    expect(workShort.wave).toBe('square');
   });
 });

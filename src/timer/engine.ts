@@ -46,11 +46,18 @@ export function totalDurationSec(r: RoutineTiming): number {
 }
 
 export type BeepKind = 'short' | 'long' | 'finish';
+/**
+ * Which sound family a beep uses: countdowns that end a Work period use the work
+ * sound; countdowns that end Get Ready, Rest or Set Rest (i.e. lead into Work)
+ * use the rest sound. Each has its own volume setting.
+ */
+export type BeepSound = 'work' | 'rest';
 
 export interface Beep {
   /** Offset from the start of the run, in ms. */
   atMs: number;
   kind: BeepKind;
+  sound: BeepSound;
 }
 
 /** Last-seconds countdown length: short beeps at 4, 3, 2, 1 s remaining (SPEC §4.4). */
@@ -66,10 +73,11 @@ export const WARNING_SEC = 5;
 export function beepSchedule(phases: readonly Phase[]): Beep[] {
   const beeps: Beep[] = [];
   phases.forEach((p, idx) => {
+    const sound: BeepSound = p.kind === 'work' ? 'work' : 'rest';
     for (const s of COUNTDOWN_BEEPS) {
-      if (s < p.durationSec) beeps.push({ atMs: p.endMs - s * 1000, kind: 'short' });
+      if (s < p.durationSec) beeps.push({ atMs: p.endMs - s * 1000, kind: 'short', sound });
     }
-    beeps.push({ atMs: p.endMs, kind: idx === phases.length - 1 ? 'finish' : 'long' });
+    beeps.push({ atMs: p.endMs, kind: idx === phases.length - 1 ? 'finish' : 'long', sound });
   });
   return beeps;
 }

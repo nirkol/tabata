@@ -114,7 +114,8 @@ export class App {
 
   /** Settings apply immediately (SPEC §6). */
   private applySettings(): void {
-    this.beeper.setVolume(this.settings.volume);
+    this.beeper.setVolume('work', this.settings.volume);
+    this.beeper.setVolume('rest', this.settings.restVolume);
     this.beeper.setMuted(this.settings.muted);
     const style = document.documentElement.style;
     style.setProperty('--digit-color', this.settings.digitColor);

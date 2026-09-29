@@ -38,7 +38,7 @@ npm run typecheck
 
 - **Routines** tab: start, edit or delete routines. Press **Enter** to start the highlighted routine (the one used last).
 - **Run screen:** **Space** pauses and resumes, **Esc** stops (after a confirmation), and **F** toggles fullscreen.
-- **Settings** tab: beep volume and a test beep, mute, counter digit color (red is reserved for the last 5 seconds) and size, and reset to defaults.
+- **Settings** tab: separate volumes (with Test buttons) for the work beeps and the rest beeps, which use a different sound, mute, counter digit color (red is reserved for the last 5 seconds) and size, and reset to defaults.
 
 ## How the timing works
 
