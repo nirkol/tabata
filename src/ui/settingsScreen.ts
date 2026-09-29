@@ -127,36 +127,49 @@ export function settingsScreen(app: App): Screen {
     app.go({ name: 'settings' });
   }
 
+  // Compact layout: each slider sits on the same row as its − / + control.
+  volume.el.querySelector('.stepper')!.append(volumeSlider, testBeep, h('label', { class: 'toggle-row', for: 'mute-toggle' }, mute, h('span', {}, 'Mute')));
+  size.el.querySelector('.stepper')!.append(sizeSlider);
+
   const el = h(
     'section',
     { class: 'settings-screen' },
-    h('div', { class: 'screen-header' }, h('h1', {}, 'Settings')),
     h(
       'div',
-      { class: 'panel' },
-      h('h2', {}, 'Sound'),
-      volume.el,
-      h('div', { class: 'row' }, volumeSlider, testBeep),
-      h('label', { class: 'toggle-row', for: 'mute-toggle' }, mute, h('span', {}, 'Mute all beeps')),
+      { class: 'screen-header' },
+      h('h1', {}, 'Settings'),
+      h('button', { type: 'button', class: 'btn btn-danger-outline', 'data-testid': 'reset-settings', onclick: () => void reset() }, 'Reset to defaults'),
     ),
+    h('div', { class: 'panel' }, h('h2', {}, 'Sound'), volume.el),
     h(
       'div',
       { class: 'panel' },
       h('h2', {}, 'Counter display'),
-      h('div', { class: 'field' }, h('label', { class: 'field-label', for: 'color-input' }, 'Counter digit color'), h('div', { class: 'row' }, colorInput, swatches), colorError),
-      size.el,
-      sizeSlider,
-      preview,
+      h(
+        'div',
+        { class: 'display-grid' },
+        h(
+          'div',
+          { class: 'display-controls' },
+          h('div', { class: 'field' }, h('label', { class: 'field-label', for: 'color-input' }, 'Counter digit color'), h('div', { class: 'row' }, colorInput, swatches), colorError),
+          size.el,
+        ),
+        preview,
+      ),
     ),
     h(
       'div',
       { class: 'panel' },
-      h('h2', {}, 'Data'),
-      h('p', { class: 'hint' }, 'Export your routines to a file as a backup, or import them from a file (for example into the Mac app).'),
-      h('div', { class: 'row' }, h('button', { type: 'button', class: 'btn', 'data-testid': 'export', onclick: doExport }, 'Export routines'), h('button', { type: 'button', class: 'btn', 'data-testid': 'import', onclick: () => fileInput.click() }, 'Import routines'), fileInput),
-      importMsg,
+      h(
+        'div',
+        { class: 'row' },
+        h('h2', { class: 'inline-title' }, 'Data'),
+        h('button', { type: 'button', class: 'btn', 'data-testid': 'export', title: 'Save your routines to a file (backup, or to move them to the Mac app)', onclick: doExport }, 'Export routines'),
+        h('button', { type: 'button', class: 'btn', 'data-testid': 'import', title: 'Add routines from an exported file', onclick: () => fileInput.click() }, 'Import routines'),
+        fileInput,
+        importMsg,
+      ),
     ),
-    h('div', { class: 'form-actions' }, h('button', { type: 'button', class: 'btn btn-danger-outline', 'data-testid': 'reset-settings', onclick: () => void reset() }, 'Reset to defaults')),
   );
   return { el };
 }

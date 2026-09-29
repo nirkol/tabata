@@ -357,7 +357,7 @@ h2 {
 }
 .size-preview {
   /* Stands for the whole window: digits take --digit-size % of its height. */
-  height: 240px;
+  height: 160px;
   border-radius: 12px;
   background: #000;
   border: 1px solid var(--border);
@@ -370,8 +370,50 @@ h2 {
   color: var(--digit-color);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  font-size: calc(240px * var(--digit-size) / 100);
+  font-size: calc(160px * var(--digit-size) / 100);
   line-height: 1;
+}
+/* ---------- Settings (compact) ---------- */
+.settings-screen .panel {
+  padding: 14px 20px;
+  margin-bottom: 12px;
+  gap: 10px;
+}
+.settings-screen h2 {
+  margin: 0;
+}
+.settings-screen .field-error:empty {
+  display: none;
+}
+.settings-screen .stepper {
+  flex-wrap: wrap;
+}
+.settings-screen .stepper .slider {
+  min-width: 140px;
+  max-width: 260px;
+  margin: 0 8px;
+}
+.settings-screen .toggle-row {
+  margin-left: 8px;
+}
+.inline-title {
+  margin-right: 8px;
+}
+.display-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 260px;
+  gap: 20px;
+  align-items: center;
+}
+.display-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+@media (max-width: 720px) {
+  .display-grid {
+    grid-template-columns: 1fr;
+  }
 }
 .import-msg {
   color: var(--muted);

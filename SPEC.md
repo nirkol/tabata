@@ -207,6 +207,7 @@ Beep volume and Mute can also be changed from the Run screen (§4.2).
 - The Run screen background is dark (near black) so that the digits have high contrast.
 - Settings apply immediately and persist.
 - A "Reset to defaults" button.
+- The Settings screen is compact: each slider sits on the same row as its − / + control, the digit-size preview sits beside the color and size controls, Export/Import share one row, and Reset to defaults is in the page header.
 
 ---
 
