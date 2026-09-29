@@ -1,7 +1,6 @@
 # Tabata Timer: Product Spec
 
-> **Status:** Draft v0.1. Items marked **❓ OPEN** still need a decision from the product owner.
-> Items marked **💡 PROPOSED** are suggestions that are in scope unless someone rejects them.
+> **Status:** Draft v0.2. Answers from the product owner are included. Remaining open items are marked **❓ OPEN**, each with a proposed default that applies unless someone changes it.
 > **Audience:** Claude Code, which will implement this spec.
 
 ---
@@ -15,9 +14,9 @@ Delivery happens in two phases:
 | Phase | Deliverable | Notes |
 |---|---|---|
 | **1. Web simulation** | Frontend-only web app that runs in a desktop browser (Chrome, Safari) | No backend. All data is stored in the browser. |
-| **2. macOS app** | Installable `.dmg` built from the **same** frontend code | Starts only after Phase 1 is approved. See §9. |
+| **2. macOS app** | Installable `.dmg` built with **Tauri** from the **same** frontend code | Starts only after Phase 1 is approved. See §9. |
 
-Phase 1 must be built so it can be wrapped as a Mac app later without a rewrite (see §8).
+Phase 1 must be built so it can be wrapped with Tauri later without a rewrite (see §8).
 
 ---
 
@@ -25,10 +24,10 @@ Phase 1 must be built so it can be wrapped as a Mac app later without a rewrite 
 
 | Term | Meaning |
 |---|---|
-| **Work** | The training period (the user's "Training time"). |
+| **Work** | The training period. |
 | **Rest** | The rest period after each work period. |
 | **Interval** | One Work + one Rest. |
-| **Set** | A block of *N* intervals. The user's "Repeats" are the number of sets. |
+| **Set** | A block of *N* intervals. A routine repeats its block of intervals for a number of sets. |
 | **Routine** | A saved, named configuration of all of the above. |
 | **Phase** | The current state of the timer: `Get Ready`, `Work`, `Rest`, `Set Rest`, `Done`. |
 
@@ -41,24 +40,35 @@ Phase 1 must be built so it can be wrapped as a Mac app later without a rewrite 
 | Name | text | 1–40 chars | `Routine N` | N is the next free number: `Routine 1`, `Routine 2`, … |
 | Work time | seconds | 1 s – 600 s (10 min) | 20 s | Entered as mm:ss |
 | Rest time | seconds | 1 s – 180 s (3 min) | 10 s | Entered as mm:ss |
-| Intervals | integer | 1 – 50 ❓ | 8 | How many Work+Rest pairs make up one set |
-| Sets (Repeats) | integer | 1 – 10 | 1 | How many times the whole block of intervals runs |
-| 💡 Rest between sets | seconds | 0 s – 300 s | 60 s | Longer recovery between sets. 0 = none |
-| 💡 Get-ready countdown | seconds | 0 s – 30 s | 10 s | Countdown before the first Work period |
+| Intervals | integer | 1 – 20 | 8 | Number of Work+Rest pairs in one set |
+| Sets | integer | 1 – 10 | 1 | Number of times the whole block of intervals runs |
+| Rest between sets | seconds | 0 s – 300 s | 0 s | Optional longer recovery between sets. 0 = none (the normal Rest is used). ❓ **OPEN Q1:** keep this field? |
 
 The defaults (20 s / 10 s / 8 intervals) are the classic Tabata protocol.
 
-### 3.1 Timeline example
-Work 20 s, Rest 10 s, 3 intervals, 2 sets, set-rest 60 s:
+**Get Ready** is a fixed **5-second** countdown before the first Work period of every run. It is not configurable, and it has the same red digits and beeps as any other phase (§4.3, §4.4).
+
+### 3.1 Phase sequence rules
+1. Every run starts with **Get Ready (5 s)**.
+2. Each set runs `Work → Rest`, *Intervals* times.
+3. **Between sets:** if *Rest between sets* > 0, it **replaces** the last Rest of the set. Otherwise the normal Rest runs.
+4. The **last Rest of the last set is skipped**, so the routine ends right after the final Work period.
+5. Then the timer enters **Done**.
+
+Example: Work 20 s, Rest 10 s, 3 intervals, 2 sets, no set rest:
 
 ```
-Get Ready(10) → [W20 R10 W20 R10 W20 R10] → SetRest(60) → [W20 R10 W20 R10 W20 R10] → Done
+GetReady(5) → W20 R10 W20 R10 W20 R10 → W20 R10 W20 R10 W20 → Done
 ```
 
-❓ **OPEN Q1:** Should the **last Rest of each set be skipped**? Many timers skip it because Set Rest or Done follows immediately. Proposal: skip the final Rest of the last set, and replace the final Rest of other sets with Set Rest.
+Same routine, with a set rest of 60 s:
+
+```
+GetReady(5) → W20 R10 W20 R10 W20 SetRest(60) → W20 R10 W20 R10 W20 → Done
+```
 
 ### 3.2 Derived values (shown in the editor)
-- **Total routine duration**, for example "Total: 8:30".
+- **Total routine duration**, including Get Ready, for example "Total: 4:05".
 
 ---
 
@@ -72,68 +82,70 @@ This screen is used mid-workout, often from several meters away, so readability 
 ┌───────────────────────────────────────────────────────────┐
 │  Routine: "Morning HIIT"                     Set 1 / 2    │
 │                                                           │
-│                        WORK                               │  ← phase label, colored
+│                        WORK                               │  ← phase label
 │                  ╭───────────────╮                        │
 │                  │               │                        │
 │                  │     0:17      │  ← HUGE digits         │
 │                  │               │                        │
-│                  ╰───────────────╯  ← progress ring/bar   │
+│                  ╰───────────────╯  ← progress ring       │
 │                                                           │
 │   Work 0:20   │   Rest 0:10   │  Intervals left: 5 / 8    │
 │                                                           │
 │   Next: REST 0:10                Total remaining: 6:42    │
 │                                                           │
-│        [ ⏮ Restart ]   [ ⏯ PAUSE ]   [ ⏭ Skip ]  [ ■ Stop ]│
+│              [ ⏯ PAUSE ]            [ ■ STOP ]            │
 └───────────────────────────────────────────────────────────┘
 ```
 
 ### 4.2 Required display elements
-1. **Countdown for the current phase** in very large digits (see §6 for size and color settings). Format is `m:ss`, or plain `ss` under 60 s (❓ **OPEN Q2**).
-2. **Phase label**: WORK / REST / SET REST / GET READY / DONE.
+1. **Countdown for the current phase** in very large digits, formatted `m:ss` (for example `0:17`, `2:30`).
+2. **Phase label**: GET READY / WORK / REST / SET REST / DONE, in large capital letters.
 3. **Work and Rest durations** of the routine.
 4. **Intervals remaining** in the current set, for example `5 / 8`.
 5. **Current set**, for example `Set 1 / 2`.
-6. 💡 **Next phase** preview: "Next: REST 0:10".
-7. 💡 **Total time remaining** for the whole routine.
+6. **Next phase** preview, for example "Next: REST 0:10".
+7. **Total time remaining** for the whole routine.
 
-### 4.3 Progress indicator
-- A circular ring (or horizontal bar) around or below the digits that empties as the phase elapses. It animates smoothly and does not jump once per second.
-- **Normal color follows the phase:** Work = green, Rest = blue, Set Rest = purple, Get Ready = yellow. 💡 The whole background also tints slightly with the phase color, so the phase is visible from across the room.
-- **In the last 5 seconds of any phase** (Work, Rest, Set Rest, Get Ready), the indicator turns **red**.
+### 4.3 Colors and progress indicator
+- **Every phase uses the same color.** The digit color is the one chosen in Settings (§6). The background and the other elements do not change color between Work, Rest, Set Rest or Get Ready. The phase label text is what tells the phases apart.
+- **In the last 5 seconds of any phase**, the digits **and** the progress indicator turn **red**. They return to the normal color when the next phase starts.
+- The progress indicator is a ring around the digits that empties as the phase elapses. It animates smoothly and does not jump once per second.
 
 ### 4.4 Audio cues
-| Moment | Sound |
-|---|---|
-| Last 5 seconds of **Work** (at 5, 4, 3, 2, 1) | Short beep each second |
-| Last 5 seconds of **Rest** / Set Rest / Get Ready | Short beep each second |
-| Phase change (reaches 0) | 💡 Longer or higher-pitched beep, so "go" sounds different from the countdown |
-| Routine finished | 💡 A distinct "finished" sound, for example three long beeps |
+Every phase (Get Ready, Work, Rest, Set Rest) ends with the same **5-beep countdown**:
 
+| Remaining time | Sound |
+|---|---|
+| 4 s, 3 s, 2 s, 1 s | Short beep (~150 ms) |
+| 0 s (phase changes) | **Long beep** (~600 ms). This is the 5th beep, and it marks the moment the next phase starts. |
+| End of routine | A distinct "finished" sound (three long beeps) instead of the single long beep |
+
+- The beeps start at the moment the digits turn red (the last 5 seconds) and fall exactly on the second boundaries.
+- If a phase is shorter than 5 s, only the beeps that fit inside it are played, plus the long beep at 0.
 - Beeps are **generated** with the Web Audio API (oscillator), not audio files. This keeps timing sample-accurate.
-- Volume comes from the admin setting (§6).
-- If a phase is 5 s or shorter, beep on every second of it.
+- Volume comes from Settings (§6).
 
 ### 4.5 Controls
-| Control | Behavior | Keyboard 💡 |
+| Control | Behavior | Keyboard |
 |---|---|---|
-| **Start** | Starts the selected routine (Get Ready phase first) | `Enter` |
-| **Pause / Resume** | Freezes the countdown and sound; Resume continues from the exact remaining time | `Space` |
-| 💡 Skip | Jumps to the next phase | `→` |
-| 💡 Restart phase | Restarts the current phase | `←` |
+| **Start** (on the routine list) | Starts the routine with the 5 s Get Ready | `Enter` |
+| **Pause / Resume** | Freezes the countdown and all sound. Resume continues from the exact remaining time. | `Space` |
 | **Stop** | Ends the run and returns to the routine list, after an "Are you sure?" confirmation | `Esc` |
-| 💡 Fullscreen | Toggles fullscreen | `F` |
+| Fullscreen | Toggles fullscreen | `F` |
 
-The buttons must be large (at least 64 px tall), because the trainer may click them with sweaty hands.
+- ❓ **OPEN Q2:** add **Skip phase** (`→`) and **Restart phase** (`←`) buttons? Proposed default: no, keep only Pause and Stop in v1.
+- The buttons must be large (at least 64 px tall), because the trainer may click them with sweaty hands.
 
 ### 4.6 Background behavior (critical)
 The countdown **and the beeps must keep running** when the window or tab is not focused, is minimized, or is behind another app.
 
 Implementation requirements:
 - **Never compute time by counting `setInterval` ticks.** Browsers throttle timers in background tabs to 1 per second or less. Remaining time is always computed as `endTimestamp - performance.now()`.
-- **Schedule beeps ahead of time on the Web Audio clock.** At phase start, or on resume, compute every beep time for the phase and schedule the oscillators with `audioContext.currentTime + offset`. The audio clock is not throttled in background tabs.
+- **Schedule beeps ahead of time on the Web Audio clock.** At phase start, or on resume, schedule the whole remaining sequence of beeps, or at least the next few phases, with `audioContext.currentTime + offset`. The audio clock is not throttled in background tabs. On Pause, cancel the scheduled beeps; on Resume, schedule them again.
+- Because background timers may be delayed, phase advancement must also be computed from timestamps. When the tab comes back into focus, the engine immediately catches up to the correct phase.
 - The `AudioContext` is created or resumed on the first user click (the Start button), because browsers block autoplay otherwise.
-- 💡 Request a **Screen Wake Lock** while running, so the display doesn't sleep mid-workout.
-- 💡 Show the remaining time and phase in the **browser tab title**, for example `0:17 WORK – Tabata`.
+- Request a **Screen Wake Lock** while running, so the display doesn't sleep mid-workout.
+- Show the remaining time and phase in the **browser tab title**, for example `0:17 WORK – Tabata`.
 
 ---
 
@@ -141,43 +153,42 @@ Implementation requirements:
 
 ### 5.1 List
 - Shows all saved routines as cards with the name, a summary (`20s / 10s × 8 × 1 set`) and the total duration.
-- Each card has **Start**, **Edit**, **Duplicate 💡** and **Delete** buttons.
+- Each card has **Start**, **Edit**, **Duplicate** and **Delete** buttons.
 - **Delete** asks for confirmation.
 - A **"+ New Routine"** button opens the editor, prefilled with the defaults and the next free `Routine N` name.
 - On first launch, the app creates one sample routine: "Classic Tabata" (20/10 × 8 × 1).
-- 💡 The last-used routine is highlighted, and the app opens with it selected.
+- The last-used routine is highlighted.
 
 ### 5.2 Editor
 - Contains every field from §3, with validation that enforces the ranges. Invalid input shows an inline error and disables Save.
 - Time fields use an `mm:ss` input with − / + stepper buttons (5 s steps; holding the button repeats).
 - A live "Total duration" preview is shown.
 - Buttons: **Save**, **Cancel**.
-- Names do not need to be unique, but a duplicate name triggers a warning.
+- Names do not need to be unique.
 
 ---
 
-## 6. Settings ("Admin")
+## 6. Settings (Admin)
 
-❓ **OPEN Q3:** Is "admin" just a **Settings screen**, or does it need a **PIN or password** so that trainees can't change routines? Proposal: a plain Settings screen with no PIN in v1.
+The admin area is a plain **Settings screen with no PIN or password**. It holds routine management (§5) and the settings below.
 
 | Setting | Control | Range | Default |
 |---|---|---|---|
 | Beep volume | Slider + **"Test beep"** button | 0 – 100 % | 70 % |
-| 💡 Beep pitch / sound style | Dropdown | Classic beep / Low tone / Whistle | Classic |
-| Counter digit color | Color picker + 💡 "Use phase colors" toggle | any | Use phase colors ON (white digits on a colored ring) |
-| Counter digit size | Slider with live preview | S / M / L / XL / Max, or 10 – 60 % of viewport height | L (~40 vh) |
-| 💡 Mute | Toggle, also on the run screen | on/off | off |
-| 💡 Theme | Dark / Light | — | Dark (better contrast in a gym) |
+| Counter digit color | Color picker (with a few presets) | any color except red, which is reserved for the last 5 s | White `#FFFFFF` |
+| Counter digit size | Slider with live preview | 10 – 60 % of window height | 40 % |
+| Mute | Toggle, also available on the run screen | on / off | off |
 
+- The Run screen background is dark (near black) so that the digits have high contrast.
 - Settings apply immediately and persist.
-- 💡 A "Reset to defaults" button.
+- A "Reset to defaults" button.
 
 ---
 
 ## 7. Data and persistence
 
 - **Phase 1:** `localStorage`, stored under versioned keys (`tabata.v1.routines` and `tabata.v1.settings`).
-- The data model is JSON and versioned, so it can migrate later:
+- The data model is JSON and versioned:
 
 ```json
 {
@@ -190,91 +201,94 @@ Implementation requirements:
       "restSec": 10,
       "intervals": 8,
       "sets": 1,
-      "setRestSec": 60,
-      "prepSec": 10,
+      "setRestSec": 0,
       "createdAt": "ISO-8601",
       "updatedAt": "ISO-8601"
     }
   ],
   "settings": {
     "volume": 0.7,
+    "muted": false,
     "digitColor": "#FFFFFF",
-    "usePhaseColors": true,
-    "digitSize": "L",
-    "theme": "dark"
+    "digitSizePct": 40
   }
 }
 ```
 
-- 💡 **Export / Import** routines as a `.json` file. This is a backup, and it is the way to move data from the web simulation into the Mac app.
+- **Export / Import** routines as a `.json` file. This is a backup, and it is the way to move data from the web simulation into the Mac app.
 - Storage access goes through a small `storage` module. That way Phase 2 can swap in file-based storage without touching the UI.
 
 ---
 
 ## 8. Technical approach (Phase 1)
 
-- **Stack:** Vite + TypeScript. No UI framework, or a lightweight one (❓ **OPEN Q4:** vanilla TS vs React; proposal: vanilla TS, since the app is small).
+- **Stack:** Vite + TypeScript with no UI framework (vanilla TS, since the app is small). Tauri can package it directly later.
 - Frontend only, no backend, no network calls, fully offline.
 - **Code structure:**
-  - `timer/engine.ts`: a pure state machine that builds the phase sequence from a routine and exposes `start`, `pause`, `resume`, `skip` and `stop`. It has **no DOM or audio code** and is fully unit-tested.
-  - `audio/beeper.ts`: Web Audio beep scheduling and volume.
+  - `timer/engine.ts`: a pure state machine that builds the phase sequence (§3.1) from a routine and exposes `start`, `pause`, `resume` and `stop`. It takes a clock as input, has **no DOM or audio code**, and is fully unit-tested.
+  - `audio/beeper.ts`: Web Audio beep scheduling, volume and mute.
   - `storage/`: persistence behind an interface.
-  - `ui/`: screens (List, Editor, Run, Settings).
-- **Tests:** unit tests (Vitest) for the engine (phase sequence, pause/resume math, skipped final rest, totals) and validation. One Playwright smoke test: create a routine, run it, pause, resume, and finish it at an accelerated speed.
-- 💡 A dev-only **"speed ×10"** query flag (`?speed=10`) to make manual testing fast.
+  - `ui/`: screens (Routine list, Editor, Run, Settings).
+- **Tests:**
+  - Unit tests (Vitest) for the engine: the phase sequence including the skipped final rest and the set-rest replacement, pause/resume math, total-duration calculation, and beep times.
+  - Validation tests for all field ranges.
+  - One Playwright smoke test: create a routine, run it, pause, resume, and finish it, using the speed flag.
+- A dev-only **speed flag** (`?speed=10`) that makes time run faster, for quick manual testing.
 - Supported browsers: latest Chrome and Safari on macOS.
 
 ---
 
-## 9. Phase 2: macOS app (later, after the web version is approved)
+## 9. Phase 2: macOS app (after the web version is approved)
 
-- Wrap the Phase 1 frontend with **Tauri** (small ~10 MB app, native WebKit) or **Electron** (~150 MB, bundles Chromium). ❓ **OPEN Q5**. Proposal: Tauri.
+- Wrap the Phase 1 frontend with **Tauri** (small app, ~10 MB, native WebKit).
 - Output: a `.dmg` installer that drags the app into Applications.
+- Target: Apple Silicon (arm64). ❓ **OPEN Q3:** is Intel support needed? Proposed default: no.
+- **Unsigned build is acceptable.** The first launch shows a Gatekeeper warning, and the user right-clicks → Open once. The README must explain this step.
 - Mac-specific needs:
   - Prevent **App Nap** or throttling while a routine is running, so timing and beeps stay accurate in the background.
   - Prevent display sleep while running.
-  - 💡 Dock badge or menu-bar item showing the remaining time.
-  - 💡 A native notification when the routine finishes.
-- **Code signing and notarization:** without an Apple Developer account ($99/yr), macOS Gatekeeper warns on first launch, and the user must right-click → Open. ❓ **OPEN Q6:** is an unsigned app acceptable for personal use?
-- Apple Silicon (arm64) is required. Intel is optional (❓ **OPEN Q7**).
+  - Routines are stored in a JSON file in the app's data folder instead of `localStorage`, and they can be imported from the web version's export.
 
 ---
 
-## 10. Out of scope (v1)
-- User accounts, cloud sync, mobile apps.
-- Per-interval custom exercises or names (see ideas below).
-- Workout history and statistics.
-
-## 11. Ideas for later versions 💡
-- **Named exercises per interval**, for example "Burpees", "Squats", with "Next: Squats" shown during Rest.
-- **Voice announcements** (speech synthesis): "Rest", "Go", "3, 2, 1".
-- **Workout log**: date, routine and completed or aborted.
-- **Mirror / second-screen mode** for a projector or TV in the gym.
-- **Warm-up and cool-down** phases.
+## 10. Out of scope
+- Exercise names per interval
+- Voice announcements
+- Workout history and statistics
+- User accounts, cloud sync, mobile apps
+- PIN or password protection for admin
 
 ---
 
-## 12. Acceptance criteria (Phase 1)
+## 11. Acceptance criteria (Phase 1)
 1. The user can create, edit, duplicate and delete routines. New routines get a default name `Routine N`, and routines survive a page reload.
-2. Validation enforces all ranges in §3.
-3. Running a routine follows exactly the phase sequence in §3.1. This is verified by unit tests.
+2. Validation enforces all ranges in §3 (intervals 1–20, sets 1–10, work 1 s–10 min, rest 1 s–3 min).
+3. A run follows exactly the phase sequence in §3.1, including the 5 s Get Ready and the skipped final Rest. This is verified by unit tests.
 4. The countdown digits are readable from 3 m away at the default size, and the size and color settings take effect immediately.
-5. The indicator turns red during the last 5 s of every phase, and a beep sounds at each of those seconds.
+5. All phases use the same digit color. During the last 5 s of every phase, the digits and the ring are red, 4 short beeps play, and the 5th beep is long and marks the phase change.
 6. Pause freezes time and sound, and Resume continues with less than 100 ms drift.
-7. With the tab in the background for 60 s or more, beeps still play on time. When the user returns, the display shows the correct time, and total drift over a 10-minute routine is under 250 ms.
-8. The volume setting changes beep loudness, and 0 % is silent.
+7. With the tab in the background for 60 s or more, beeps still play on time. When the user returns, the display shows the correct time and phase, and total drift over a 10-minute routine is under 250 ms.
+8. The volume setting changes beep loudness, and 0 % or Mute is silent.
 9. The app works offline after the first load.
 
 ---
 
-## 13. Open questions summary
+## 12. Open questions
 | # | Question | Proposed default |
 |---|---|---|
-| Q1 | Skip the last Rest of a set? | Yes (replaced by Set Rest or Done) |
-| Q2 | Show `0:17` or `17` under one minute? | `0:17` |
-| Q3 | Should admin be PIN-protected? | No PIN in v1 |
-| Q4 | Vanilla TS or React? | Vanilla TS |
-| Q5 | Tauri or Electron for the Mac build? | Tauri |
-| Q6 | Is an unsigned Mac app acceptable? | Yes (personal use) |
-| Q7 | Intel Mac support needed? | Apple Silicon only |
-| Q8 | Max number of intervals? | 50 |
+| Q1 | Keep the optional "Rest between sets" field? | Yes, default 0 (off) |
+| Q2 | Add Skip and Restart-phase buttons? | No, only Pause and Stop |
+| Q3 | Intel Mac support needed? | No, Apple Silicon only |
+
+## 13. Decision log
+| Topic | Decision |
+|---|---|
+| "Repeats" | Renamed to **Sets** (1–10) |
+| Final rest | The last Rest of the last set is skipped |
+| Get Ready | Fixed 5 s, with the same red digits and beeps as other phases |
+| Max intervals | 20 |
+| Beeps | 4 short beeps + 1 long 5th beep at the phase change |
+| Colors | Same color for all phases; only the last 5 s turn red |
+| Admin | No PIN |
+| Mac packaging | Tauri, unsigned build accepted |
+| Exercise names, voice, history | Not needed |
