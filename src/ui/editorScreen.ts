@@ -109,5 +109,6 @@ export function editorScreen(app: App, routineId: string | null): Screen {
   );
   update();
   queueMicrotask(() => nameInput.focus());
-  return { el };
+  // Leaving is only possible with Save or Cancel.
+  return { el, lockNav: 'Save or cancel the routine first' };
 }

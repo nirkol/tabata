@@ -138,7 +138,7 @@ Every phase (Get Ready, Work, Rest, Cycle Rest) ends with the same **5-beep coun
 |---|---|---|
 | **Start** (on the routine list) | Starts the routine with the 5 s Get Ready | `Enter` |
 | **Pause / Resume** | Freezes the countdown and all sound. Resume continues from the exact remaining time. | `Space` |
-| **Stop** | Ends the run and returns to the routine list, after an "Are you sure?" confirmation | `Esc` |
+| **Stop** | Ends the run and returns to the routine list, after an "Are you sure?" confirmation. **Only available while paused** (disabled while running, and `Esc` does nothing then), so a routine can't be left by accident. | `Esc` |
 | Fullscreen | Toggles fullscreen | `F` |
 
 - The Run screen has **only Pause and Stop**. There are no Skip or Restart-phase buttons.
@@ -172,7 +172,7 @@ Implementation requirements:
 ### 5.2 Editor
 - Contains every field from §3, with validation that enforces the ranges. Invalid input shows an inline error and disables Save.
 - A live "Total duration" preview is shown.
-- Buttons: **Save**, **Cancel**.
+- Buttons: **Save**, **Cancel**. The editor can only be left with these: the top navigation tabs are disabled while a routine is being created or edited.
 - Names do not need to be unique.
 
 ### 5.3 Number input control (used for every numeric field)
@@ -327,6 +327,7 @@ Both beep volumes and Mute can also be changed from the Run screen (§4.2).
 | Export / Import | Removed from Settings; routines are not moved between the web version and the Mac app |
 | Routine list | No Duplicate button (Start, Edit, Delete only) |
 | Run-screen info | Cycle counter only at the start of the Work/Rest row; "Cycle remaining" and "Total remaining" together in the center; volume slider + mute in the top-right corner |
+| Leaving screens | The Run screen can only be left while paused (or when done); the routine editor only with Save or Cancel |
 | Run-screen controls | Only Pause and Stop (no Skip or Restart); at the end: Start over and Back to routines |
 | Mac packaging | Tauri, unsigned build accepted |
 | Beep sounds | 5 selectable styles, all variations of a workout-timer beep (Classic, Soft, High, Low beep, Gym bell), chosen separately for work and rest |

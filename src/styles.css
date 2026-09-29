@@ -80,6 +80,13 @@ button {
 .tab:hover {
   color: var(--text);
 }
+.tab:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.tab:disabled:hover {
+  color: var(--muted);
+}
 .tab.active {
   color: var(--text);
   background: var(--surface-2);

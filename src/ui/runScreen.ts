@@ -136,9 +136,16 @@ export function runScreen(app: App, routine: Routine): Screen {
       pauseBtn.hidden = true;
       startOverBtn.hidden = false;
       stopBtn.textContent = '← Back to routines';
+      stopBtn.disabled = false;
+      stopBtn.removeAttribute('title');
       void releaseWakeLock();
     } else {
       pauseBtn.textContent = s.status === 'paused' ? '▶ RESUME' : 'PAUSE';
+      // The routine can only be left while paused (or when done), so it can't be stopped by accident.
+      const running = s.status === 'running';
+      stopBtn.disabled = running;
+      if (running) stopBtn.title = 'Pause the routine first to stop it';
+      else stopBtn.removeAttribute('title');
     }
   }
 
@@ -202,7 +209,9 @@ export function runScreen(app: App, routine: Routine): Screen {
   }
 
   async function requestStop(): Promise<void> {
-    if (engine.getStatus() === 'done') return leave();
+    const status = engine.getStatus();
+    if (status === 'done') return leave();
+    if (status !== 'paused') return; // must pause first
     if (await confirmDialog('Stop this routine and go back to the list?', 'Stop')) leave();
   }
 

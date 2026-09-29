@@ -16,6 +16,8 @@ export interface Screen {
   onKey?(e: KeyboardEvent): void;
   /** Hides the top navigation (the Run screen is full-window). */
   fullWindow?: boolean;
+  /** Disables the top navigation: the screen can only be left with its own buttons (e.g. Save / Cancel). */
+  lockNav?: string;
 }
 
 type Route = { name: 'list' } | { name: 'editor'; routineId: string | null } | { name: 'settings' } | { name: 'run'; routineId: string };
@@ -81,8 +83,11 @@ export class App {
     }
     this.screen = screen;
     this.nav.hidden = !!screen.fullWindow;
-    for (const tab of this.nav.querySelectorAll<HTMLElement>('.tab')) {
+    for (const tab of this.nav.querySelectorAll<HTMLButtonElement>('.tab')) {
       tab.classList.toggle('active', tab.dataset.route === route.name || (route.name === 'editor' && tab.dataset.route === 'list'));
+      tab.disabled = !!screen.lockNav;
+      if (screen.lockNav) tab.title = screen.lockNav;
+      else tab.removeAttribute('title');
     }
     this.main.replaceChildren(screen.el);
     document.title = 'yFit Tabata Timer';

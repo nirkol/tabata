@@ -127,7 +127,8 @@ test('run screen: no set counter at the top, volume control works', async ({ pag
   await page.getByTestId('run-volume-rest').fill('25');
   await expect(page.getByTestId('run-volume-rest-value')).toHaveText('25%');
   await expect(page.getByTestId('run-volume-value')).toHaveText('60%');
-  // The change is saved to Settings.
+  // The change is saved to Settings (pause first: a running routine can't be left).
+  await page.getByTestId('pause').click();
   await page.keyboard.press('Escape');
   await page.getByTestId('confirm-yes').click();
   await page.getByTestId('nav-settings').click();
@@ -158,6 +159,7 @@ test('settings: beep styles and hiding the remaining times', async ({ page }) =>
   await expect(page.getByTestId('run-next')).toBeVisible();
 
   // Turning it back on shows them again.
+  await page.keyboard.press('Space');
   await page.keyboard.press('Escape');
   await page.getByTestId('confirm-yes').click();
   await page.getByTestId('nav-settings').click();
@@ -167,15 +169,39 @@ test('settings: beep styles and hiding the remaining times', async ({ page }) =>
   await expect(page.getByTestId('run-remaining')).toBeVisible();
 });
 
-test('stop asks for confirmation', async ({ page }) => {
+test('stop only works while paused, and asks for confirmation', async ({ page }) => {
   await fresh(page);
   await page.getByTestId('start').click();
+  // Running: Stop is disabled and Esc does nothing.
+  await expect(page.getByTestId('stop')).toBeDisabled();
+  await page.keyboard.press('Escape');
+  await expect(page.getByTestId('confirm-yes')).toHaveCount(0);
+  await expect(page.getByTestId('run-screen')).toBeVisible();
+  // Paused: Stop asks for confirmation.
+  await page.keyboard.press('Space');
+  await expect(page.getByTestId('stop')).toBeEnabled();
   await page.keyboard.press('Escape');
   await page.getByTestId('confirm-no').click();
   await expect(page.getByTestId('run-screen')).toBeVisible();
   await page.getByTestId('stop').click();
   await page.getByTestId('confirm-yes').click();
   await expect(page.getByTestId('routine-list')).toBeVisible();
+});
+
+test('editor can only be left with Save or Cancel', async ({ page }) => {
+  await fresh(page);
+  await page.getByTestId('new-routine').click();
+  await expect(page.getByTestId('nav-routines')).toBeDisabled();
+  await expect(page.getByTestId('nav-settings')).toBeDisabled();
+  await page.getByTestId('nav-settings').click({ force: true });
+  await expect(page.getByTestId('save')).toBeVisible();
+  await page.getByTestId('cancel').click();
+  await expect(page.getByTestId('routine-list')).toBeVisible();
+  await expect(page.getByTestId('nav-settings')).toBeEnabled();
+  await page.getByTestId('edit').click();
+  await expect(page.getByTestId('nav-routines')).toBeDisabled();
+  await page.getByTestId('save').click();
+  await expect(page.getByTestId('nav-routines')).toBeEnabled();
 });
 
 test('last 5 seconds: digits and ring turn red', async ({ page }) => {
