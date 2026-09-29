@@ -12,7 +12,7 @@ function fakeContext() {
     resume: async () => undefined,
     createGain() {
       return {
-        gain: { value: 1, setValueAtTime(v: number) { this.value = v; }, linearRampToValueAtTime() {} },
+        gain: { value: 1, setValueAtTime(v: number) { this.value = v; }, linearRampToValueAtTime() {}, exponentialRampToValueAtTime() {} },
         connect() {},
         disconnect() {},
       } as unknown as GainNode;
@@ -24,7 +24,7 @@ function fakeContext() {
         set type(w: string) {
           rec.wave = w;
         },
-        frequency: { setValueAtTime: (f: number) => (rec.freq = f) },
+        frequency: { setValueAtTime: (f: number) => (rec.freq = f), exponentialRampToValueAtTime() {} },
         connect() {},
         disconnect() {},
         onended: null,
@@ -43,6 +43,11 @@ function fakeContext() {
   return { ctx: ctx as AudioContextLike & { currentTime: number }, started };
 }
 
+/** Distinct start times, i.e. one entry per beep however many oscillators it uses. */
+function uniqueStarts(list: { start: number }[]): number[] {
+  return [...new Set(list.map((o) => +o.start.toFixed(6)))].sort((a, b) => a - b);
+}
+
 const routine = { workSec: 20, restSec: 10, intervals: 2, sets: 1, setRestSec: 60 }; // G5 W20 R10 W20 = 55 s
 
 describe('Beeper', () => {
@@ -51,14 +56,16 @@ describe('Beeper', () => {
     const b = new Beeper(() => ctx);
     const beeps = beepSchedule(buildPhases(routine));
     b.startRun(beeps, 0, 1);
-    // 4 phases × (4 short + 1 end) = 20 beeps, but the finish sound is 3 tones → 22 oscillators
-    expect(started).toHaveLength(22);
-    expect(started.slice(0, 5).map((o) => o.start)).toEqual([101, 102, 103, 104, 105]);
+    // 4 phases × (4 short + 1 end) = 20 beeps, but the finish sound is 3 strikes → 22 distinct start times
+    // (work tones mix several oscillators that start together).
+    const strikes = uniqueStarts(started);
+    expect(strikes).toHaveLength(22);
+    expect(strikes.slice(0, 5)).toEqual([101, 102, 103, 104, 105]);
     // short vs long: different length
     expect(started[0].stop - started[0].start).toBeCloseTo(0.15);
     expect(started[4].stop - started[4].start).toBeCloseTo(0.6);
     // finish: three long beeps starting at the end of the run (t = 100 + 55)
-    expect(started.slice(-3).map((o) => o.start)).toEqual([155, 155.85, 156.7]);
+    expect(strikes.slice(-3)).toEqual([155, 155.85, 156.7]);
   });
 
   it('cancels scheduled beeps on pause and reschedules from the resume point', () => {
@@ -77,7 +84,7 @@ describe('Beeper', () => {
     // Remaining in Get Ready: short at 4 s and the long at 5 s → 0.5 s and 1.5 s after resume.
     expect(resumed[0].start).toBeCloseTo(130.5);
     expect(resumed[1].start).toBeCloseTo(131.5);
-    expect(resumed).toHaveLength(22 - 3);
+    expect(uniqueStarts(resumed)).toHaveLength(22 - 3);
   });
 
   it('scales offsets with the speed flag', () => {
@@ -99,8 +106,8 @@ describe('Beeper', () => {
     b.sync(SCHEDULE_AHEAD_MS); // 10 min later
     expect(started.length).toBeGreaterThan(first);
     // No beep is scheduled twice.
-    const times = started.map((o) => o.start);
-    expect(new Set(times).size).toBe(times.length);
+    const keys = started.map((o) => `${o.start}/${o.freq}`);
+    expect(new Set(keys).size).toBe(keys.length);
   });
 
   it('volume 0 and mute are silent; work and rest volumes are separate', () => {
@@ -126,10 +133,15 @@ describe('Beeper', () => {
     const b = new Beeper(() => ctx);
     b.startRun(beepSchedule(buildPhases(routine)), 0, 1);
     // First 5 beeps are Get Ready (rest sound), the next 4 short ones end the first Work.
-    const restShort = started[0];
-    const workShort = started[5];
-    expect(restShort.freq).not.toBe(workShort.freq);
-    expect(restShort.wave).toBe('triangle');
-    expect(workShort.wave).toBe('square');
+    const restShort = started.filter((o) => o.start === 101);
+    const workShort = started.filter((o) => o.start === 121);
+    const workBell = started.filter((o) => o.start === 125);
+    expect(restShort).toHaveLength(1);
+    expect(restShort[0].wave).toBe('triangle');
+    // Work: a two-partial "tock" and a four-partial bell, no square-wave monitor beep.
+    expect(workShort).toHaveLength(2);
+    expect(workBell).toHaveLength(4);
+    expect(started.some((o) => o.wave === 'square')).toBe(false);
+    expect(workShort[0].freq).not.toBe(restShort[0].freq);
   });
 });

@@ -12,29 +12,68 @@ export interface AudioContextLike {
 
 export type AudioContextFactory = () => AudioContextLike;
 
+interface Overtone {
+  /** Frequency as a multiple of the tone's base frequency. */
+  ratio: number;
+  gain: number;
+}
+
 interface Tone {
   freq: number;
   durationSec: number;
   wave: OscillatorType;
   /** Envelope peak; softer waveforms get a higher peak to sound about as loud. */
   peak: number;
+  /** Overtones mixed together (default: just the base frequency). */
+  partials?: Overtone[];
+  /** Percussive: fade out exponentially over the whole duration instead of holding. */
+  decay?: boolean;
+  /** Pitch at the end, as a multiple of the start pitch (a quick drop sounds percussive). */
+  sweepTo?: number;
 }
 
 /**
- * Short countdown beep and the long phase-change beep (SPEC §4.4), in two sounds:
- * a bright, buzzy "work" beep and a lower, rounder "rest" beep.
+ * Short countdown beep and the long phase-change beep (SPEC §4.4), in two sounds.
+ * Work: a woody "tock" for the countdown and a boxing-ring bell for the phase
+ * change, so it sounds like a gym timer rather than a medical monitor.
+ * Rest: a lower, softer, rounder beep.
  */
 const TONES: Record<BeepSound, Record<Exclude<BeepKind, 'finish'>, Tone>> = {
   work: {
-    short: { freq: 880, durationSec: 0.15, wave: 'square', peak: 0.35 },
-    long: { freq: 1320, durationSec: 0.6, wave: 'square', peak: 0.35 },
+    short: {
+      freq: 1250,
+      durationSec: 0.12,
+      wave: 'sine',
+      peak: 0.9,
+      decay: true,
+      sweepTo: 0.6,
+      partials: [
+        { ratio: 1, gain: 1 },
+        { ratio: 2.3, gain: 0.35 },
+      ],
+    },
+    long: {
+      // Inharmonic overtones give the metallic ring of a bell.
+      freq: 760,
+      durationSec: 1.1,
+      wave: 'sine',
+      peak: 0.7,
+      decay: true,
+      partials: [
+        { ratio: 1, gain: 1 },
+        { ratio: 2.76, gain: 0.55 },
+        { ratio: 5.4, gain: 0.3 },
+        { ratio: 8.93, gain: 0.12 },
+      ],
+    },
   },
   rest: {
     short: { freq: 587, durationSec: 0.15, wave: 'triangle', peak: 0.8 },
     long: { freq: 880, durationSec: 0.6, wave: 'triangle', peak: 0.8 },
   },
 };
-const FINISH_GAP_SEC = 0.25;
+/** "Finished" sound: three strikes of the long tone, this far apart. */
+const FINISH_SPACING_SEC = 0.85;
 const RAMP_SEC = 0.005;
 
 /**
@@ -163,8 +202,7 @@ export class Beeper {
   private play(beep: Beep, when: number): void {
     const tones = TONES[beep.sound];
     if (beep.kind === 'finish') {
-      // "Finished" sound: three long beeps.
-      for (let i = 0; i < 3; i++) this.tone(beep.sound, tones.long, when + i * (tones.long.durationSec + FINISH_GAP_SEC));
+      for (let i = 0; i < 3; i++) this.tone(beep.sound, tones.long, when + i * FINISH_SPACING_SEC);
     } else {
       this.tone(beep.sound, tones[beep.kind], when);
     }
@@ -176,24 +214,39 @@ export class Beeper {
     if (!ctx || !bus) return;
     const start = Math.max(when, ctx.currentTime);
     const end = start + tone.durationSec;
-    const osc = ctx.createOscillator();
+
+    // Envelope: short attack (avoids clicks), then hold or percussive decay.
     const env = ctx.createGain();
-    osc.type = tone.wave;
-    osc.frequency.setValueAtTime(tone.freq, start);
-    // Short attack/release ramps avoid clicks.
     env.gain.setValueAtTime(0, start);
     env.gain.linearRampToValueAtTime(tone.peak, start + RAMP_SEC);
-    env.gain.setValueAtTime(tone.peak, end - RAMP_SEC);
-    env.gain.linearRampToValueAtTime(0, end);
-    osc.connect(env);
+    if (tone.decay) {
+      env.gain.exponentialRampToValueAtTime(0.0001, end);
+    } else {
+      env.gain.setValueAtTime(tone.peak, end - RAMP_SEC);
+      env.gain.linearRampToValueAtTime(0, end);
+    }
     env.connect(bus);
-    osc.onended = () => {
-      this.live.delete(osc);
-      osc.disconnect();
-      env.disconnect();
-    };
-    this.live.add(osc);
-    osc.start(start);
-    osc.stop(end);
+
+    const partials = tone.partials ?? [{ ratio: 1, gain: 1 }];
+    let playing = partials.length;
+    for (const p of partials) {
+      const osc = ctx.createOscillator();
+      const level = ctx.createGain();
+      level.gain.setValueAtTime(p.gain, start);
+      osc.type = tone.wave;
+      osc.frequency.setValueAtTime(tone.freq * p.ratio, start);
+      if (tone.sweepTo) osc.frequency.exponentialRampToValueAtTime(tone.freq * p.ratio * tone.sweepTo, end);
+      osc.connect(level);
+      level.connect(env);
+      osc.onended = () => {
+        this.live.delete(osc);
+        osc.disconnect();
+        level.disconnect();
+        if (--playing === 0) env.disconnect();
+      };
+      this.live.add(osc);
+      osc.start(start);
+      osc.stop(end);
+    }
   }
 }

@@ -129,7 +129,7 @@ Every phase (Get Ready, Work, Rest, Set Rest) ends with the same **5-beep countd
 
 - The beeps start at the moment the digits turn red (the last 5 seconds) and fall exactly on the second boundaries.
 - If a phase is shorter than 5 s, only the beeps that fit inside it are played, plus the long beep at 0.
-- **Two beep sounds:** countdowns that end a **Work** period use the *work sound* (bright, higher-pitched). Countdowns that end **Get Ready, Rest or Rest between sets** (the ones that lead into Work) use a different *rest sound* (lower, softer). The final "finished" sound uses the work sound. Each sound has its own volume (§6).
+- **Two beep sounds:** countdowns that end a **Work** period use the *work sound*: a short woody "tock" for the countdown beeps and a boxing-ring bell strike for the long beep, so it sounds like a gym timer rather than a medical monitor. Countdowns that end **Get Ready, Rest or Rest between sets** (the ones that lead into Work) use a different *rest sound* (lower, softer). The final "finished" sound is three bell strikes. Each sound has its own volume (§6).
 - Beeps are **generated** with the Web Audio API (oscillator), not audio files. This keeps timing sample-accurate.
 - Volumes come from Settings (§6).
 
