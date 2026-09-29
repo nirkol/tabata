@@ -167,6 +167,7 @@ Implementation requirements:
 - A **"+ New Routine"** button opens the editor, prefilled with the defaults and the next free `Routine N` name.
 - On first launch, the app creates one sample routine: "Classic Tabata" (20/10 × 8 × 1).
 - The last-used routine is highlighted.
+- **Long lists scroll:** only the routine cards scroll (with an always-visible scrollbar); the top bar, the "Routines" title and "+ New Routine" stay in place. The highlighted routine is scrolled into view when the list opens, and the scroll position is kept when a card is selected.
 
 ### 5.2 Editor
 - Contains every field from §3, with validation that enforces the ranges. Invalid input shows an inline error and disables Save.

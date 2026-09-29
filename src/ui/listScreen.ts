@@ -24,12 +24,14 @@ export function listScreen(app: App): Screen {
   const selectedId = () => app.lastUsedId ?? app.routines[0]?.id ?? null;
 
   function render(): void {
+    const scrollTop = list.scrollTop; // keep the scroll position when re-rendering
     list.replaceChildren();
     if (app.routines.length === 0) {
       list.append(h('p', { class: 'empty' }, 'No routines yet. Create one with “+ New Routine”.'));
       return;
     }
     for (const r of app.routines) list.append(card(r));
+    list.scrollTop = scrollTop;
   }
 
   function card(r: Routine): HTMLElement {
@@ -78,6 +80,8 @@ export function listScreen(app: App): Screen {
   }
 
   render();
+  // Bring the highlighted routine into view once the list is on screen.
+  requestAnimationFrame(() => list.querySelector('.card.selected')?.scrollIntoView({ block: 'nearest' }));
   return {
     el,
     onKey(e) {

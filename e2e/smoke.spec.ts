@@ -195,6 +195,30 @@ test('editor: validation, press-and-hold and typed values', async ({ page }) => 
   await expect(page.getByTestId('save')).toBeDisabled();
 });
 
+test('long routine list scrolls while the header stays visible', async ({ page }) => {
+  await fresh(page);
+  await page.evaluate(() => {
+    const now = new Date().toISOString();
+    const routines = Array.from({ length: 15 }, (_, i) => ({ id: `r${i}`, name: `Routine ${i + 1}`, workSec: 20, restSec: 10, intervals: 8, sets: 1, setRestSec: 60, createdAt: now, updatedAt: now }));
+    localStorage.setItem('tabata.v1.routines', JSON.stringify({ version: 1, routines }));
+    localStorage.setItem('tabata.v1.lastUsed', 'r14');
+  });
+  await page.reload();
+  const list = page.getByTestId('routine-list');
+  // The highlighted (last used) routine is scrolled into view.
+  await expect(page.locator('[data-id="r14"]')).toBeInViewport();
+  expect(await list.evaluate((el) => el.scrollHeight > el.clientHeight)).toBe(true);
+  await list.evaluate((el) => (el.scrollTop = 0));
+  await expect(page.locator('[data-id="r0"]')).toBeInViewport();
+  await expect(page.locator('[data-id="r14"]')).not.toBeInViewport();
+  // Scrolling moves only the list: the header and New Routine button stay put.
+  await page.locator('[data-id="r0"]').hover();
+  await page.mouse.wheel(0, 5000);
+  await expect(page.locator('[data-id="r14"]')).toBeInViewport();
+  await expect(page.getByTestId('new-routine')).toBeInViewport();
+  await expect(page.getByTestId('nav-settings')).toBeInViewport();
+});
+
 test('routines: edit, delete and default names', async ({ page }) => {
   await fresh(page);
   const cards = page.getByTestId('routine-card');
