@@ -637,14 +637,20 @@ h2 {
   align-items: center;
   gap: 10px;
 }
-.run-volume-item {
-  display: flex;
+.run-volume-stack {
+  /* Work volume on top, Rest volume beneath it; columns keep the sliders aligned. */
+  display: grid;
+  grid-template-columns: auto auto auto;
   align-items: center;
-  gap: 6px;
+  gap: 2px 8px;
+}
+.run-volume-item {
+  display: contents;
 }
 .run-volume-label {
   color: var(--muted);
   font-size: 14px;
+  text-align: right;
 }
 .run-volume {
   width: 100px;
@@ -662,7 +668,7 @@ h2 {
   color: var(--border);
 }
 .run-info-secondary {
-  /* Next (left) · Set remaining + Total remaining (center), even when Next is empty. */
+  /* Next (left) · Cycle remaining + Total remaining (center), even when Next is empty. */
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   color: var(--muted);

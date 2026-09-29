@@ -111,7 +111,7 @@ This screen is used mid-workout, often from several meters away, so readability 
 
 The bottom row shows the Next phase on the left, and Cycle remaining next to Total remaining in the center.
 
-The top-right corner has the **volume controls**: a mute button, a *Work* and a *Rest* volume slider (0–100 %, step 5 %) with their current values, and the fullscreen button. Changes apply immediately and are saved to Settings. Moving the slider above 0 % while muted unmutes.
+The top-right corner has the **volume controls**: a mute button, then two volume sliders stacked on top of each other, labeled **Work volume** (top) and **Rest volume** (beneath it), each 0–100 % in 5 % steps with its current value, and the fullscreen button. Changes apply immediately and are saved to Settings. Moving the slider above 0 % while muted unmutes.
 
 ### 4.3 Colors and progress indicator
 - **Every phase uses the same color.** The digit color is the one chosen in Settings (§6). The background and the other elements do not change color between Work, Rest, Cycle Rest or Get Ready. The phase label text is what tells the phases apart.

@@ -43,7 +43,7 @@ export function runScreen(app: App, routine: Routine): Screen {
   const muteBtn = h('button', { type: 'button', class: 'btn btn-icon', 'data-testid': 'run-mute', onclick: () => toggleMute() });
   /** A compact volume slider for the work or rest beeps. */
   function volumeControl(key: 'volume' | 'restVolume', label: string, testId: string) {
-    const slider = h('input', { type: 'range', class: 'run-volume', min: 0, max: 100, step: 5, 'aria-label': `${label} beep volume`, 'data-testid': testId });
+    const slider = h('input', { type: 'range', class: 'run-volume', min: 0, max: 100, step: 5, 'aria-label': label, 'data-testid': testId });
     slider.value = String(Math.round(app.settings[key] * 100));
     const value = h('span', { class: 'run-volume-value', 'data-testid': `${testId}-value` });
     slider.addEventListener('input', () => {
@@ -59,8 +59,8 @@ export function runScreen(app: App, routine: Routine): Screen {
     };
     return { el, update };
   }
-  const workVolume = volumeControl('volume', 'Work', 'run-volume');
-  const restVolume = volumeControl('restVolume', 'Rest', 'run-volume-rest');
+  const workVolume = volumeControl('volume', 'Work volume', 'run-volume');
+  const restVolume = volumeControl('restVolume', 'Rest volume', 'run-volume-rest');
   const fullscreenBtn = h('button', { type: 'button', class: 'btn btn-icon', title: 'Fullscreen (F)', 'aria-label': 'Toggle fullscreen', onclick: () => toggleFullscreen() }, '⛶');
 
   const el = h(
@@ -71,7 +71,7 @@ export function runScreen(app: App, routine: Routine): Screen {
       { class: 'run-top' },
       h('div', { class: 'run-name' }, `Routine: “${routine.name}”`),
       app.speed !== 1 ? h('div', { class: 'speed-badge' }, `×${app.speed} speed (dev)`) : null,
-      h('div', { class: 'run-top-right' }, h('div', { class: 'run-volume-group' }, muteBtn, workVolume.el, restVolume.el), fullscreenBtn),
+      h('div', { class: 'run-top-right' }, h('div', { class: 'run-volume-group' }, muteBtn, h('div', { class: 'run-volume-stack' }, workVolume.el, restVolume.el)), fullscreenBtn),
     ),
     phaseLabel,
     stage,
