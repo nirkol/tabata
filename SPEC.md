@@ -26,10 +26,10 @@ Phase 1 must be built so it can be wrapped with Tauri later without a rewrite (s
 |---|---|
 | **Work** | The training period. |
 | **Rest** | The rest period after each work period. |
-| **Interval** | One Work + one Rest. |
-| **Set** | A block of *N* intervals. A routine repeats its block of intervals for a number of sets. |
+| **Round** | One Work + one Rest. |
+| **Cycle** | A block of *N* rounds. A routine repeats its block of rounds for a number of cycles. |
 | **Routine** | A saved, named configuration of all of the above. |
-| **Phase** | The current state of the timer: `Get Ready`, `Work`, `Rest`, `Set Rest`, `Done`. |
+| **Phase** | The current state of the timer: `Get Ready`, `Work`, `Rest`, `Cycle Rest`, `Done`. |
 
 ---
 
@@ -40,30 +40,30 @@ Phase 1 must be built so it can be wrapped with Tauri later without a rewrite (s
 | Name | text | 1–40 chars | `Routine N` | N is the next free number: `Routine 1`, `Routine 2`, … |
 | Work time | seconds | 1 s – 600 s (10 min) | 20 s | Entered as mm:ss |
 | Rest time | seconds | 1 s – 180 s (3 min) | 10 s | Entered as mm:ss |
-| Intervals | integer | 1 – 20 | 8 | Number of Work+Rest pairs in one set |
-| Sets | integer | 1 – 10 | 1 | Number of times the whole block of intervals runs |
-| Rest between sets | seconds | 1 s – 300 s (5 min) | 60 s | Recovery between two sets. Entered as mm:ss. Disabled (grayed out) when Sets = 1, because there is no gap to fill. |
+| Rounds | integer | 1 – 20 | 8 | Number of Work+Rest pairs in one cycle |
+| Cycles | integer | 1 – 10 | 1 | Number of times the whole block of rounds runs |
+| Rest between cycles | seconds | 1 s – 300 s (5 min) | 60 s | Recovery between two cycles. Entered as mm:ss. Disabled (grayed out) when Cycles = 1, because there is no gap to fill. |
 
-The defaults (20 s / 10 s / 8 intervals) are the classic Tabata protocol.
+The defaults (20 s / 10 s / 8 rounds) are the classic Tabata protocol.
 
 **Get Ready** is a fixed **5-second** countdown before the first Work period of every run. It is not configurable, and it has the same red digits and beeps as any other phase (§4.3, §4.4).
 
 ### 3.1 Phase sequence rules
 1. Every run starts with **Get Ready (5 s)**.
-2. Each set runs `Work → Rest`, *Intervals* times.
-3. **Between sets:** the last Rest of every set except the final one is **replaced** by *Rest between sets*. It is not added on top of the normal Rest.
-4. The **last Rest of the last set is skipped**, so the routine ends right after the final Work period.
+2. Each cycle runs `Work → Rest`, *Rounds* times.
+3. **Between cycles:** the last Rest of every cycle except the final one is **replaced** by *Rest between cycles*. It is not added on top of the normal Rest.
+4. The **last Rest of the last cycle is skipped**, so the routine ends right after the final Work period.
 5. Then the timer enters **Done**.
 
-Example: Work 20 s, Rest 10 s, 3 intervals, 2 sets, Rest between sets 60 s:
+Example: Work 20 s, Rest 10 s, 3 rounds, 2 cycles, Rest between cycles 60 s:
 
 ```
 GetReady(5)
-Set 1:  W20 R10 W20 R10 W20 SetRest(60)
-Set 2:  W20 R10 W20 R10 W20 → Done
+Cycle 1:  W20 R10 W20 R10 W20 CycleRest(60)
+Cycle 2:  W20 R10 W20 R10 W20 → Done
 ```
 
-With Sets = 1, there is no Set Rest:
+With Cycles = 1, there is no Cycle Rest:
 
 ```
 GetReady(5) → W20 R10 W20 R10 W20 → Done
@@ -91,9 +91,9 @@ This screen is used mid-workout, often from several meters away, so readability 
 │                  │               │                        │
 │                  ╰───────────────╯  ← progress ring       │
 │                                                           │
-│  Set 1 / 2 │ Work 0:20 │ Rest 0:10 │ Intervals left: 5 / 8 │
+│  Cycle 1 / 2 │ Work 0:20 │ Rest 0:10 │ Rounds left: 5 / 8 │
 │                                                           │
-│ Next: REST 0:10   Set remaining: 2:05 │ Total remaining: 6:42 │
+│ Next: REST 0:10   Cycle remaining: 2:05 │ Total remaining: 6:42 │
 │                                                           │
 │              [ ⏯ PAUSE ]            [ ■ STOP ]            │
 └───────────────────────────────────────────────────────────┘
@@ -101,25 +101,25 @@ This screen is used mid-workout, often from several meters away, so readability 
 
 ### 4.2 Required display elements
 1. **Countdown for the current phase** in very large digits, formatted `m:ss` (for example `0:17`, `2:30`).
-2. **Phase label**: GET READY / WORK / REST / SET REST / DONE, in large capital letters.
-3. **Current set and the Work and Rest durations** of the routine, in one row: `Set 1 / 2 │ Work 0:20 │ Rest 0:10 │ Intervals left: 5 / 8`.
-4. **Intervals remaining** in the current set, for example `5 / 8`.
-5. **Current set**, for example `Set 1 / 2`, shown once, at the start of the Work/Rest row (not in the top corner).
+2. **Phase label**: GET READY / WORK / REST / CYCLE REST / DONE, in large capital letters.
+3. **Current cycle and the Work and Rest durations** of the routine, in one row: `Cycle 1 / 2 │ Work 0:20 │ Rest 0:10 │ Rounds left: 5 / 8`.
+4. **Rounds remaining** in the current cycle, for example `5 / 8`.
+5. **Current cycle**, for example `Cycle 1 / 2`, shown once, at the start of the Work/Rest row (not in the top corner).
 6. **Next phase** preview, for example "Next: REST 0:10".
-7. **Set remaining**: time left in the current set. A set runs from its first Work period until the next set starts, so it includes the Rest between sets. During Get Ready it shows the full length of set 1.
+7. **Cycle remaining**: time left in the current cycle. A cycle runs from its first Work period until the next cycle starts, so it includes the Rest between cycles. During Get Ready it shows the full length of cycle 1.
 8. **Total time remaining** for the whole routine.
 
-The bottom row shows the Next phase on the left, and Set remaining next to Total remaining in the center.
+The bottom row shows the Next phase on the left, and Cycle remaining next to Total remaining in the center.
 
 The top-right corner has the **volume controls**: a mute button, a *Work* and a *Rest* volume slider (0–100 %, step 5 %) with their current values, and the fullscreen button. Changes apply immediately and are saved to Settings. Moving the slider above 0 % while muted unmutes.
 
 ### 4.3 Colors and progress indicator
-- **Every phase uses the same color.** The digit color is the one chosen in Settings (§6). The background and the other elements do not change color between Work, Rest, Set Rest or Get Ready. The phase label text is what tells the phases apart.
+- **Every phase uses the same color.** The digit color is the one chosen in Settings (§6). The background and the other elements do not change color between Work, Rest, Cycle Rest or Get Ready. The phase label text is what tells the phases apart.
 - **In the last 5 seconds of any phase**, the digits **and** the progress indicator turn **red**. They return to the normal color when the next phase starts.
 - The progress indicator is a ring around the digits that empties as the phase elapses. It animates smoothly and does not jump once per second.
 
 ### 4.4 Audio cues
-Every phase (Get Ready, Work, Rest, Set Rest) ends with the same **5-beep countdown**:
+Every phase (Get Ready, Work, Rest, Cycle Rest) ends with the same **5-beep countdown**:
 
 | Remaining time | Sound |
 |---|---|
@@ -129,7 +129,7 @@ Every phase (Get Ready, Work, Rest, Set Rest) ends with the same **5-beep countd
 
 - The beeps start at the moment the digits turn red (the last 5 seconds) and fall exactly on the second boundaries.
 - If a phase is shorter than 5 s, only the beeps that fit inside it are played, plus the long beep at 0.
-- **Two beep sounds:** countdowns that end a **Work** period use the *work sound*: a short woody "tock" for the countdown beeps and a boxing-ring bell strike for the long beep, so it sounds like a gym timer rather than a medical monitor. Countdowns that end **Get Ready, Rest or Rest between sets** (the ones that lead into Work) use a different *rest sound* (lower, softer). The final "finished" sound is three bell strikes. Each sound has its own volume (§6).
+- **Two beep sounds:** countdowns that end a **Work** period use the *work sound*: a short woody "tock" for the countdown beeps and a boxing-ring bell strike for the long beep, so it sounds like a gym timer rather than a medical monitor. Countdowns that end **Get Ready, Rest or Rest between cycles** (the ones that lead into Work) use a different *rest sound* (lower, softer). The final "finished" sound is three bell strikes. Each sound has its own volume (§6).
 - Beeps are **generated** with the Web Audio API (oscillator), not audio files. This keeps timing sample-accurate.
 - Volumes come from Settings (§6).
 
@@ -161,7 +161,7 @@ Implementation requirements:
 ## 5. Routines screen (list and editor)
 
 ### 5.1 List
-- Shows all saved routines as cards with the name and **labeled** values, so it's clear which number is which: `WORK 0:20 · REST 0:10 · INTERVALS 8 · SETS 2 · REST BETWEEN SETS 1:00 · TOTAL 8:45`. Rest between sets is shown only when there are 2+ sets.
+- Shows all saved routines as cards with the name and **labeled** values, so it's clear which number is which: `WORK 0:20 · REST 0:10 · ROUNDS 8 · CYCLES 2 · REST BETWEEN CYCLES 1:00 · TOTAL 8:45`. Rest between cycles is shown only when there are 2+ cycles.
 - Each card has **Start**, **Edit** and **Delete** buttons (no Duplicate).
 - **Delete** asks for confirmation.
 - A **"+ New Routine"** button opens the editor, prefilled with the defaults and the next free `Routine N` name.
@@ -176,7 +176,7 @@ Implementation requirements:
 - Names do not need to be unique.
 
 ### 5.3 Number input control (used for every numeric field)
-Every numeric field (Work, Rest, Rest between sets, Intervals, Sets, and the numeric settings in §6) uses the same control:
+Every numeric field (Work, Rest, Rest between cycles, Rounds, Cycles, and the numeric settings in §6) uses the same control:
 
 ```
  [ − ]  [  0:20  ]  [ + ]
@@ -184,7 +184,7 @@ Every numeric field (Work, Rest, Rest between sets, Intervals, Sets, and the num
 
 - **− / + buttons:** each click changes the value by one step. Pressing and holding the button repeats the step, and the repeat speeds up after about 1 s of holding.
   - Time fields: step = 1 s. After 2 s of holding, the step grows to 5 s.
-  - Intervals / Sets: step = 1.
+  - Rounds / Cycles: step = 1.
 - **Manual entry:** the user can click the value and type it directly.
   - Time fields accept `m:ss` (for example `1:30`) or plain seconds (for example `90`, displayed as `1:30` afterwards).
   - Pressing Enter or leaving the field confirms the value. Pressing Esc restores the previous value.
@@ -200,10 +200,10 @@ The admin area is a plain **Settings screen with no PIN or password**. It holds 
 | Setting | Control | Range | Default |
 |---|---|---|---|
 | Work beep volume | − / + number control (§5.3, step 5 %) + slider + **"Test"** button | 0 – 100 % | 70 % |
-| Rest beep volume | Same control as the work beep volume, for the rest sound (Get Ready, Rest, Rest between sets) | 0 – 100 % | 70 % |
+| Rest beep volume | Same control as the work beep volume, for the rest sound (Get Ready, Rest, Rest between cycles) | 0 – 100 % | 70 % |
 | Work beep sound | Dropdown next to the work volume; plays the sound when changed | Classic beep / Soft beep / High beep / Low beep / Gym bell | Gym bell |
 | Rest beep sound | Dropdown next to the rest volume; plays the sound when changed | Classic beep / Soft beep / High beep / Low beep / Gym bell | Soft beep |
-| Show remaining times | Checkbox: show "Set remaining" and "Total remaining" on the Run screen | on / off | on |
+| Show remaining times | Checkbox: show "Cycle remaining" and "Total remaining" on the Run screen | on / off | on |
 | Counter digit color | Color picker (with a few presets) | any color except red, which is reserved for the last 5 s | White `#FFFFFF` |
 | Counter digit size | − / + number control (§5.3, step 5 %) + slider, with live preview | 10 – 60 % of window height | 40 % |
 | Mute | Toggle, also available on the run screen | on / off | off |
@@ -266,7 +266,7 @@ Both beep volumes and Mute can also be changed from the Run screen (§4.2).
   - `storage/`: persistence behind an interface.
   - `ui/`: screens (Routine list, Editor, Run, Settings).
 - **Tests:**
-  - Unit tests (Vitest) for the engine: the phase sequence including the skipped final rest and the set-rest replacement, pause/resume math, total-duration calculation, and beep times.
+  - Unit tests (Vitest) for the engine: the phase sequence including the skipped final rest and the cycle-rest replacement, pause/resume math, total-duration calculation, and beep times.
   - Validation tests for all field ranges.
   - One Playwright smoke test: create a routine, run it, pause, resume, and finish it, using the speed flag.
 - A dev-only **speed flag** (`?speed=10`) that makes time run faster, for quick manual testing.
@@ -289,7 +289,7 @@ Both beep volumes and Mute can also be changed from the Run screen (§4.2).
 ---
 
 ## 10. Out of scope
-- Exercise names per interval
+- Exercise names per round
 - Voice announcements
 - Workout history and statistics
 - User accounts, cloud sync, mobile apps
@@ -299,9 +299,9 @@ Both beep volumes and Mute can also be changed from the Run screen (§4.2).
 
 ## 11. Acceptance criteria (Phase 1)
 1. The user can create, edit and delete routines. New routines get a default name `Routine N`, and routines survive a page reload.
-2. Validation enforces all ranges in §3 (intervals 1–20, sets 1–10, work 1 s–10 min, rest 1 s–3 min, rest between sets 1 s–5 min).
+2. Validation enforces all ranges in §3 (rounds 1–20, cycles 1–10, work 1 s–10 min, rest 1 s–3 min, rest between cycles 1 s–5 min).
 3. Every numeric field can be changed with the − / + buttons (including press-and-hold) and by typing a value, as described in §5.3.
-4. A run follows exactly the phase sequence in §3.1, including the 5 s Get Ready, the rest between sets replacing the last Rest of each set, and the skipped final Rest. This is verified by unit tests.
+4. A run follows exactly the phase sequence in §3.1, including the 5 s Get Ready, the rest between cycles replacing the last Rest of each cycle, and the skipped final Rest. This is verified by unit tests.
 5. The countdown digits are readable from 3 m away at the default size, and the size and color settings take effect immediately.
 6. All phases use the same digit color. During the last 5 s of every phase, the digits and the ring are red, 4 short beeps play, and the 5th beep is long and marks the phase change.
 7. Pause freezes time and sound, and Resume continues with less than 100 ms drift.
@@ -314,22 +314,23 @@ Both beep volumes and Mute can also be changed from the Run screen (§4.2).
 ## 12. Decision log
 | Topic | Decision |
 |---|---|
-| "Repeats" | Renamed to **Sets** (1–10) |
-| Final rest | The last Rest of the last set is skipped |
+| "Repeats" | Renamed to **Cycles** (1–10) |
+| Terminology | The app says **Cycles** (formerly "Sets") and **Rounds** (formerly "Intervals"). The stored data keeps the field names `sets`, `intervals` and `setRestSec`, so saved routines keep working. |
+| Final rest | The last Rest of the last cycle is skipped |
 | Get Ready | Fixed 5 s, with the same red digits and beeps as other phases |
-| Max intervals | 20 |
-| Rest between sets | Configurable per routine, 1–300 s (default 60 s); replaces the last Rest of each set except the final set |
+| Max rounds | 20 |
+| Rest between cycles | Configurable per routine, 1–300 s (default 60 s); replaces the last Rest of each cycle except the final cycle |
 | Number inputs | − / + buttons (with press-and-hold) **and** manual typing for every numeric field |
 | Beeps | 4 short beeps + 1 long 5th beep at the phase change; rest countdowns use a different sound with its own volume |
 | Colors | Same color for all phases; only the last 5 s turn red |
 | Admin | No PIN |
 | Export / Import | Removed from Settings; routines are not moved between the web version and the Mac app |
 | Routine list | No Duplicate button (Start, Edit, Delete only) |
-| Run-screen info | Set counter only at the start of the Work/Rest row; "Set remaining" and "Total remaining" together in the center; volume slider + mute in the top-right corner |
+| Run-screen info | Cycle counter only at the start of the Work/Rest row; "Cycle remaining" and "Total remaining" together in the center; volume slider + mute in the top-right corner |
 | Run-screen controls | Only Pause and Stop (no Skip or Restart); at the end: Start over and Back to routines |
 | Mac packaging | Tauri, unsigned build accepted |
 | Beep sounds | 5 selectable styles, all variations of a workout-timer beep (Classic, Soft, High, Low beep, Gym bell), chosen separately for work and rest |
-| Remaining times | "Set remaining" / "Total remaining" can be hidden in Settings |
+| Remaining times | "Cycle remaining" / "Total remaining" can be hidden in Settings |
 | App name | "yFit Tabata Timer" (top-left, larger, display font; also the browser tab title) |
 | Mac hardware | Universal binary for Apple Silicon and Intel |
 | Exercise names, voice, history | Not needed |

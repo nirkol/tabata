@@ -244,6 +244,6 @@ export const PHASE_LABELS: Record<PhaseKind | 'done', string> = {
   getReady: 'GET READY',
   work: 'WORK',
   rest: 'REST',
-  setRest: 'SET REST',
+  setRest: 'CYCLE REST',
   done: 'DONE',
 };

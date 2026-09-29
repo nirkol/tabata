@@ -49,7 +49,7 @@ export function settingsScreen(app: App): Screen {
     return input.el;
   }
   const workVolume = volumeRow('volume', 'work', 'Work beeps');
-  const restVolume = volumeRow('restVolume', 'rest', 'Rest beeps (Get Ready, Rest, Rest between sets)');
+  const restVolume = volumeRow('restVolume', 'rest', 'Rest beeps (Get Ready, Rest, Rest between cycles)');
 
   const showRemaining = h('input', { type: 'checkbox', class: 'toggle', id: 'show-remaining', 'data-testid': 'show-remaining' });
   showRemaining.checked = app.settings.showRemaining;
@@ -155,7 +155,7 @@ export function settingsScreen(app: App): Screen {
           { class: 'display-controls' },
           h('div', { class: 'field' }, h('label', { class: 'field-label', for: 'color-input' }, 'Counter digit color'), h('div', { class: 'row' }, colorInput, swatches), colorError),
           size.el,
-          h('label', { class: 'toggle-row', for: 'show-remaining' }, showRemaining, h('span', {}, 'Show “Set remaining” and “Total remaining” during the workout')),
+          h('label', { class: 'toggle-row', for: 'show-remaining' }, showRemaining, h('span', {}, 'Show “Cycle remaining” and “Total remaining” during the workout')),
         ),
         preview,
       ),

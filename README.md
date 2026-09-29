@@ -1,6 +1,6 @@
 # yFit Tabata Timer
 
-An interval-training stopwatch for trainers. Create named routines (work / rest / intervals / sets), then run them with huge, easy-to-read digits and countdown beeps.
+An interval-training stopwatch for trainers. Create named routines (work / rest / rounds / cycles), then run them with huge, easy-to-read digits and countdown beeps.
 
 The full product spec is in [SPEC.md](SPEC.md). This repository currently contains **Phase 1: the web simulation**, a frontend-only app that runs in the browser. Phase 2 (the macOS app built with Tauri) comes later.
 

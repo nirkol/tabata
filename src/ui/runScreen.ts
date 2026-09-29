@@ -102,7 +102,7 @@ export function runScreen(app: App, routine: Routine): Screen {
     const label = done ? PHASE_LABELS.done : PHASE_LABELS[phase!.kind];
     const setNo = phase ? phase.set : routine.sets;
 
-    setInfo.textContent = `Set ${setNo} / ${routine.sets}`;
+    setInfo.textContent = `Cycle ${setNo} / ${routine.sets}`;
     phaseLabel.textContent = label;
     const text = done ? '0:00' : formatCountdown(s.phaseRemainingMs);
     if (text !== digits.textContent) digits.textContent = text;
@@ -115,9 +115,9 @@ export function runScreen(app: App, routine: Routine): Screen {
     el.classList.toggle('done', done);
     ring.style.strokeDashoffset = String(100 * (1 - (done ? 0 : s.phaseFractionRemaining)));
 
-    intervalsLeft.textContent = `Intervals left: ${s.intervalsLeft} / ${routine.intervals}`;
+    intervalsLeft.textContent = `Rounds left: ${s.intervalsLeft} / ${routine.intervals}`;
     next.textContent = done ? '' : `Next: ${s.nextPhase ? `${PHASE_LABELS[s.nextPhase.kind]} ${formatClock(s.nextPhase.durationSec)}` : PHASE_LABELS.done}`;
-    setRemaining.textContent = `Set remaining: ${formatCountdown(s.setRemainingMs)}`;
+    setRemaining.textContent = `Cycle remaining: ${formatCountdown(s.setRemainingMs)}`;
     totalRemaining.textContent = `Total remaining: ${formatCountdown(s.totalRemainingMs)}`;
     muteBtn.textContent = app.settings.muted ? '🔇' : '🔊';
     muteBtn.setAttribute('aria-label', app.settings.muted ? 'Unmute' : 'Mute');

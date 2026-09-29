@@ -29,7 +29,7 @@ test('first launch shows the sample routine', async ({ page }) => {
   await expect(page).toHaveTitle('yFit Tabata Timer');
   await expect(page.getByTestId('routine-card')).toHaveCount(1);
   await expect(page.getByTestId('routine-name')).toHaveText('Classic Tabata');
-  await expect(page.getByTestId('routine-stats').locator('.stat')).toHaveText(['Work0:20', 'Rest0:10', 'Intervals8', 'Sets1', 'Total3:55']);
+  await expect(page.getByTestId('routine-stats').locator('.stat')).toHaveText(['Work0:20', 'Rest0:10', 'Rounds8', 'Cycles1', 'Total3:55']);
 });
 
 test('smoke: create a routine, run it, pause, resume and finish (speed flag)', async ({ page }) => {
@@ -56,7 +56,7 @@ test('smoke: create a routine, run it, pause, resume and finish (speed flag)', a
 
   const card = page.getByTestId('routine-card').filter({ hasText: 'Smoke' });
   await expect(card).toHaveClass(/selected/);
-  await expect(card.getByTestId('routine-stats').locator('.stat')).toHaveText(['Work0:15', 'Rest0:05', 'Intervals3', 'Sets2', 'Rest between sets0:20', 'Total2:15']);
+  await expect(card.getByTestId('routine-stats').locator('.stat')).toHaveText(['Work0:15', 'Rest0:05', 'Rounds3', 'Cycles2', 'Rest between cycles0:20', 'Total2:15']);
 
   // Survives reload.
   await page.reload();
@@ -65,11 +65,11 @@ test('smoke: create a routine, run it, pause, resume and finish (speed flag)', a
   // Run.
   await page.getByTestId('routine-card').filter({ hasText: 'Smoke' }).getByTestId('start').click();
   await expect(page.getByTestId('run-screen')).toBeVisible();
-  await expect(page.getByTestId('run-set-info')).toHaveText('Set 1 / 2');
+  await expect(page.getByTestId('run-set-info')).toHaveText('Cycle 1 / 2');
   await expect(page.getByTestId('run-phase')).toHaveText('WORK', { timeout: 5000 });
-  await expect(page.getByTestId('run-intervals')).toHaveText('Intervals left: 3 / 3');
-  await expect(page.getByTestId('run-set-info')).toHaveText('Set 1 / 2');
-  await expect(page.getByTestId('run-set-remaining')).toContainText('Set remaining: ');
+  await expect(page.getByTestId('run-intervals')).toHaveText('Rounds left: 3 / 3');
+  await expect(page.getByTestId('run-set-info')).toHaveText('Cycle 1 / 2');
+  await expect(page.getByTestId('run-set-remaining')).toContainText('Cycle remaining: ');
 
   // Pause: the display freezes.
   await page.keyboard.press('Space');
@@ -82,9 +82,9 @@ test('smoke: create a routine, run it, pause, resume and finish (speed flag)', a
   // Resume and let it finish.
   await page.getByTestId('pause').click();
   await expect(page.getByTestId('pause')).toHaveText('PAUSE');
-  await expect(page.getByTestId('run-phase')).toHaveText('SET REST', { timeout: 10000 });
-  await expect(page.getByTestId('run-set-info')).toHaveText('Set 1 / 2');
-  await expect(page.getByTestId('run-set-info')).toHaveText('Set 2 / 2', { timeout: 10000 });
+  await expect(page.getByTestId('run-phase')).toHaveText('CYCLE REST', { timeout: 10000 });
+  await expect(page.getByTestId('run-set-info')).toHaveText('Cycle 1 / 2');
+  await expect(page.getByTestId('run-set-info')).toHaveText('Cycle 2 / 2', { timeout: 10000 });
   await expect(page.getByTestId('run-phase')).toHaveText('DONE', { timeout: 15000 });
   await expect(page.getByTestId('run-digits')).toHaveText('0:00');
   await expect(page).toHaveTitle('DONE – yFit Tabata Timer');
@@ -97,7 +97,7 @@ test('smoke: create a routine, run it, pause, resume and finish (speed flag)', a
   await expect(page.getByTestId('pause')).toBeHidden();
   await page.getByTestId('start-over').click();
   await expect(page.getByTestId('run-phase')).toHaveText(/GET READY|WORK/);
-  await expect(page.getByTestId('run-set-info')).toHaveText('Set 1 / 2');
+  await expect(page.getByTestId('run-set-info')).toHaveText('Cycle 1 / 2');
   await expect(page.getByTestId('start-over')).toBeHidden();
   await expect(page.getByTestId('pause')).toBeVisible();
   await expect(page.getByTestId('run-phase')).toHaveText('DONE', { timeout: 15000 });
@@ -109,9 +109,9 @@ test('smoke: create a routine, run it, pause, resume and finish (speed flag)', a
 test('run screen: no set counter at the top, volume control works', async ({ page }) => {
   await fresh(page);
   await page.getByTestId('start').click();
-  await expect(page.locator('.run-top')).not.toContainText('Set 1');
-  await expect(page.getByTestId('run-set-info')).toHaveText('Set 1 / 1');
-  await expect(page.locator('.run-remaining')).toContainText('Set remaining');
+  await expect(page.locator('.run-top')).not.toContainText('Cycle 1');
+  await expect(page.getByTestId('run-set-info')).toHaveText('Cycle 1 / 1');
+  await expect(page.locator('.run-remaining')).toContainText('Cycle remaining');
   await expect(page.locator('.run-remaining')).toContainText('Total remaining');
 
   await expect(page.getByTestId('run-volume-value')).toHaveText('70%');

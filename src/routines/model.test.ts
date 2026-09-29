@@ -62,7 +62,7 @@ describe('createRoutine', () => {
 describe('routineStats', () => {
   it('labels every value on the card', () => {
     const text = (f: RoutineFields) => routineStats(f).map((s) => `${s.label} ${s.value}`).join(' · ');
-    expect(text({ ...valid, sets: 1 })).toBe('Work 0:20 · Rest 0:10 · Intervals 8 · Sets 1');
-    expect(text({ ...valid, workSec: 90, sets: 3 })).toBe('Work 1:30 · Rest 0:10 · Intervals 8 · Sets 3 · Rest between sets 1:00');
+    expect(text({ ...valid, sets: 1 })).toBe('Work 0:20 · Rest 0:10 · Rounds 8 · Cycles 1');
+    expect(text({ ...valid, workSec: 90, sets: 3 })).toBe('Work 1:30 · Rest 0:10 · Rounds 8 · Cycles 3 · Rest between cycles 1:00');
   });
 });

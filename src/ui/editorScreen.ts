@@ -17,9 +17,9 @@ import { createNumberInput, type NumberInput } from './numberInput';
 const FIELDS: { field: NumericField; label: string; kind: 'time' | 'int' }[] = [
   { field: 'workSec', label: 'Work time', kind: 'time' },
   { field: 'restSec', label: 'Rest time', kind: 'time' },
-  { field: 'intervals', label: 'Intervals', kind: 'int' },
-  { field: 'sets', label: 'Sets', kind: 'int' },
-  { field: 'setRestSec', label: 'Rest between sets', kind: 'time' },
+  { field: 'intervals', label: 'Rounds', kind: 'int' },
+  { field: 'sets', label: 'Cycles', kind: 'int' },
+  { field: 'setRestSec', label: 'Rest between cycles', kind: 'time' },
 ];
 
 /** Routine editor (SPEC §5.2). `routineId` null creates a new routine. */

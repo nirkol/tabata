@@ -134,9 +134,9 @@ export function routineStats(r: RoutineFields): { label: string; value: string }
   const stats = [
     { label: 'Work', value: formatClock(r.workSec) },
     { label: 'Rest', value: formatClock(r.restSec) },
-    { label: 'Intervals', value: String(r.intervals) },
-    { label: 'Sets', value: String(r.sets) },
+    { label: 'Rounds', value: String(r.intervals) },
+    { label: 'Cycles', value: String(r.sets) },
   ];
-  if (r.sets > 1) stats.push({ label: 'Rest between sets', value: formatClock(r.setRestSec) });
+  if (r.sets > 1) stats.push({ label: 'Rest between cycles', value: formatClock(r.setRestSec) });
   return stats;
 }
