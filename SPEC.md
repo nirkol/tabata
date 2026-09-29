@@ -1,6 +1,6 @@
 # Tabata Timer: Product Spec
 
-> **Status:** Draft v0.2. Answers from the product owner are included. Remaining open items are marked **❓ OPEN**, each with a proposed default that applies unless someone changes it.
+> **Status:** Draft v0.3. Answers from the product owner are included. Remaining open items are marked **❓ OPEN**, each with a proposed default that applies unless someone changes it.
 > **Audience:** Claude Code, which will implement this spec.
 
 ---
@@ -42,7 +42,7 @@ Phase 1 must be built so it can be wrapped with Tauri later without a rewrite (s
 | Rest time | seconds | 1 s – 180 s (3 min) | 10 s | Entered as mm:ss |
 | Intervals | integer | 1 – 20 | 8 | Number of Work+Rest pairs in one set |
 | Sets | integer | 1 – 10 | 1 | Number of times the whole block of intervals runs |
-| Rest between sets | seconds | 0 s – 300 s | 0 s | Optional longer recovery between sets. 0 = none (the normal Rest is used). ❓ **OPEN Q1:** keep this field? |
+| Rest between sets | seconds | 1 s – 300 s (5 min) | 60 s | Recovery between two sets. Entered as mm:ss. Disabled (grayed out) when Sets = 1, because there is no gap to fill. |
 
 The defaults (20 s / 10 s / 8 intervals) are the classic Tabata protocol.
 
@@ -51,20 +51,22 @@ The defaults (20 s / 10 s / 8 intervals) are the classic Tabata protocol.
 ### 3.1 Phase sequence rules
 1. Every run starts with **Get Ready (5 s)**.
 2. Each set runs `Work → Rest`, *Intervals* times.
-3. **Between sets:** if *Rest between sets* > 0, it **replaces** the last Rest of the set. Otherwise the normal Rest runs.
+3. **Between sets:** the last Rest of every set except the final one is **replaced** by *Rest between sets*. It is not added on top of the normal Rest.
 4. The **last Rest of the last set is skipped**, so the routine ends right after the final Work period.
 5. Then the timer enters **Done**.
 
-Example: Work 20 s, Rest 10 s, 3 intervals, 2 sets, no set rest:
+Example: Work 20 s, Rest 10 s, 3 intervals, 2 sets, Rest between sets 60 s:
 
 ```
-GetReady(5) → W20 R10 W20 R10 W20 R10 → W20 R10 W20 R10 W20 → Done
+GetReady(5)
+Set 1:  W20 R10 W20 R10 W20 SetRest(60)
+Set 2:  W20 R10 W20 R10 W20 → Done
 ```
 
-Same routine, with a set rest of 60 s:
+With Sets = 1, there is no Set Rest:
 
 ```
-GetReady(5) → W20 R10 W20 R10 W20 SetRest(60) → W20 R10 W20 R10 W20 → Done
+GetReady(5) → W20 R10 W20 R10 W20 → Done
 ```
 
 ### 3.2 Derived values (shown in the editor)
@@ -133,7 +135,7 @@ Every phase (Get Ready, Work, Rest, Set Rest) ends with the same **5-beep countd
 | **Stop** | Ends the run and returns to the routine list, after an "Are you sure?" confirmation | `Esc` |
 | Fullscreen | Toggles fullscreen | `F` |
 
-- ❓ **OPEN Q2:** add **Skip phase** (`→`) and **Restart phase** (`←`) buttons? Proposed default: no, keep only Pause and Stop in v1.
+- ❓ **OPEN Q1:** add **Skip phase** (`→`) and **Restart phase** (`←`) buttons? Proposed default: no, keep only Pause and Stop in v1.
 - The buttons must be large (at least 64 px tall), because the trainer may click them with sweaty hands.
 
 ### 4.6 Background behavior (critical)
@@ -161,8 +163,23 @@ Implementation requirements:
 
 ### 5.2 Editor
 - Contains every field from §3, with validation that enforces the ranges. Invalid input shows an inline error and disables Save.
-- Time fields use an `mm:ss` input with − / + stepper buttons (5 s steps; holding the button repeats).
 - A live "Total duration" preview is shown.
+
+### 5.3 Number input control (used for every numeric field)
+Every numeric field (Work, Rest, Rest between sets, Intervals, Sets, and the numeric settings in §6) uses the same control:
+
+```
+ [ − ]  [  0:20  ]  [ + ]
+```
+
+- **− / + buttons:** each click changes the value by one step. Pressing and holding the button repeats the step, and the repeat speeds up after about 1 s of holding.
+  - Time fields: step = 1 s. After 2 s of holding, the step grows to 5 s.
+  - Intervals / Sets: step = 1.
+- **Manual entry:** the user can click the value and type it directly.
+  - Time fields accept `m:ss` (for example `1:30`) or plain seconds (for example `90`, displayed as `1:30` afterwards).
+  - Pressing Enter or leaving the field confirms the value. Pressing Esc restores the previous value.
+- **Limits:** the − button is disabled at the minimum value and + is disabled at the maximum. A typed value outside the range shows an inline error such as "Must be between 0:01 and 3:00", and Save stays disabled until it's fixed. Non-numeric input is rejected.
+- The buttons are at least 44 × 44 px, so they are easy to click.
 - Buttons: **Save**, **Cancel**.
 - Names do not need to be unique.
 
@@ -174,9 +191,9 @@ The admin area is a plain **Settings screen with no PIN or password**. It holds 
 
 | Setting | Control | Range | Default |
 |---|---|---|---|
-| Beep volume | Slider + **"Test beep"** button | 0 – 100 % | 70 % |
+| Beep volume | − / + number control (§5.3, step 5 %) + slider + **"Test beep"** button | 0 – 100 % | 70 % |
 | Counter digit color | Color picker (with a few presets) | any color except red, which is reserved for the last 5 s | White `#FFFFFF` |
-| Counter digit size | Slider with live preview | 10 – 60 % of window height | 40 % |
+| Counter digit size | − / + number control (§5.3, step 5 %) + slider, with live preview | 10 – 60 % of window height | 40 % |
 | Mute | Toggle, also available on the run screen | on / off | off |
 
 - The Run screen background is dark (near black) so that the digits have high contrast.
@@ -201,7 +218,7 @@ The admin area is a plain **Settings screen with no PIN or password**. It holds 
       "restSec": 10,
       "intervals": 8,
       "sets": 1,
-      "setRestSec": 0,
+      "setRestSec": 60,
       "createdAt": "ISO-8601",
       "updatedAt": "ISO-8601"
     }
@@ -242,7 +259,7 @@ The admin area is a plain **Settings screen with no PIN or password**. It holds 
 
 - Wrap the Phase 1 frontend with **Tauri** (small app, ~10 MB, native WebKit).
 - Output: a `.dmg` installer that drags the app into Applications.
-- Target: Apple Silicon (arm64). ❓ **OPEN Q3:** is Intel support needed? Proposed default: no.
+- Target: Apple Silicon (arm64). ❓ **OPEN Q2:** is Intel support needed? Proposed default: no.
 - **Unsigned build is acceptable.** The first launch shows a Gatekeeper warning, and the user right-clicks → Open once. The README must explain this step.
 - Mac-specific needs:
   - Prevent **App Nap** or throttling while a routine is running, so timing and beeps stay accurate in the background.
@@ -262,23 +279,23 @@ The admin area is a plain **Settings screen with no PIN or password**. It holds 
 
 ## 11. Acceptance criteria (Phase 1)
 1. The user can create, edit, duplicate and delete routines. New routines get a default name `Routine N`, and routines survive a page reload.
-2. Validation enforces all ranges in §3 (intervals 1–20, sets 1–10, work 1 s–10 min, rest 1 s–3 min).
-3. A run follows exactly the phase sequence in §3.1, including the 5 s Get Ready and the skipped final Rest. This is verified by unit tests.
-4. The countdown digits are readable from 3 m away at the default size, and the size and color settings take effect immediately.
-5. All phases use the same digit color. During the last 5 s of every phase, the digits and the ring are red, 4 short beeps play, and the 5th beep is long and marks the phase change.
-6. Pause freezes time and sound, and Resume continues with less than 100 ms drift.
-7. With the tab in the background for 60 s or more, beeps still play on time. When the user returns, the display shows the correct time and phase, and total drift over a 10-minute routine is under 250 ms.
-8. The volume setting changes beep loudness, and 0 % or Mute is silent.
-9. The app works offline after the first load.
+2. Validation enforces all ranges in §3 (intervals 1–20, sets 1–10, work 1 s–10 min, rest 1 s–3 min, rest between sets 1 s–5 min).
+3. Every numeric field can be changed with the − / + buttons (including press-and-hold) and by typing a value, as described in §5.3.
+4. A run follows exactly the phase sequence in §3.1, including the 5 s Get Ready, the rest between sets replacing the last Rest of each set, and the skipped final Rest. This is verified by unit tests.
+5. The countdown digits are readable from 3 m away at the default size, and the size and color settings take effect immediately.
+6. All phases use the same digit color. During the last 5 s of every phase, the digits and the ring are red, 4 short beeps play, and the 5th beep is long and marks the phase change.
+7. Pause freezes time and sound, and Resume continues with less than 100 ms drift.
+8. With the tab in the background for 60 s or more, beeps still play on time. When the user returns, the display shows the correct time and phase, and total drift over a 10-minute routine is under 250 ms.
+9. The volume setting changes beep loudness, and 0 % or Mute is silent.
+10. The app works offline after the first load.
 
 ---
 
 ## 12. Open questions
 | # | Question | Proposed default |
 |---|---|---|
-| Q1 | Keep the optional "Rest between sets" field? | Yes, default 0 (off) |
-| Q2 | Add Skip and Restart-phase buttons? | No, only Pause and Stop |
-| Q3 | Intel Mac support needed? | No, Apple Silicon only |
+| Q1 | Add Skip and Restart-phase buttons? | No, only Pause and Stop |
+| Q2 | Intel Mac support needed? | No, Apple Silicon only |
 
 ## 13. Decision log
 | Topic | Decision |
@@ -287,6 +304,8 @@ The admin area is a plain **Settings screen with no PIN or password**. It holds 
 | Final rest | The last Rest of the last set is skipped |
 | Get Ready | Fixed 5 s, with the same red digits and beeps as other phases |
 | Max intervals | 20 |
+| Rest between sets | Configurable per routine, 1–300 s (default 60 s); replaces the last Rest of each set except the final set |
+| Number inputs | − / + buttons (with press-and-hold) **and** manual typing for every numeric field |
 | Beeps | 4 short beeps + 1 long 5th beep at the phase change |
 | Colors | Same color for all phases; only the last 5 s turn red |
 | Admin | No PIN |
