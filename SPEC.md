@@ -158,7 +158,7 @@ Implementation requirements:
 ## 5. Routines screen (list and editor)
 
 ### 5.1 List
-- Shows all saved routines as cards with the name, a summary (`20s / 10s × 8 × 1 set`) and the total duration.
+- Shows all saved routines as cards with the name and **labeled** values, so it's clear which number is which: `WORK 0:20 · REST 0:10 · INTERVALS 8 · SETS 2 · REST BETWEEN SETS 1:00 · TOTAL 8:45`. Rest between sets is shown only when there are 2+ sets.
 - Each card has **Start**, **Edit** and **Delete** buttons (no Duplicate).
 - **Delete** asks for confirmation.
 - A **"+ New Routine"** button opens the editor, prefilled with the defaults and the next free `Routine N` name.

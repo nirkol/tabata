@@ -125,8 +125,18 @@ export function sampleRoutine(): Routine {
   return createRoutine({ name: 'Classic Tabata', ...DEFAULT_FIELDS });
 }
 
-/** Short card summary, e.g. "20s / 10s × 8 × 1 set". */
-export function routineSummary(r: RoutineFields): string {
-  const t = (s: number) => (s < 60 ? `${s}s` : formatClock(s));
-  return `${t(r.workSec)} / ${t(r.restSec)} × ${r.intervals} × ${r.sets} ${r.sets === 1 ? 'set' : 'sets'}`;
+/**
+ * Labeled values for a routine card (SPEC §5.1), e.g. Work 0:20 · Rest 0:10 ·
+ * Intervals 8 · Sets 2 · Rest between sets 1:00. Rest between sets only
+ * appears with 2+ sets, since it isn't used otherwise.
+ */
+export function routineStats(r: RoutineFields): { label: string; value: string }[] {
+  const stats = [
+    { label: 'Work', value: formatClock(r.workSec) },
+    { label: 'Rest', value: formatClock(r.restSec) },
+    { label: 'Intervals', value: String(r.intervals) },
+    { label: 'Sets', value: String(r.sets) },
+  ];
+  if (r.sets > 1) stats.push({ label: 'Rest between sets', value: formatClock(r.setRestSec) });
+  return stats;
 }

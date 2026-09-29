@@ -27,8 +27,7 @@ test('first launch shows the sample routine', async ({ page }) => {
   await fresh(page);
   await expect(page.getByTestId('routine-card')).toHaveCount(1);
   await expect(page.getByTestId('routine-name')).toHaveText('Classic Tabata');
-  await expect(page.getByTestId('routine-card')).toContainText('20s / 10s × 8 × 1 set');
-  await expect(page.getByTestId('routine-card')).toContainText('Total 3:55');
+  await expect(page.getByTestId('routine-stats').locator('.stat')).toHaveText(['Work0:20', 'Rest0:10', 'Intervals8', 'Sets1', 'Total3:55']);
 });
 
 test('smoke: create a routine, run it, pause, resume and finish (speed flag)', async ({ page }) => {
@@ -55,7 +54,7 @@ test('smoke: create a routine, run it, pause, resume and finish (speed flag)', a
 
   const card = page.getByTestId('routine-card').filter({ hasText: 'Smoke' });
   await expect(card).toHaveClass(/selected/);
-  await expect(card).toContainText('15s / 5s × 3 × 2 sets');
+  await expect(card.getByTestId('routine-stats').locator('.stat')).toHaveText(['Work0:15', 'Rest0:05', 'Intervals3', 'Sets2', 'Rest between sets0:20', 'Total2:15']);
 
   // Survives reload.
   await page.reload();

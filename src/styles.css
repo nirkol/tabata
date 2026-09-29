@@ -178,14 +178,34 @@ h2 {
   font-size: 20px;
   overflow-wrap: anywhere;
 }
-.card-summary {
-  color: var(--text);
+.card-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 20px;
+  margin: 6px 0 0;
+}
+.stat {
+  display: flex;
+  flex-direction: column;
+}
+.stat dt {
+  color: var(--muted);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.stat dd {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
-.card-total {
+.stat-total {
+  padding-left: 20px;
+  border-left: 1px solid var(--border);
+}
+.stat-total dd {
   color: var(--muted);
-  font-size: 14px;
-  margin-top: 2px;
 }
 .card-actions {
   display: flex;

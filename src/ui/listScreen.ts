@@ -1,4 +1,4 @@
-import { routineSummary, type Routine } from '../routines/model';
+import { routineStats, type Routine } from '../routines/model';
 import { totalDurationSec } from '../timer/engine';
 import { formatClock } from '../timer/format';
 import type { App, Screen } from './app';
@@ -48,7 +48,18 @@ export function listScreen(app: App): Screen {
           render();
         },
       },
-      h('div', { class: 'card-main' }, h('h2', { class: 'card-title', 'data-testid': 'routine-name' }, r.name), h('div', { class: 'card-summary' }, routineSummary(r)), h('div', { class: 'card-total' }, `Total ${formatClock(totalDurationSec(r))}`)),
+      h(
+        'div',
+        { class: 'card-main' },
+        h('h2', { class: 'card-title', 'data-testid': 'routine-name' }, r.name),
+        h(
+          'dl',
+          { class: 'card-stats', 'data-testid': 'routine-stats' },
+          ...[...routineStats(r), { label: 'Total', value: formatClock(totalDurationSec(r)) }].map(({ label, value }) =>
+            h('div', { class: 'stat' + (label === 'Total' ? ' stat-total' : '') }, h('dt', {}, label), h('dd', {}, value)),
+          ),
+        ),
+      ),
       h(
         'div',
         { class: 'card-actions' },

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_FIELDS, createRoutine, nextRoutineName, routineSummary, validateRoutine, type RoutineFields } from './model';
+import { DEFAULT_FIELDS, createRoutine, nextRoutineName, routineStats, validateRoutine, type RoutineFields } from './model';
 
 const valid: RoutineFields = { name: 'Test', ...DEFAULT_FIELDS, sets: 2 };
 
@@ -59,9 +59,10 @@ describe('createRoutine', () => {
   });
 });
 
-describe('routineSummary', () => {
-  it('formats the card summary', () => {
-    expect(routineSummary({ ...valid, sets: 1 })).toBe('20s / 10s × 8 × 1 set');
-    expect(routineSummary({ ...valid, workSec: 90, sets: 3 })).toBe('1:30 / 10s × 8 × 3 sets');
+describe('routineStats', () => {
+  it('labels every value on the card', () => {
+    const text = (f: RoutineFields) => routineStats(f).map((s) => `${s.label} ${s.value}`).join(' · ');
+    expect(text({ ...valid, sets: 1 })).toBe('Work 0:20 · Rest 0:10 · Intervals 8 · Sets 1');
+    expect(text({ ...valid, workSec: 90, sets: 3 })).toBe('Work 1:30 · Rest 0:10 · Intervals 8 · Sets 3 · Rest between sets 1:00');
   });
 });
