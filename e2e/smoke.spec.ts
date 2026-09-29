@@ -167,7 +167,7 @@ test('editor: validation, press-and-hold and typed values', async ({ page }) => 
   await expect(page.getByTestId('save')).toBeDisabled();
 });
 
-test('routines: edit, duplicate, delete and default names', async ({ page }) => {
+test('routines: edit, delete and default names', async ({ page }) => {
   await fresh(page);
   const cards = page.getByTestId('routine-card');
 
@@ -183,16 +183,14 @@ test('routines: edit, duplicate, delete and default names', async ({ page }) => 
   await page.getByTestId('save').click();
   await expect(cards.nth(1).getByTestId('routine-name')).toHaveText('Renamed');
 
-  await cards.nth(1).getByTestId('duplicate').click();
-  await expect(cards).toHaveCount(3);
-  await expect(cards.nth(2).getByTestId('routine-name')).toHaveText('Renamed copy');
+  await expect(cards.first().getByTestId('duplicate')).toHaveCount(0);
 
-  await cards.nth(2).getByTestId('delete').click();
+  await cards.nth(1).getByTestId('delete').click();
   await page.getByTestId('confirm-yes').click();
-  await expect(cards).toHaveCount(2);
+  await expect(cards).toHaveCount(1);
 
   await page.reload();
-  await expect(cards).toHaveCount(2);
+  await expect(cards).toHaveCount(1);
 });
 
 test('settings: color, size and volume apply immediately and persist', async ({ page }) => {

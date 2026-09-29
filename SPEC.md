@@ -159,7 +159,7 @@ Implementation requirements:
 
 ### 5.1 List
 - Shows all saved routines as cards with the name, a summary (`20s / 10s × 8 × 1 set`) and the total duration.
-- Each card has **Start**, **Edit**, **Duplicate** and **Delete** buttons.
+- Each card has **Start**, **Edit** and **Delete** buttons (no Duplicate).
 - **Delete** asks for confirmation.
 - A **"+ New Routine"** button opens the editor, prefilled with the defaults and the next free `Routine N` name.
 - On first launch, the app creates one sample routine: "Classic Tabata" (20/10 × 8 × 1).
@@ -283,7 +283,7 @@ The admin area is a plain **Settings screen with no PIN or password**. It holds 
 ---
 
 ## 11. Acceptance criteria (Phase 1)
-1. The user can create, edit, duplicate and delete routines. New routines get a default name `Routine N`, and routines survive a page reload.
+1. The user can create, edit and delete routines. New routines get a default name `Routine N`, and routines survive a page reload.
 2. Validation enforces all ranges in §3 (intervals 1–20, sets 1–10, work 1 s–10 min, rest 1 s–3 min, rest between sets 1 s–5 min).
 3. Every numeric field can be changed with the − / + buttons (including press-and-hold) and by typing a value, as described in §5.3.
 4. A run follows exactly the phase sequence in §3.1, including the 5 s Get Ready, the rest between sets replacing the last Rest of each set, and the skipped final Rest. This is verified by unit tests.
@@ -308,6 +308,7 @@ The admin area is a plain **Settings screen with no PIN or password**. It holds 
 | Beeps | 4 short beeps + 1 long 5th beep at the phase change |
 | Colors | Same color for all phases; only the last 5 s turn red |
 | Admin | No PIN |
+| Routine list | No Duplicate button (Start, Edit, Delete only) |
 | Run-screen info | Set counter at the start of the Work/Rest row; "Set remaining" next to "Total remaining" |
 | Run-screen controls | Only Pause and Stop (no Skip or Restart); at the end: Start over and Back to routines |
 | Mac packaging | Tauri, unsigned build accepted |

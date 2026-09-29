@@ -36,7 +36,7 @@ npm run typecheck
 
 ## How to use
 
-- **Routines** tab: start, edit, duplicate or delete routines. Press **Enter** to start the highlighted routine (the one used last).
+- **Routines** tab: start, edit or delete routines. Press **Enter** to start the highlighted routine (the one used last).
 - **Run screen:** **Space** pauses and resumes, **Esc** stops (after a confirmation), and **F** toggles fullscreen.
 - **Settings** tab: beep volume and a test beep, mute, counter digit color (red is reserved for the last 5 seconds) and size, export or import routines as a `.json` file, and reset to defaults.
 
