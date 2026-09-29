@@ -439,10 +439,6 @@ h2 {
   align-items: center;
   gap: 12px;
 }
-.run-set {
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
 .speed-badge {
   color: #ffd60a;
   font-size: 14px;
@@ -529,14 +525,33 @@ h2 {
   font-size: clamp(16px, 3vh, 30px);
   font-variant-numeric: tabular-nums;
 }
-.run-info-secondary > :last-child {
-  text-align: right;
+.run-remaining {
+  display: flex;
+  gap: 16px;
+  color: var(--text);
+}
+.run-volume-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.run-volume {
+  width: 140px;
+  accent-color: var(--accent);
+}
+.run-volume.muted {
+  opacity: 0.4;
+}
+.run-volume-value {
+  min-width: 3.2em;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
 }
 .run-info .sep {
   color: var(--border);
 }
 .run-info-secondary {
-  /* Next (left) · Set remaining (center) · Total remaining (right), even when one is empty. */
+  /* Next (left) · Set remaining + Total remaining (center), even when Next is empty. */
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   color: var(--muted);

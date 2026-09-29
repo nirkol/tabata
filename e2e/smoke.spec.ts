@@ -63,7 +63,7 @@ test('smoke: create a routine, run it, pause, resume and finish (speed flag)', a
   // Run.
   await page.getByTestId('routine-card').filter({ hasText: 'Smoke' }).getByTestId('start').click();
   await expect(page.getByTestId('run-screen')).toBeVisible();
-  await expect(page.getByTestId('run-set')).toHaveText('Set 1 / 2');
+  await expect(page.getByTestId('run-set-info')).toHaveText('Set 1 / 2');
   await expect(page.getByTestId('run-phase')).toHaveText('WORK', { timeout: 5000 });
   await expect(page.getByTestId('run-intervals')).toHaveText('Intervals left: 3 / 3');
   await expect(page.getByTestId('run-set-info')).toHaveText('Set 1 / 2');
@@ -81,7 +81,7 @@ test('smoke: create a routine, run it, pause, resume and finish (speed flag)', a
   await page.getByTestId('pause').click();
   await expect(page.getByTestId('pause')).toHaveText('PAUSE');
   await expect(page.getByTestId('run-phase')).toHaveText('SET REST', { timeout: 10000 });
-  await expect(page.getByTestId('run-set')).toHaveText('Set 1 / 2');
+  await expect(page.getByTestId('run-set-info')).toHaveText('Set 1 / 2');
   await expect(page.getByTestId('run-set-info')).toHaveText('Set 2 / 2', { timeout: 10000 });
   await expect(page.getByTestId('run-phase')).toHaveText('DONE', { timeout: 15000 });
   await expect(page.getByTestId('run-digits')).toHaveText('0:00');
@@ -95,13 +95,36 @@ test('smoke: create a routine, run it, pause, resume and finish (speed flag)', a
   await expect(page.getByTestId('pause')).toBeHidden();
   await page.getByTestId('start-over').click();
   await expect(page.getByTestId('run-phase')).toHaveText(/GET READY|WORK/);
-  await expect(page.getByTestId('run-set')).toHaveText('Set 1 / 2');
+  await expect(page.getByTestId('run-set-info')).toHaveText('Set 1 / 2');
   await expect(page.getByTestId('start-over')).toBeHidden();
   await expect(page.getByTestId('pause')).toBeVisible();
   await expect(page.getByTestId('run-phase')).toHaveText('DONE', { timeout: 15000 });
 
   await page.getByTestId('stop').click();
   await expect(page.getByTestId('routine-list')).toBeVisible();
+});
+
+test('run screen: no set counter at the top, volume control works', async ({ page }) => {
+  await fresh(page);
+  await page.getByTestId('start').click();
+  await expect(page.locator('.run-top')).not.toContainText('Set 1');
+  await expect(page.getByTestId('run-set-info')).toHaveText('Set 1 / 1');
+  await expect(page.locator('.run-remaining')).toContainText('Set remaining');
+  await expect(page.locator('.run-remaining')).toContainText('Total remaining');
+
+  await expect(page.getByTestId('run-volume-value')).toHaveText('70%');
+  await page.getByTestId('run-volume').fill('40');
+  await expect(page.getByTestId('run-volume-value')).toHaveText('40%');
+  // Mute, then turning the volume up unmutes.
+  await page.getByTestId('run-mute').click();
+  await expect(page.getByTestId('run-mute')).toHaveAttribute('aria-label', 'Unmute');
+  await page.getByTestId('run-volume').fill('60');
+  await expect(page.getByTestId('run-mute')).toHaveAttribute('aria-label', 'Mute');
+  // The change is saved to Settings.
+  await page.keyboard.press('Escape');
+  await page.getByTestId('confirm-yes').click();
+  await page.getByTestId('nav-settings').click();
+  await expect(page.getByTestId('volume-input')).toHaveValue('60');
 });
 
 test('stop asks for confirmation', async ({ page }) => {

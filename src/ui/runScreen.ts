@@ -15,7 +15,6 @@ export function runScreen(app: App, routine: Routine): Screen {
   const beeps = beepSchedule(engine.phases);
 
   // --- Elements ---
-  const setLabel = h('div', { class: 'run-set', 'data-testid': 'run-set' });
   const phaseLabel = h('div', { class: 'run-phase', 'data-testid': 'run-phase' });
   const digits = h('div', { class: 'run-digits', 'data-testid': 'run-digits' });
   const svgNs = 'http://www.w3.org/2000/svg';
@@ -42,6 +41,15 @@ export function runScreen(app: App, routine: Routine): Screen {
   const startOverBtn = h('button', { type: 'button', class: 'btn btn-run btn-primary', 'data-testid': 'start-over', hidden: true, onclick: () => app.startRoutine(routine.id) }, '↻ Start over');
   const stopBtn = h('button', { type: 'button', class: 'btn btn-run', 'data-testid': 'stop', onclick: () => void requestStop() }, '■ STOP');
   const muteBtn = h('button', { type: 'button', class: 'btn btn-icon', 'data-testid': 'run-mute', onclick: () => toggleMute() });
+  const volumeSlider = h('input', { type: 'range', class: 'run-volume', min: 0, max: 100, step: 5, 'aria-label': 'Beep volume', 'data-testid': 'run-volume' });
+  volumeSlider.value = String(Math.round(app.settings.volume * 100));
+  const volumeValue = h('span', { class: 'run-volume-value', 'data-testid': 'run-volume-value' });
+  volumeSlider.addEventListener('input', () => {
+    const v = Number(volumeSlider.value);
+    // Turning the volume up while muted unmutes, so the change is audible.
+    app.updateSettings(v > 0 && app.settings.muted ? { volume: v / 100, muted: false } : { volume: v / 100 });
+    render();
+  });
   const fullscreenBtn = h('button', { type: 'button', class: 'btn btn-icon', title: 'Fullscreen (F)', 'aria-label': 'Toggle fullscreen', onclick: () => toggleFullscreen() }, '⛶');
 
   const el = h(
@@ -52,7 +60,7 @@ export function runScreen(app: App, routine: Routine): Screen {
       { class: 'run-top' },
       h('div', { class: 'run-name' }, `Routine: “${routine.name}”`),
       app.speed !== 1 ? h('div', { class: 'speed-badge' }, `×${app.speed} speed (dev)`) : null,
-      h('div', { class: 'run-top-right' }, setLabel, muteBtn, fullscreenBtn),
+      h('div', { class: 'run-top-right' }, h('div', { class: 'run-volume-group' }, muteBtn, volumeSlider, volumeValue), fullscreenBtn),
     ),
     phaseLabel,
     stage,
@@ -67,7 +75,7 @@ export function runScreen(app: App, routine: Routine): Screen {
       h('span', { class: 'sep' }, '│'),
       intervalsLeft,
     ),
-    h('div', { class: 'run-info run-info-secondary' }, next, setRemaining, totalRemaining),
+    h('div', { class: 'run-info run-info-secondary' }, next, h('div', { class: 'run-remaining' }, setRemaining, h('span', { class: 'sep' }, '│'), totalRemaining), h('span')),
     h('div', { class: 'run-controls' }, pauseBtn, startOverBtn, stopBtn),
   );
 
@@ -83,7 +91,6 @@ export function runScreen(app: App, routine: Routine): Screen {
     const label = done ? PHASE_LABELS.done : PHASE_LABELS[phase!.kind];
     const setNo = phase ? phase.set : routine.sets;
 
-    setLabel.textContent = `Set ${setNo} / ${routine.sets}`;
     setInfo.textContent = `Set ${setNo} / ${routine.sets}`;
     phaseLabel.textContent = label;
     const text = done ? '0:00' : formatCountdown(s.phaseRemainingMs);
@@ -103,6 +110,8 @@ export function runScreen(app: App, routine: Routine): Screen {
     totalRemaining.textContent = `Total remaining: ${formatCountdown(s.totalRemainingMs)}`;
     muteBtn.textContent = app.settings.muted ? '🔇' : '🔊';
     muteBtn.setAttribute('aria-label', app.settings.muted ? 'Unmute' : 'Mute');
+    volumeValue.textContent = `${Math.round(app.settings.volume * 100)}%`;
+    volumeSlider.classList.toggle('muted', app.settings.muted);
 
     if (s.status !== lastStatus) {
       lastStatus = s.status;
