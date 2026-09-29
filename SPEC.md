@@ -91,9 +91,9 @@ This screen is used mid-workout, often from several meters away, so readability 
 │                  │               │                        │
 │                  ╰───────────────╯  ← progress ring       │
 │                                                           │
-│   Work 0:20   │   Rest 0:10   │  Intervals left: 5 / 8    │
+│  Set 1 / 2 │ Work 0:20 │ Rest 0:10 │ Intervals left: 5 / 8 │
 │                                                           │
-│   Next: REST 0:10                Total remaining: 6:42    │
+│ Next: REST 0:10   Set remaining: 2:05  Total remaining: 6:42│
 │                                                           │
 │              [ ⏯ PAUSE ]            [ ■ STOP ]            │
 └───────────────────────────────────────────────────────────┘
@@ -102,11 +102,14 @@ This screen is used mid-workout, often from several meters away, so readability 
 ### 4.2 Required display elements
 1. **Countdown for the current phase** in very large digits, formatted `m:ss` (for example `0:17`, `2:30`).
 2. **Phase label**: GET READY / WORK / REST / SET REST / DONE, in large capital letters.
-3. **Work and Rest durations** of the routine.
+3. **Current set and the Work and Rest durations** of the routine, in one row: `Set 1 / 2 │ Work 0:20 │ Rest 0:10 │ Intervals left: 5 / 8`.
 4. **Intervals remaining** in the current set, for example `5 / 8`.
 5. **Current set**, for example `Set 1 / 2`.
 6. **Next phase** preview, for example "Next: REST 0:10".
-7. **Total time remaining** for the whole routine.
+7. **Set remaining**: time left in the current set. A set runs from its first Work period until the next set starts, so it includes the Rest between sets. During Get Ready it shows the full length of set 1.
+8. **Total time remaining** for the whole routine.
+
+The bottom row shows, from left to right: Next phase, Set remaining, Total remaining.
 
 ### 4.3 Colors and progress indicator
 - **Every phase uses the same color.** The digit color is the one chosen in Settings (§6). The background and the other elements do not change color between Work, Rest, Set Rest or Get Ready. The phase label text is what tells the phases apart.
@@ -304,6 +307,7 @@ The admin area is a plain **Settings screen with no PIN or password**. It holds 
 | Beeps | 4 short beeps + 1 long 5th beep at the phase change |
 | Colors | Same color for all phases; only the last 5 s turn red |
 | Admin | No PIN |
+| Run-screen info | Set counter at the start of the Work/Rest row; "Set remaining" next to "Total remaining" |
 | Run-screen controls | Only Pause and Stop (no Skip or Restart) |
 | Mac packaging | Tauri, unsigned build accepted |
 | Mac hardware | Universal binary for Apple Silicon and Intel |

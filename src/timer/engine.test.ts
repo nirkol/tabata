@@ -207,6 +207,26 @@ describe('TimerEngine', () => {
   });
 });
 
+describe('setRemainingMs', () => {
+  // G5 | set 1: W20 R10 W20 R10 W20 S60 (5–145 s) | set 2: W20 R10 W20 R10 W20 (145–225 s)
+  it('counts down the current set, including the rest between sets', () => {
+    const c = fakeClock();
+    const e = new TimerEngine(base, c.now);
+    e.start();
+    expect(e.snapshot().setRemainingMs).toBe(140000); // Get Ready: full length of set 1
+    c.advance(2000);
+    expect(e.snapshot().setRemainingMs).toBe(140000); // still static during Get Ready
+    c.advance(3000 + 10000); // 10 s into set 1
+    expect(e.snapshot().setRemainingMs).toBe(130000);
+    c.advance(100000); // 30 s into the rest between sets
+    expect(e.snapshot()).toMatchObject({ setRemainingMs: 30000, phase: { kind: 'setRest', set: 1 } });
+    c.advance(30000); // set 2 starts
+    expect(e.snapshot()).toMatchObject({ setRemainingMs: 80000, phase: { kind: 'work', set: 2 } });
+    c.advance(80000);
+    expect(e.snapshot().setRemainingMs).toBe(0);
+  });
+});
+
 describe('intervalsLeft', () => {
   it('counts down as each Work period finishes', () => {
     const phases = buildPhases({ ...base, sets: 1 });

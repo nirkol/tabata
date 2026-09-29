@@ -33,7 +33,9 @@ export function runScreen(app: App, routine: Routine): Screen {
   ringBox.prepend(svg);
   const stage = h('div', { class: 'run-stage' }, ringBox);
 
+  const setInfo = h('span', { 'data-testid': 'run-set-info' });
   const intervalsLeft = h('span', { 'data-testid': 'run-intervals' });
+  const setRemaining = h('span', { 'data-testid': 'run-set-remaining' });
   const next = h('span', { class: 'run-next', 'data-testid': 'run-next' });
   const totalRemaining = h('span', { 'data-testid': 'run-total' });
   const pauseBtn = h('button', { type: 'button', class: 'btn btn-run btn-primary', 'data-testid': 'pause', onclick: () => togglePause() }, 'PAUSE');
@@ -56,13 +58,15 @@ export function runScreen(app: App, routine: Routine): Screen {
     h(
       'div',
       { class: 'run-info' },
+      setInfo,
+      h('span', { class: 'sep' }, '│'),
       h('span', {}, `Work ${formatClock(routine.workSec)}`),
       h('span', { class: 'sep' }, '│'),
       h('span', {}, `Rest ${formatClock(routine.restSec)}`),
       h('span', { class: 'sep' }, '│'),
       intervalsLeft,
     ),
-    h('div', { class: 'run-info run-info-secondary' }, next, totalRemaining),
+    h('div', { class: 'run-info run-info-secondary' }, next, setRemaining, totalRemaining),
     h('div', { class: 'run-controls' }, pauseBtn, stopBtn),
   );
 
@@ -79,6 +83,7 @@ export function runScreen(app: App, routine: Routine): Screen {
     const setNo = phase ? phase.set : routine.sets;
 
     setLabel.textContent = `Set ${setNo} / ${routine.sets}`;
+    setInfo.textContent = `Set ${setNo} / ${routine.sets}`;
     phaseLabel.textContent = label;
     const text = done ? '0:00' : formatCountdown(s.phaseRemainingMs);
     if (text !== digits.textContent) digits.textContent = text;
@@ -93,6 +98,7 @@ export function runScreen(app: App, routine: Routine): Screen {
 
     intervalsLeft.textContent = `Intervals left: ${s.intervalsLeft} / ${routine.intervals}`;
     next.textContent = done ? '' : `Next: ${s.nextPhase ? `${PHASE_LABELS[s.nextPhase.kind]} ${formatClock(s.nextPhase.durationSec)}` : PHASE_LABELS.done}`;
+    setRemaining.textContent = `Set remaining: ${formatCountdown(s.setRemainingMs)}`;
     totalRemaining.textContent = `Total remaining: ${formatCountdown(s.totalRemainingMs)}`;
     muteBtn.textContent = app.settings.muted ? '🔇' : '🔊';
     muteBtn.setAttribute('aria-label', app.settings.muted ? 'Unmute' : 'Mute');

@@ -90,6 +90,12 @@ export interface Snapshot {
   /** 1 at the start of a phase, 0 at its end. */
   phaseFractionRemaining: number;
   totalRemainingMs: number;
+  /**
+   * Remaining time of the current set, in ms. A set runs from its first Work to the
+   * start of the next set (so it includes the Rest between sets). During Get Ready
+   * it is the full length of set 1.
+   */
+  setRemainingMs: number;
   /** Intervals of the current set whose Work period hasn't finished yet. */
   intervalsLeft: number;
   /** True during the last WARNING_SEC seconds of a phase. */
@@ -175,6 +181,16 @@ export class TimerEngine {
     return lo;
   }
 
+  /** Start of a set's first Work period, in ms. */
+  setStartMs(set: number): number {
+    return this.phases.find((p) => p.set === set && p.kind !== 'getReady')!.startMs;
+  }
+
+  /** End of a set, including its Rest between sets, in ms. */
+  setEndMs(set: number): number {
+    return this.phases.filter((p) => p.set === set).at(-1)!.endMs;
+  }
+
   snapshot(): Snapshot {
     const status = this.getStatus();
     const elapsedMs = this.elapsedMs();
@@ -193,6 +209,7 @@ export class TimerEngine {
       phaseRemainingMs,
       phaseFractionRemaining,
       totalRemainingMs: this.totalMs - elapsedMs,
+      setRemainingMs: phase ? this.setEndMs(phase.set) - Math.max(elapsedMs, this.setStartMs(phase.set)) : 0,
       intervalsLeft: phase ? intervalsLeft(phase, this.routine.intervals) : 0,
       warning: phase !== null && phaseRemainingMs <= WARNING_SEC * 1000,
     };

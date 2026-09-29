@@ -67,6 +67,8 @@ test('smoke: create a routine, run it, pause, resume and finish (speed flag)', a
   await expect(page.getByTestId('run-set')).toHaveText('Set 1 / 2');
   await expect(page.getByTestId('run-phase')).toHaveText('WORK', { timeout: 5000 });
   await expect(page.getByTestId('run-intervals')).toHaveText('Intervals left: 3 / 3');
+  await expect(page.getByTestId('run-set-info')).toHaveText('Set 1 / 2');
+  await expect(page.getByTestId('run-set-remaining')).toContainText('Set remaining: ');
 
   // Pause: the display freezes.
   await page.keyboard.press('Space');
@@ -81,6 +83,7 @@ test('smoke: create a routine, run it, pause, resume and finish (speed flag)', a
   await expect(page.getByTestId('pause')).toHaveText('PAUSE');
   await expect(page.getByTestId('run-phase')).toHaveText('SET REST', { timeout: 10000 });
   await expect(page.getByTestId('run-set')).toHaveText('Set 1 / 2');
+  await expect(page.getByTestId('run-set-info')).toHaveText('Set 2 / 2', { timeout: 10000 });
   await expect(page.getByTestId('run-phase')).toHaveText('DONE', { timeout: 15000 });
   await expect(page.getByTestId('run-digits')).toHaveText('0:00');
   await expect(page).toHaveTitle('DONE – Tabata');
