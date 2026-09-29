@@ -1,6 +1,6 @@
 # Tabata Timer: Product Spec
 
-> **Status:** Draft v0.3. Answers from the product owner are included. Remaining open items are marked **❓ OPEN**, each with a proposed default that applies unless someone changes it.
+> **Status:** v1.0, ready for implementation. All open questions are resolved (see the decision log in §12).
 > **Audience:** Claude Code, which will implement this spec.
 
 ---
@@ -135,7 +135,7 @@ Every phase (Get Ready, Work, Rest, Set Rest) ends with the same **5-beep countd
 | **Stop** | Ends the run and returns to the routine list, after an "Are you sure?" confirmation | `Esc` |
 | Fullscreen | Toggles fullscreen | `F` |
 
-- ❓ **OPEN Q1:** add **Skip phase** (`→`) and **Restart phase** (`←`) buttons? Proposed default: no, keep only Pause and Stop in v1.
+- The Run screen has **only Pause and Stop**. There are no Skip or Restart-phase buttons.
 - The buttons must be large (at least 64 px tall), because the trainer may click them with sweaty hands.
 
 ### 4.6 Background behavior (critical)
@@ -259,7 +259,8 @@ The admin area is a plain **Settings screen with no PIN or password**. It holds 
 
 - Wrap the Phase 1 frontend with **Tauri** (small app, ~10 MB, native WebKit).
 - Output: a `.dmg` installer that drags the app into Applications.
-- Target: Apple Silicon (arm64). ❓ **OPEN Q2:** is Intel support needed? Proposed default: no.
+- Target: **both Apple Silicon (arm64) and Intel (x86_64) Macs**. Build a single **universal binary** (`tauri build --target universal-apple-darwin`) so one `.dmg` works on both.
+- Minimum macOS version: 11 (Big Sur), which is the Tauri 2 minimum.
 - **Unsigned build is acceptable.** The first launch shows a Gatekeeper warning, and the user right-clicks → Open once. The README must explain this step.
 - Mac-specific needs:
   - Prevent **App Nap** or throttling while a routine is running, so timing and beeps stay accurate in the background.
@@ -291,13 +292,7 @@ The admin area is a plain **Settings screen with no PIN or password**. It holds 
 
 ---
 
-## 12. Open questions
-| # | Question | Proposed default |
-|---|---|---|
-| Q1 | Add Skip and Restart-phase buttons? | No, only Pause and Stop |
-| Q2 | Intel Mac support needed? | No, Apple Silicon only |
-
-## 13. Decision log
+## 12. Decision log
 | Topic | Decision |
 |---|---|
 | "Repeats" | Renamed to **Sets** (1–10) |
@@ -309,5 +304,7 @@ The admin area is a plain **Settings screen with no PIN or password**. It holds 
 | Beeps | 4 short beeps + 1 long 5th beep at the phase change |
 | Colors | Same color for all phases; only the last 5 s turn red |
 | Admin | No PIN |
+| Run-screen controls | Only Pause and Stop (no Skip or Restart) |
 | Mac packaging | Tauri, unsigned build accepted |
+| Mac hardware | Universal binary for Apple Silicon and Intel |
 | Exercise names, voice, history | Not needed |
