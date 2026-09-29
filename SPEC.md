@@ -139,6 +139,7 @@ Every phase (Get Ready, Work, Rest, Set Rest) ends with the same **5-beep countd
 | Fullscreen | Toggles fullscreen | `F` |
 
 - The Run screen has **only Pause and Stop**. There are no Skip or Restart-phase buttons.
+- When the routine finishes (DONE), Pause is hidden and two buttons are shown: **↻ Start over** (runs the same routine again from Get Ready) and **← Back to routines**.
 - The buttons must be large (at least 64 px tall), because the trainer may click them with sweaty hands.
 
 ### 4.6 Background behavior (critical)
@@ -308,7 +309,7 @@ The admin area is a plain **Settings screen with no PIN or password**. It holds 
 | Colors | Same color for all phases; only the last 5 s turn red |
 | Admin | No PIN |
 | Run-screen info | Set counter at the start of the Work/Rest row; "Set remaining" next to "Total remaining" |
-| Run-screen controls | Only Pause and Stop (no Skip or Restart) |
+| Run-screen controls | Only Pause and Stop (no Skip or Restart); at the end: Start over and Back to routines |
 | Mac packaging | Tauri, unsigned build accepted |
 | Mac hardware | Universal binary for Apple Silicon and Intel |
 | Exercise names, voice, history | Not needed |

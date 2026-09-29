@@ -91,6 +91,16 @@ test('smoke: create a routine, run it, pause, resume and finish (speed flag)', a
   const beeps = await page.evaluate(() => (window as unknown as { __beeps: unknown[] }).__beeps.length);
   expect(beeps).toBeGreaterThan(0);
 
+  // Start over runs the same routine again from Get Ready.
+  await expect(page.getByTestId('start-over')).toBeVisible();
+  await expect(page.getByTestId('pause')).toBeHidden();
+  await page.getByTestId('start-over').click();
+  await expect(page.getByTestId('run-phase')).toHaveText(/GET READY|WORK/);
+  await expect(page.getByTestId('run-set')).toHaveText('Set 1 / 2');
+  await expect(page.getByTestId('start-over')).toBeHidden();
+  await expect(page.getByTestId('pause')).toBeVisible();
+  await expect(page.getByTestId('run-phase')).toHaveText('DONE', { timeout: 15000 });
+
   await page.getByTestId('stop').click();
   await expect(page.getByTestId('routine-list')).toBeVisible();
 });

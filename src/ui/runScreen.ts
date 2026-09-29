@@ -39,6 +39,7 @@ export function runScreen(app: App, routine: Routine): Screen {
   const next = h('span', { class: 'run-next', 'data-testid': 'run-next' });
   const totalRemaining = h('span', { 'data-testid': 'run-total' });
   const pauseBtn = h('button', { type: 'button', class: 'btn btn-run btn-primary', 'data-testid': 'pause', onclick: () => togglePause() }, 'PAUSE');
+  const startOverBtn = h('button', { type: 'button', class: 'btn btn-run btn-primary', 'data-testid': 'start-over', hidden: true, onclick: () => app.startRoutine(routine.id) }, '↻ Start over');
   const stopBtn = h('button', { type: 'button', class: 'btn btn-run', 'data-testid': 'stop', onclick: () => void requestStop() }, '■ STOP');
   const muteBtn = h('button', { type: 'button', class: 'btn btn-icon', 'data-testid': 'run-mute', onclick: () => toggleMute() });
   const fullscreenBtn = h('button', { type: 'button', class: 'btn btn-icon', title: 'Fullscreen (F)', 'aria-label': 'Toggle fullscreen', onclick: () => toggleFullscreen() }, '⛶');
@@ -67,7 +68,7 @@ export function runScreen(app: App, routine: Routine): Screen {
       intervalsLeft,
     ),
     h('div', { class: 'run-info run-info-secondary' }, next, setRemaining, totalRemaining),
-    h('div', { class: 'run-controls' }, pauseBtn, stopBtn),
+    h('div', { class: 'run-controls' }, pauseBtn, startOverBtn, stopBtn),
   );
 
   // --- Rendering ---
@@ -113,8 +114,8 @@ export function runScreen(app: App, routine: Routine): Screen {
   function onStatusChange(s: Snapshot): void {
     if (s.status === 'done') {
       pauseBtn.hidden = true;
+      startOverBtn.hidden = false;
       stopBtn.textContent = '← Back to routines';
-      stopBtn.classList.add('btn-primary');
       void releaseWakeLock();
     } else {
       pauseBtn.textContent = s.status === 'paused' ? '▶ RESUME' : 'PAUSE';
