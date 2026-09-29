@@ -28,6 +28,11 @@ describe('buildPhases (SPEC §3.1)', () => {
     expect(first).toMatchObject({ kind: 'getReady', durationSec: 5, startMs: 0, endMs: 5000 });
   });
 
+  it('skips a 0 s rest: Work follows Work directly', () => {
+    expect(notation(buildPhases({ ...base, restSec: 0 }))).toBe('G5 W20 W20 W20 S60 W20 W20 W20');
+    expect(totalDurationSec({ ...base, restSec: 0 })).toBe(5 + 6 * 20 + 60);
+  });
+
   it('handles 1 interval per set: work, set rest, work', () => {
     expect(notation(buildPhases({ ...base, intervals: 1, sets: 3, setRestSec: 30 }))).toBe('G5 W20 S30 W20 S30 W20');
   });

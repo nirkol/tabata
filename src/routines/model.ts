@@ -24,7 +24,7 @@ export interface Range {
 export const LIMITS = {
   nameLength: { min: 1, max: 40 },
   workSec: { min: 1, max: 600 },
-  restSec: { min: 1, max: 180 },
+  restSec: { min: 0, max: 180 }, // 0 = no rest: the next Work starts right away
   intervals: { min: 1, max: 20 },
   sets: { min: 1, max: 10 },
   setRestSec: { min: 1, max: 300 },

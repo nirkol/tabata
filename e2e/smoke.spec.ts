@@ -191,6 +191,20 @@ test('stop pauses the routine while asking for confirmation', async ({ page }) =
   await expect(page.getByTestId('routine-list')).toBeVisible();
 });
 
+test('Hebrew routine names: right-to-left by default', async ({ page }) => {
+  await fresh(page);
+  await page.getByTestId('new-routine').click();
+  await expect(page.getByTestId('name-input')).toHaveAttribute('dir', 'rtl');
+  await page.getByTestId('name-input').fill('אימון בוקר');
+  await page.getByTestId('save').click();
+  const card = page.getByTestId('routine-card').filter({ hasText: 'אימון בוקר' });
+  await expect(card.getByTestId('routine-name')).toHaveAttribute('dir', 'auto');
+  expect(await card.getByTestId('routine-name').evaluate((el) => getComputedStyle(el).direction)).toBe('rtl');
+  // English names still read left-to-right.
+  const english = page.getByTestId('routine-card').filter({ hasText: 'Classic Tabata' }).getByTestId('routine-name');
+  expect(await english.evaluate((el) => getComputedStyle(el).direction)).toBe('ltr');
+});
+
 test('editor can only be left with Save or Cancel', async ({ page }) => {
   await fresh(page);
   await page.getByTestId('new-routine').click();
@@ -207,19 +221,24 @@ test('editor can only be left with Save or Cancel', async ({ page }) => {
   await expect(page.getByTestId('nav-routines')).toBeEnabled();
 });
 
-test('last 5 seconds: digits and ring turn red', async ({ page }) => {
-  await fresh(page);
+test('colors: work is green (the chosen work color), rest is always red', async ({ page }) => {
+  await fresh(page, '?speed=5');
   await page.getByTestId('start').click();
-  // Get Ready is 5 s long, so it is red from the start.
-  await expect(page.getByTestId('run-phase')).toHaveText('GET READY');
-  await expect(page.getByTestId('run-screen')).toHaveClass(/warning/);
   const red = 'rgb(255, 59, 48)';
+  const green = 'rgb(48, 209, 88)';
+  // Get Ready counts as rest: red.
+  await expect(page.getByTestId('run-phase')).toHaveText('GET READY');
   await expect(page.getByTestId('run-digits')).toHaveCSS('color', red);
   await expect(page.getByTestId('run-ring')).toHaveCSS('stroke', red);
-  // Work (20 s) starts in the normal color.
+  // Work: green for the whole phase, including its last 5 seconds.
   await expect(page.getByTestId('run-phase')).toHaveText('WORK', { timeout: 7000 });
-  await expect(page.getByTestId('run-digits')).toHaveCSS('color', 'rgb(255, 255, 255)');
-  await expect(page.getByTestId('run-screen')).not.toHaveClass(/warning/);
+  await expect(page.getByTestId('run-digits')).toHaveCSS('color', green);
+  await expect(page.getByTestId('run-ring')).toHaveCSS('stroke', green);
+  await expect(page.getByTestId('run-screen')).toHaveClass(/warning/, { timeout: 7000 });
+  await expect(page.getByTestId('run-digits')).toHaveCSS('color', green);
+  // Rest: red.
+  await expect(page.getByTestId('run-phase')).toHaveText('REST', { timeout: 7000 });
+  await expect(page.getByTestId('run-digits')).toHaveCSS('color', red);
 });
 
 test('editor: validation, press-and-hold and typed values', async ({ page }) => {
@@ -227,7 +246,7 @@ test('editor: validation, press-and-hold and typed values', async ({ page }) => 
   await page.getByTestId('new-routine').click();
 
   await page.getByTestId('restSec-input').fill('3:01');
-  await expect(page.getByTestId('restSec-error')).toHaveText('Must be between 0:01 and 3:00');
+  await expect(page.getByTestId('restSec-error')).toHaveText('Must be between 0:00 and 3:00');
   await expect(page.getByTestId('save')).toBeDisabled();
   await page.getByTestId('restSec-input').press('Escape');
   await expect(page.getByTestId('restSec-input')).toHaveValue('0:10');

@@ -39,7 +39,7 @@ Phase 1 must be built so it can be wrapped with Tauri later without a rewrite (s
 |---|---|---|---|---|
 | Name | text | 1–40 chars | `Routine N` | N is the next free number: `Routine 1`, `Routine 2`, … |
 | Work time | seconds | 1 s – 600 s (10 min) | 20 s | Entered as mm:ss |
-| Rest time | seconds | 1 s – 180 s (3 min) | 10 s | Entered as mm:ss |
+| Rest time | seconds | 0 s – 180 s (3 min) | 10 s | Entered as mm:ss. **0 = no rest**: the next Work starts right away (the 0 s Rest phase is skipped). |
 | Rounds | integer | 1 – 20 | 8 | Number of Work+Rest pairs in one cycle |
 | Cycles | integer | 1 – 10 | 1 | Number of times the whole block of rounds runs |
 | Rest between cycles | seconds | 1 s – 300 s (5 min) | 60 s | Recovery between two cycles. Entered as mm:ss. Disabled (grayed out) when Cycles = 1, because there is no gap to fill. |
@@ -114,8 +114,7 @@ The bottom row shows the Next phase on the left, and Cycle remaining next to Tot
 The top-right corner has the **volume controls**: a mute button, then two volume sliders stacked on top of each other, labeled **Work volume** (top) and **Rest volume** (beneath it), each 0–100 % in 5 % steps with its current value, and the fullscreen button. Changes apply immediately and are saved to Settings. Moving the slider above 0 % while muted unmutes.
 
 ### 4.3 Colors and progress indicator
-- **Every phase uses the same color.** The digit color is the one chosen in Settings (§6). The background and the other elements do not change color between Work, Rest, Cycle Rest or Get Ready. The phase label text is what tells the phases apart.
-- **In the last 5 seconds of any phase**, the digits **and** the progress indicator turn **red**. They return to the normal color when the next phase starts.
+- **Color by phase:** during **Work** the digits and ring use the **work color** chosen in Settings (default **green**). During **Rest, Cycle Rest and Get Ready** they are always **red**. The color stays the same for the whole phase; the last 5 seconds are announced by the beeps.
 - The progress indicator is a ring around the digits that empties as the phase elapses. It animates smoothly and does not jump once per second.
 
 ### 4.4 Audio cues
@@ -173,6 +172,8 @@ Implementation requirements:
 ### 5.2 Editor
 - Contains every field from §3, with validation that enforces the ranges. Invalid input shows an inline error and disables Save.
 - A live "Total duration" preview is shown.
+- Compact two-column layout: Name across the top, then Work | Rest, Rounds | Cycles, Rest between cycles | Total, then Save / Cancel.
+- **Routine names are right-to-left by default** (they are mostly Hebrew): the name field is RTL, and names are shown with automatic direction everywhere (Hebrew RTL, English LTR). A bundled bold Hebrew font (Rubik) matches the display font.
 - Buttons: **Save**, **Cancel**. The editor can only be left with these: the top navigation tabs are disabled while a routine is being created or edited.
 - Names do not need to be unique.
 
@@ -205,7 +206,7 @@ The admin area is a plain **Settings screen with no PIN or password**. It holds 
 | Work beep sound | Dropdown next to the work volume; plays the sound when changed | Classic beep / Soft beep / High beep / Low beep / Gym bell | Gym bell |
 | Rest beep sound | Dropdown next to the rest volume; plays the sound when changed | Classic beep / Soft beep / High beep / Low beep / Gym bell | Soft beep |
 | Show remaining times | Checkbox: show "Cycle remaining" and "Total remaining" on the Run screen | on / off | on |
-| Counter digit color | Color picker (with a few presets) | any color except red, which is reserved for the last 5 s | White `#FFFFFF` |
+| Work color | Color picker (with a few presets) for the digits and ring during Work | any color except red, which is reserved for rest | Green `#30D158` |
 | Counter digit size | − / + number control (§5.3, step 5 %) + slider, with live preview | 10 – 60 % of window height | 40 % |
 | Mute | Toggle, also available on the run screen | on / off | off |
 
@@ -246,7 +247,7 @@ Both beep volumes and Mute can also be changed from the Run screen (§4.2).
     "restStyle": "soft",
     "showRemaining": true,
     "muted": false,
-    "digitColor": "#FFFFFF",
+    "digitColor": "#30D158",
     "digitSizePct": 40
   }
 }
@@ -304,7 +305,7 @@ Both beep volumes and Mute can also be changed from the Run screen (§4.2).
 3. Every numeric field can be changed with the − / + buttons (including press-and-hold) and by typing a value, as described in §5.3.
 4. A run follows exactly the phase sequence in §3.1, including the 5 s Get Ready, the rest between cycles replacing the last Rest of each cycle, and the skipped final Rest. This is verified by unit tests.
 5. The countdown digits are readable from 3 m away at the default size, and the size and color settings take effect immediately.
-6. All phases use the same digit color. During the last 5 s of every phase, the digits and the ring are red, 4 short beeps play, and the 5th beep is long and marks the phase change.
+6. During Work the digits and ring use the work color (default green); during Rest, Cycle Rest and Get Ready they are red. During the last 5 s of every phase, 4 short beeps play, and the 5th beep is long and marks the phase change.
 7. Pause freezes time and sound, and Resume continues with less than 100 ms drift.
 8. With the tab in the background for 60 s or more, beeps still play on time. When the user returns, the display shows the correct time and phase, and total drift over a 10-minute routine is under 250 ms.
 9. The volume setting changes beep loudness, and 0 % or Mute is silent.
@@ -323,7 +324,9 @@ Both beep volumes and Mute can also be changed from the Run screen (§4.2).
 | Rest between cycles | Configurable per routine, 1–300 s (default 60 s); replaces the last Rest of each cycle except the final cycle |
 | Number inputs | − / + buttons (with press-and-hold) **and** manual typing for every numeric field |
 | Beeps | 4 short beeps + 1 long 5th beep at the phase change; rest countdowns use a different sound with its own volume |
-| Colors | Same color for all phases; only the last 5 s turn red |
+| Colors | Work in the chosen work color (default green); rest (and Get Ready) always red |
+| Zero rest | Rest time may be 0 (no rest between rounds) |
+| Hebrew names | Routine names are right-to-left by default |
 | Admin | No PIN |
 | Export / Import | Removed from Settings; routines are not moved between the web version and the Mac app |
 | Routine list | No Duplicate button (Start, Edit, Delete only) |

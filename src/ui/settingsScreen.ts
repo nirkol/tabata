@@ -5,7 +5,7 @@ import { confirmDialog } from './dialog';
 import { h } from './dom';
 import { createNumberInput } from './numberInput';
 
-const COLOR_PRESETS = ['#FFFFFF', '#FFD60A', '#30D158', '#64D2FF', '#0A84FF', '#BF5AF2'];
+const COLOR_PRESETS = ['#30D158', '#FFFFFF', '#FFD60A', '#64D2FF', '#0A84FF', '#BF5AF2'];
 
 /** Settings / admin screen (SPEC §6). */
 export function settingsScreen(app: App): Screen {
@@ -59,14 +59,14 @@ export function settingsScreen(app: App): Screen {
   mute.checked = app.settings.muted;
   mute.addEventListener('change', () => app.updateSettings({ muted: mute.checked }));
 
-  // --- Digit color: picker + presets, red is reserved ---
+  // --- Work color: picker + presets; red is reserved for rest ---
   const colorError = h('div', { class: 'field-error', 'data-testid': 'color-error' });
   const colorInput = h('input', { type: 'color', class: 'color-input', id: 'color-input', 'data-testid': 'color-input' });
   colorInput.value = app.settings.digitColor.toLowerCase();
   const swatches = h('div', { class: 'swatches' });
   function setColor(hex: string): boolean {
     if (isReddish(hex)) {
-      colorError.textContent = 'Red is reserved for the last 5 seconds. Please pick another color.';
+      colorError.textContent = 'Red is reserved for rest. Please pick another color for work.';
       colorInput.value = app.settings.digitColor.toLowerCase();
       return false;
     }
@@ -84,7 +84,7 @@ export function settingsScreen(app: App): Screen {
           type: 'button',
           class: 'swatch' + (c === app.settings.digitColor ? ' active' : ''),
           style: `background:${c}`,
-          'aria-label': `Digit color ${c}`,
+          'aria-label': `Work color ${c}`,
           'data-testid': `swatch-${c.slice(1)}`,
           onclick: () => setColor(c),
         }),
@@ -153,7 +153,8 @@ export function settingsScreen(app: App): Screen {
         h(
           'div',
           { class: 'display-controls' },
-          h('div', { class: 'field' }, h('label', { class: 'field-label', for: 'color-input' }, 'Counter digit color'), h('div', { class: 'row' }, colorInput, swatches), colorError),
+          h('div', { class: 'field' }, h('label', { class: 'field-label', for: 'color-input' }, 'Work color'), h('div', { class: 'row' }, colorInput, swatches), colorError),
+          h('p', { class: 'hint color-note' }, 'Rest and Get Ready are always shown in ', h('span', { class: 'dot dot-rest' }), 'red.'),
           size.el,
           h('label', { class: 'toggle-row', for: 'show-remaining' }, showRemaining, h('span', {}, 'Show “Cycle remaining” and “Total remaining” during the workout')),
         ),

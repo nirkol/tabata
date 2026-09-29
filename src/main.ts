@@ -1,4 +1,6 @@
 import '@fontsource/barlow-condensed/latin-700.css';
+// Hebrew letters for routine names (Barlow Condensed has none); loaded only when needed.
+import '@fontsource/rubik/hebrew-700.css';
 import './styles.css';
 import { createNativeStore, isNative } from './platform/native';
 import { LocalAppStorage } from './storage/storage';

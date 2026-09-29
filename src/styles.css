@@ -7,9 +7,9 @@
   --muted: #9a9aa5;
   --accent: #0a84ff;
   --danger: #ff453a;
-  /* Warning red for the last 5 seconds (reserved: not allowed as digit color). */
-  --warning: #ff3b30;
-  /* Set from Settings at runtime. */
+  /* Counter colors: work is always green, rest (and Get Ready) always red. */
+  --work-color: #30d158;
+  --rest-color: #ff3b30;
   --digit-color: #ffffff;
   --digit-size: 40;
   color-scheme: dark;
@@ -57,7 +57,7 @@ button {
 }
 .brand {
   /* App name, in the same display font as the routine names. */
-  font-family: 'Barlow Condensed', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: 'Barlow Condensed', 'Rubik', -apple-system, BlinkMacSystemFont, sans-serif;
   font-weight: 700;
   font-size: 30px;
   letter-spacing: 0.03em;
@@ -278,7 +278,7 @@ h2 {
 .card-title {
   margin: 0;
   /* Bundled display font (works offline). */
-  font-family: 'Barlow Condensed', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: 'Barlow Condensed', 'Rubik', -apple-system, BlinkMacSystemFont, sans-serif;
   font-weight: 700;
   font-size: 26px;
   line-height: 1.1;
@@ -325,7 +325,7 @@ h2 {
 }
 .stat dd {
   margin: 4px 0 0;
-  font-family: 'Barlow Condensed', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: 'Barlow Condensed', 'Rubik', -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 24px;
   font-weight: 700;
   line-height: 1;
@@ -379,7 +379,7 @@ h2 {
   margin-bottom: 20px;
 }
 .list-title {
-  font-family: 'Barlow Condensed', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: 'Barlow Condensed', 'Rubik', -apple-system, BlinkMacSystemFont, sans-serif;
   font-size: 40px;
   font-weight: 700;
   letter-spacing: 0.02em;
@@ -489,6 +489,43 @@ kbd {
 .stepper-suffix {
   color: var(--muted);
 }
+/* ---------- Routine editor (compact) ---------- */
+.editor-screen .screen-header {
+  margin-bottom: 10px;
+}
+.editor-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 32px;
+  max-width: 640px;
+}
+.editor-form .field {
+  gap: 4px;
+}
+.editor-form .field-wide {
+  grid-column: 1 / -1;
+}
+.editor-form .field-error:empty {
+  display: none;
+}
+.editor-form .text-input {
+  max-width: none;
+}
+.name-input {
+  font-family: -apple-system, BlinkMacSystemFont, 'Rubik', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+.total-field {
+  justify-content: flex-end;
+}
+.editor-form .form-actions {
+  justify-content: flex-start;
+  margin-top: 4px;
+}
+@media (max-width: 560px) {
+  .editor-form {
+    grid-template-columns: 1fr;
+  }
+}
 .total-preview {
   font-size: 20px;
   font-weight: 700;
@@ -536,30 +573,6 @@ kbd {
 .run-remaining[hidden] {
   display: none;
 }
-.color-input {
-  width: 56px;
-  height: 44px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--bg);
-  padding: 4px;
-  cursor: pointer;
-}
-.swatches {
-  display: flex;
-  gap: 8px;
-}
-.swatch {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  border: 2px solid var(--border);
-  cursor: pointer;
-}
-.swatch.active {
-  border-color: var(--text);
-  box-shadow: 0 0 0 2px var(--accent);
-}
 .size-preview {
   /* Stands for the whole window: digits take --digit-size % of its height. */
   height: 160px;
@@ -572,7 +585,7 @@ kbd {
   overflow: hidden;
 }
 .preview-digits {
-  color: var(--digit-color);
+  color: var(--work-color);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   font-size: calc(160px * var(--digit-size) / 100);
@@ -737,11 +750,11 @@ kbd {
   /* Initial size; runScreen.ts sets the exact pixel size. */
   font-size: calc(var(--digit-size) * 1vh);
 }
-.run-screen.warning .run-digits {
-  color: var(--warning);
+.run-screen.phase-work {
+  --digit-color: var(--work-color);
 }
-.run-screen.warning .ring-progress {
-  stroke: var(--warning);
+.run-screen.phase-rest {
+  --digit-color: var(--rest-color);
 }
 .run-screen.paused .run-digits,
 .run-screen.paused .ring-box {
@@ -832,4 +845,44 @@ kbd {
     min-width: 0;
     flex: 1;
   }
+}
+
+.color-input {
+  width: 56px;
+  height: 44px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+  padding: 4px;
+  cursor: pointer;
+}
+.swatches {
+  display: flex;
+  gap: 8px;
+}
+.swatch {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  cursor: pointer;
+}
+.swatch.active {
+  border-color: var(--text);
+  box-shadow: 0 0 0 2px var(--accent);
+}
+.color-note {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+}
+.dot {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+.dot-rest {
+  background: var(--rest-color);
 }

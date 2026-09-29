@@ -125,7 +125,8 @@ export class App {
     this.beeper.setStyle('rest', this.settings.restStyle);
     this.beeper.setMuted(this.settings.muted);
     const style = document.documentElement.style;
-    style.setProperty('--digit-color', this.settings.digitColor);
+    // The chosen color is the work color; rest is always red.
+    style.setProperty('--work-color', this.settings.digitColor);
     style.setProperty('--digit-size', String(this.settings.digitSizePct));
   }
 }

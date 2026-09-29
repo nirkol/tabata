@@ -70,7 +70,7 @@ export function runScreen(app: App, routine: Routine): Screen {
     h(
       'div',
       { class: 'run-top' },
-      h('div', { class: 'run-name' }, `Routine: “${routine.name}”`),
+      h('div', { class: 'run-name' }, 'Routine: “', h('bdi', {}, routine.name), '”'),
       app.speed !== 1 ? h('div', { class: 'speed-badge' }, `×${app.speed} speed (dev)`) : null,
       h('div', { class: 'run-top-right' }, h('div', { class: 'run-volume-group' }, muteBtn, h('div', { class: 'run-volume-stack' }, workVolume.el, restVolume.el)), fullscreenBtn),
     ),
@@ -112,6 +112,9 @@ export function runScreen(app: App, routine: Routine): Screen {
       fit();
     }
     el.classList.toggle('warning', s.warning);
+    // Work is always green; Get Ready, Rest and Cycle Rest are always red.
+    el.classList.toggle('phase-work', !done && phase?.kind === 'work');
+    el.classList.toggle('phase-rest', !done && phase !== null && phase.kind !== 'work');
     el.classList.toggle('paused', s.status === 'paused');
     el.classList.toggle('done', done);
     ring.style.strokeDashoffset = String(100 * (1 - (done ? 0 : s.phaseFractionRemaining)));

@@ -59,7 +59,8 @@ export function listScreen(app: App): Screen {
         h(
           'div',
           { class: 'card-title-row' },
-          h('h2', { class: 'card-title', 'data-testid': 'routine-name' }, r.name),
+          // dir="auto": Hebrew names read right-to-left, English names left-to-right.
+          h('h2', { class: 'card-title', dir: 'auto', 'data-testid': 'routine-name' }, r.name),
           r.id === app.lastUsedId ? h('span', { class: 'badge', 'data-testid': 'last-used' }, 'Last used') : null,
         ),
         h(
@@ -82,7 +83,7 @@ export function listScreen(app: App): Screen {
   }
 
   async function remove(r: Routine): Promise<void> {
-    if (!(await confirmDialog(`Delete “${r.name}”? This can't be undone.`, 'Delete'))) return;
+    if (!(await confirmDialog(`Delete “\u2068${r.name}\u2069”? This can't be undone.`, 'Delete'))) return;
     app.saveRoutines(app.routines.filter((x) => x.id !== r.id));
     render();
   }

@@ -31,7 +31,9 @@ export function buildPhases(r: RoutineTiming): Phase[] {
     for (let i = 1; i <= r.intervals; i++) {
       push('work', r.workSec, set, i);
       const lastOfSet = i === r.intervals;
-      if (!lastOfSet) push('rest', r.restSec, set, i);
+      if (!lastOfSet) {
+        if (r.restSec > 0) push('rest', r.restSec, set, i); // a 0 s rest is skipped
+      }
       else if (set < r.sets) push('setRest', r.setRestSec, set, i); // replaces the last Rest of the set
       // else: the last Rest of the last set is skipped
     }

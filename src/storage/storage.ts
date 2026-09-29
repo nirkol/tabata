@@ -23,7 +23,7 @@ export const DEFAULT_SETTINGS: Settings = {
   restStyle: 'soft',
   showRemaining: true,
   muted: false,
-  digitColor: '#FFFFFF',
+  digitColor: '#30D158',
   digitSizePct: 40,
 };
 
@@ -107,7 +107,7 @@ export function sanitizeSettings(value: unknown): Settings {
 }
 
 /**
- * True for colors that would be confused with the red warning color (SPEC §6):
+ * True for colors that would be confused with the red rest color (SPEC §6):
  * a saturated, mid-lightness color with a hue within ±20° of pure red.
  */
 export function isReddish(hex: string): boolean {

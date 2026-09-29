@@ -30,7 +30,8 @@ export function editorScreen(app: App, routineId: string | null): Screen {
     : { name: nextRoutineName(app.routines), ...DEFAULT_FIELDS };
   const invalid = new Set<keyof RoutineFields>();
 
-  const nameInput = h('input', { id: 'name-input', class: 'text-input', type: 'text', maxlength: LIMITS.nameLength.max, autocomplete: 'off', 'data-testid': 'name-input' });
+  // Routine names are mostly Hebrew: right-to-left by default.
+  const nameInput = h('input', { id: 'name-input', class: 'text-input name-input', type: 'text', dir: 'rtl', maxlength: LIMITS.nameLength.max, autocomplete: 'off', 'data-testid': 'name-input' });
   nameInput.value = fields.name;
   const nameError = h('div', { class: 'field-error', 'data-testid': 'name-error' });
   nameInput.addEventListener('input', () => {
@@ -100,11 +101,12 @@ export function editorScreen(app: App, routineId: string | null): Screen {
     h('div', { class: 'screen-header' }, h('h1', {}, existing ? 'Edit Routine' : 'New Routine')),
     h(
       'form',
+      // Compact two-column grid: Work | Rest, Rounds | Cycles, Rest between cycles | Total.
       { class: 'editor-form', onsubmit: (e: Event) => e.preventDefault() },
-      h('div', { class: 'field' }, h('label', { class: 'field-label', for: 'name-input' }, 'Name'), nameInput, nameError),
+      h('div', { class: 'field field-wide' }, h('label', { class: 'field-label', for: 'name-input' }, 'Name'), nameInput, nameError),
       ...FIELDS.map(({ field }) => inputs[field].el),
-      total,
-      h('div', { class: 'form-actions' }, h('button', { type: 'button', class: 'btn', 'data-testid': 'cancel', onclick: () => app.go({ name: 'list' }) }, 'Cancel'), save),
+      h('div', { class: 'field total-field' }, total),
+      h('div', { class: 'form-actions field-wide' }, h('button', { type: 'button', class: 'btn', 'data-testid': 'cancel', onclick: () => app.go({ name: 'list' }) }, 'Cancel'), save),
     ),
   );
   update();

@@ -10,7 +10,7 @@ describe('validateRoutine (SPEC §3)', () => {
 
   const cases: [keyof RoutineFields, number, number, string][] = [
     ['workSec', 1, 600, 'Must be between 0:01 and 10:00'],
-    ['restSec', 1, 180, 'Must be between 0:01 and 3:00'],
+    ['restSec', 0, 180, 'Must be between 0:00 and 3:00'],
     ['intervals', 1, 20, 'Must be between 1 and 20'],
     ['sets', 1, 10, 'Must be between 1 and 10'],
     ['setRestSec', 1, 300, 'Must be between 0:01 and 5:00'],
