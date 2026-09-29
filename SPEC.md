@@ -166,7 +166,8 @@ Implementation requirements:
 - **Delete** asks for confirmation.
 - A **"+ New Routine"** button opens the editor, prefilled with the defaults and the next free `Routine N` name.
 - On first launch, the app creates one sample routine: "Classic Tabata" (20/10 × 8 × 1).
-- The last-used routine is highlighted.
+- The last-used routine is highlighted (blue edge and a "LAST USED" tag).
+- Visual style: premium dark cards with soft depth and a hover lift; values in the display font with thin dividers; the total in accent blue; **Start** is the prominent button while Edit and Delete are quiet (Delete turns red on hover); the header shows the number of routines.
 - **Long lists scroll:** only the routine cards scroll (with an always-visible scrollbar); the top bar, the "Routines" title and "+ New Routine" stay in place. The highlighted routine is scrolled into view when the list opens, and the scroll position is kept when a card is selected.
 
 ### 5.2 Editor

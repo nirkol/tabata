@@ -8,17 +8,18 @@ import { h, isTyping } from './dom';
 /** The routine list (SPEC §5.1). */
 export function listScreen(app: App): Screen {
   const list = h('div', { class: 'cards', 'data-testid': 'routine-list' });
+  const count = h('p', { class: 'list-count', 'data-testid': 'routine-count' });
   const el = h(
     'section',
     { class: 'list-screen' },
     h(
       'div',
-      { class: 'screen-header' },
-      h('h1', {}, 'Routines'),
-      h('button', { class: 'btn btn-primary', 'data-testid': 'new-routine', onclick: () => app.go({ name: 'editor', routineId: null }) }, '+ New Routine'),
+      { class: 'screen-header list-header' },
+      h('div', {}, h('h1', { class: 'list-title' }, 'Routines'), count),
+      h('button', { class: 'btn btn-primary btn-pill', 'data-testid': 'new-routine', onclick: () => app.go({ name: 'editor', routineId: null }) }, '+ New Routine'),
     ),
     list,
-    h('p', { class: 'hint' }, 'Tip: press Enter to start the highlighted routine.'),
+    h('p', { class: 'hint list-hint' }, 'Press ', h('kbd', {}, 'Enter'), ' to start the highlighted routine'),
   );
 
   const selectedId = () => app.lastUsedId ?? app.routines[0]?.id ?? null;
@@ -26,6 +27,8 @@ export function listScreen(app: App): Screen {
   function render(): void {
     const scrollTop = list.scrollTop; // keep the scroll position when re-rendering
     list.replaceChildren();
+    const n = app.routines.length;
+    count.textContent = n === 1 ? '1 routine' : `${n} routines`;
     if (app.routines.length === 0) {
       list.append(h('p', { class: 'empty' }, 'No routines yet. Create one with “+ New Routine”.'));
       return;
@@ -53,7 +56,12 @@ export function listScreen(app: App): Screen {
       h(
         'div',
         { class: 'card-main' },
-        h('h2', { class: 'card-title', 'data-testid': 'routine-name' }, r.name),
+        h(
+          'div',
+          { class: 'card-title-row' },
+          h('h2', { class: 'card-title', 'data-testid': 'routine-name' }, r.name),
+          r.id === app.lastUsedId ? h('span', { class: 'badge', 'data-testid': 'last-used' }, 'Last used') : null,
+        ),
         h(
           'dl',
           { class: 'card-stats', 'data-testid': 'routine-stats' },
@@ -65,9 +73,9 @@ export function listScreen(app: App): Screen {
       h(
         'div',
         { class: 'card-actions' },
-        h('button', { class: 'btn btn-primary', 'data-testid': 'start', onclick: stop(() => app.startRoutine(r.id)) }, '▶ Start'),
-        h('button', { class: 'btn', 'data-testid': 'edit', onclick: stop(() => app.go({ name: 'editor', routineId: r.id })) }, 'Edit'),
-        h('button', { class: 'btn btn-danger-outline', 'data-testid': 'delete', onclick: stop(() => void remove(r)) }, 'Delete'),
+        h('button', { class: 'btn btn-primary btn-pill btn-start', 'data-testid': 'start', onclick: stop(() => app.startRoutine(r.id)) }, '▶ Start'),
+        h('button', { class: 'btn btn-ghost', 'data-testid': 'edit', onclick: stop(() => app.go({ name: 'editor', routineId: r.id })) }, 'Edit'),
+        h('button', { class: 'btn btn-ghost btn-ghost-danger', 'data-testid': 'delete', onclick: stop(() => void remove(r)) }, 'Delete'),
       ),
     );
     return c;
