@@ -169,21 +169,24 @@ test('settings: beep styles and hiding the remaining times', async ({ page }) =>
   await expect(page.getByTestId('run-remaining')).toBeVisible();
 });
 
-test('stop only works while paused, and asks for confirmation', async ({ page }) => {
+test('stop pauses the routine while asking for confirmation', async ({ page }) => {
   await fresh(page);
   await page.getByTestId('start').click();
-  // Running: Stop is disabled and Esc does nothing.
-  await expect(page.getByTestId('stop')).toBeDisabled();
-  await page.keyboard.press('Escape');
-  await expect(page.getByTestId('confirm-yes')).toHaveCount(0);
-  await expect(page.getByTestId('run-screen')).toBeVisible();
-  // Paused: Stop asks for confirmation.
-  await page.keyboard.press('Space');
+  await expect(page.getByTestId('run-phase')).toHaveText('WORK', { timeout: 7000 });
+  // Running: Stop is available; it pauses while the confirmation is shown.
   await expect(page.getByTestId('stop')).toBeEnabled();
-  await page.keyboard.press('Escape');
-  await page.getByTestId('confirm-no').click();
-  await expect(page.getByTestId('run-screen')).toBeVisible();
   await page.getByTestId('stop').click();
+  await expect(page.getByTestId('confirm-yes')).toBeVisible();
+  await expect(page.getByTestId('run-screen')).toHaveClass(/paused/);
+  const frozen = await page.getByTestId('run-digits').textContent();
+  await page.waitForTimeout(1500);
+  await expect(page.getByTestId('run-digits')).toHaveText(frozen!);
+  // Cancel resumes.
+  await page.getByTestId('confirm-no').click();
+  await expect(page.getByTestId('run-screen')).not.toHaveClass(/paused/);
+  await expect(page.getByTestId('pause')).toHaveText('PAUSE');
+  // Esc works the same way; confirming goes back to the list.
+  await page.keyboard.press('Escape');
   await page.getByTestId('confirm-yes').click();
   await expect(page.getByTestId('routine-list')).toBeVisible();
 });
