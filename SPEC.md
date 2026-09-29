@@ -164,6 +164,8 @@ Implementation requirements:
 ### 5.2 Editor
 - Contains every field from §3, with validation that enforces the ranges. Invalid input shows an inline error and disables Save.
 - A live "Total duration" preview is shown.
+- Buttons: **Save**, **Cancel**.
+- Names do not need to be unique.
 
 ### 5.3 Number input control (used for every numeric field)
 Every numeric field (Work, Rest, Rest between sets, Intervals, Sets, and the numeric settings in §6) uses the same control:
@@ -180,8 +182,6 @@ Every numeric field (Work, Rest, Rest between sets, Intervals, Sets, and the num
   - Pressing Enter or leaving the field confirms the value. Pressing Esc restores the previous value.
 - **Limits:** the − button is disabled at the minimum value and + is disabled at the maximum. A typed value outside the range shows an inline error such as "Must be between 0:01 and 3:00", and Save stays disabled until it's fixed. Non-numeric input is rejected.
 - The buttons are at least 44 × 44 px, so they are easy to click.
-- Buttons: **Save**, **Cancel**.
-- Names do not need to be unique.
 
 ---
 
