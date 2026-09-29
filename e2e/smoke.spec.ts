@@ -25,6 +25,8 @@ async function fresh(page: Page, query = '') {
 
 test('first launch shows the sample routine', async ({ page }) => {
   await fresh(page);
+  await expect(page.getByTestId('brand')).toHaveText('yFit Tabata Timer');
+  await expect(page).toHaveTitle('yFit Tabata Timer');
   await expect(page.getByTestId('routine-card')).toHaveCount(1);
   await expect(page.getByTestId('routine-name')).toHaveText('Classic Tabata');
   await expect(page.getByTestId('routine-stats').locator('.stat')).toHaveText(['Work0:20', 'Rest0:10', 'Intervals8', 'Sets1', 'Total3:55']);
@@ -85,7 +87,7 @@ test('smoke: create a routine, run it, pause, resume and finish (speed flag)', a
   await expect(page.getByTestId('run-set-info')).toHaveText('Set 2 / 2', { timeout: 10000 });
   await expect(page.getByTestId('run-phase')).toHaveText('DONE', { timeout: 15000 });
   await expect(page.getByTestId('run-digits')).toHaveText('0:00');
-  await expect(page).toHaveTitle('DONE – Tabata');
+  await expect(page).toHaveTitle('DONE – yFit Tabata Timer');
 
   const beeps = await page.evaluate(() => (window as unknown as { __beeps: unknown[] }).__beeps.length);
   expect(beeps).toBeGreaterThan(0);
@@ -131,6 +133,38 @@ test('run screen: no set counter at the top, volume control works', async ({ pag
   await page.getByTestId('nav-settings').click();
   await expect(page.getByTestId('volume-input')).toHaveValue('60');
   await expect(page.getByTestId('restVolume-input')).toHaveValue('25');
+});
+
+test('settings: beep styles and hiding the remaining times', async ({ page }) => {
+  await fresh(page);
+  await page.getByTestId('nav-settings').click();
+  await expect(page.getByTestId('work-style')).toHaveValue('bell');
+  await expect(page.getByTestId('rest-style')).toHaveValue('soft');
+  await expect(page.getByTestId('work-style').locator('option')).toHaveText(['Gym bell', 'Soft beep', 'Whistle', 'Chime', 'Drum']);
+  await page.getByTestId('work-style').selectOption('whistle');
+  await page.getByTestId('rest-style').selectOption('chime');
+  await page.getByTestId('show-remaining').uncheck();
+
+  await page.reload();
+  await page.getByTestId('nav-settings').click();
+  await expect(page.getByTestId('work-style')).toHaveValue('whistle');
+  await expect(page.getByTestId('rest-style')).toHaveValue('chime');
+  await expect(page.getByTestId('show-remaining')).not.toBeChecked();
+
+  await page.getByTestId('nav-routines').click();
+  await page.getByTestId('start').click();
+  await expect(page.getByTestId('run-set-info')).toBeVisible();
+  await expect(page.getByTestId('run-remaining')).toBeHidden();
+  await expect(page.getByTestId('run-next')).toBeVisible();
+
+  // Turning it back on shows them again.
+  await page.keyboard.press('Escape');
+  await page.getByTestId('confirm-yes').click();
+  await page.getByTestId('nav-settings').click();
+  await page.getByTestId('show-remaining').check();
+  await page.getByTestId('nav-routines').click();
+  await page.getByTestId('start').click();
+  await expect(page.getByTestId('run-remaining')).toBeVisible();
 });
 
 test('stop asks for confirmation', async ({ page }) => {

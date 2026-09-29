@@ -1,4 +1,4 @@
-# Tabata Timer
+# yFit Tabata Timer
 
 An interval-training stopwatch for trainers. Create named routines (work / rest / intervals / sets), then run them with huge, easy-to-read digits and countdown beeps.
 

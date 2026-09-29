@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Beeper, SCHEDULE_AHEAD_MS, type AudioContextLike } from './beeper';
+import { BEEP_STYLES, Beeper, SCHEDULE_AHEAD_MS, type AudioContextLike } from './beeper';
 import { beepSchedule, buildPhases } from '../timer/engine';
 
 /** Records every oscillator the beeper starts/stops on a fake audio clock. */
@@ -126,6 +126,29 @@ describe('Beeper', () => {
     expect(b.outputGain('rest')).toBe(0);
     b.setMuted(false);
     expect(b.outputGain('work')).toBe(0.5);
+  });
+
+  it('plays the selected style for each of work and rest', () => {
+    const firstFreqs = (style: (typeof BEEP_STYLES)[number]) => {
+      const { ctx, started } = fakeContext();
+      const b = new Beeper(() => ctx);
+      b.setStyle('work', style);
+      b.setStyle('rest', style);
+      b.test('work');
+      return started.map((o) => o.freq).join(',');
+    };
+    // All five styles sound different.
+    const all = BEEP_STYLES.map(firstFreqs);
+    expect(new Set(all).size).toBe(5);
+
+    const { ctx, started } = fakeContext();
+    const b = new Beeper(() => ctx);
+    b.setStyle('rest', 'drum');
+    b.startRun(beepSchedule(buildPhases(routine)), 0, 1);
+    // Get Ready now uses the drum; the work beeps keep the default bell.
+    expect(started.filter((o) => o.start === 101)[0].freq).toBe(180);
+    expect(started.filter((o) => o.start === 121)[0].freq).toBe(1250);
+    expect(b.getStyle('work')).toBe('bell');
   });
 
   it('uses a different sound for rest beeps than for work beeps', () => {

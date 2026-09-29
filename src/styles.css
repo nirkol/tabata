@@ -54,8 +54,15 @@ button {
   display: none;
 }
 .brand {
+  /* App name, in the same display font as the routine names. */
+  font-family: 'Barlow Condensed', -apple-system, BlinkMacSystemFont, sans-serif;
   font-weight: 700;
-  font-size: 18px;
+  font-size: 30px;
+  letter-spacing: 0.03em;
+  line-height: 1;
+}
+.brand-accent {
+  color: var(--accent);
 }
 .tabs {
   display: flex;
@@ -382,6 +389,20 @@ h2 {
   height: 22px;
   accent-color: var(--accent);
 }
+.select {
+  min-height: 44px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  font-size: 16px;
+  cursor: pointer;
+}
+.run-remaining[hidden] {
+  display: none;
+}
 .color-input {
   width: 56px;
   height: 44px;
@@ -443,9 +464,6 @@ h2 {
   min-width: 140px;
   max-width: 260px;
   margin: 0 8px;
-}
-.settings-screen .toggle-row {
-  margin-left: 8px;
 }
 .display-grid {
   display: grid;

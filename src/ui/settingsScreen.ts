@@ -1,3 +1,4 @@
+import { BEEP_STYLES, BEEP_STYLE_LABELS, type BeepStyle } from '../audio/beeper';
 import { DEFAULT_SETTINGS, SETTINGS_LIMITS, isReddish } from '../storage/storage';
 import type { App, Screen } from './app';
 import { confirmDialog } from './dialog';
@@ -31,13 +32,28 @@ export function settingsScreen(app: App): Screen {
       input.setValue(v);
       app.updateSettings({ [key]: v / 100 });
     });
+    const styleKey = sound === 'work' ? 'workStyle' : 'restStyle';
+    const style = h('select', { class: 'select', 'aria-label': `${label}: sound`, 'data-testid': `${sound}-style` });
+    for (const id of BEEP_STYLES) {
+      const opt = h('option', { value: id }, BEEP_STYLE_LABELS[id]);
+      opt.selected = id === app.settings[styleKey];
+      style.append(opt);
+    }
+    style.addEventListener('change', () => {
+      app.updateSettings({ [styleKey]: style.value as BeepStyle });
+      app.beeper.test(sound); // let the user hear the new sound right away
+    });
     const test = h('button', { type: 'button', class: 'btn', 'data-testid': sound === 'work' ? 'test-beep' : 'test-beep-rest', onclick: () => app.beeper.test(sound) }, '🔊 Test');
-    // Compact layout: the slider and Test button sit on the same row as the − / + control.
-    input.el.querySelector('.stepper')!.append(slider, test);
+    // Compact layout: the slider, sound choice and Test button sit on the same row as the − / + control.
+    input.el.querySelector('.stepper')!.append(slider, style, test);
     return input.el;
   }
-  const workVolume = volumeRow('volume', 'work', 'Work beep volume');
-  const restVolume = volumeRow('restVolume', 'rest', 'Rest beep volume (Get Ready, Rest, Rest between sets)');
+  const workVolume = volumeRow('volume', 'work', 'Work beeps');
+  const restVolume = volumeRow('restVolume', 'rest', 'Rest beeps (Get Ready, Rest, Rest between sets)');
+
+  const showRemaining = h('input', { type: 'checkbox', class: 'toggle', id: 'show-remaining', 'data-testid': 'show-remaining' });
+  showRemaining.checked = app.settings.showRemaining;
+  showRemaining.addEventListener('change', () => app.updateSettings({ showRemaining: showRemaining.checked }));
 
   const mute = h('input', { type: 'checkbox', class: 'toggle', id: 'mute-toggle', 'data-testid': 'mute-toggle' });
   mute.checked = app.settings.muted;
@@ -139,6 +155,7 @@ export function settingsScreen(app: App): Screen {
           { class: 'display-controls' },
           h('div', { class: 'field' }, h('label', { class: 'field-label', for: 'color-input' }, 'Counter digit color'), h('div', { class: 'row' }, colorInput, swatches), colorError),
           size.el,
+          h('label', { class: 'toggle-row', for: 'show-remaining' }, showRemaining, h('span', {}, 'Show “Set remaining” and “Total remaining” during the workout')),
         ),
         preview,
       ),

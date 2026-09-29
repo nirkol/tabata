@@ -44,7 +44,7 @@ export class App {
     this.nav = h(
       'header',
       { class: 'topbar' },
-      h('div', { class: 'brand' }, 'Tabata Timer'),
+      h('div', { class: 'brand', 'data-testid': 'brand' }, h('span', { class: 'brand-accent' }, 'yFit'), ' Tabata Timer'),
       h(
         'nav',
         { class: 'tabs' },
@@ -85,7 +85,7 @@ export class App {
       tab.classList.toggle('active', tab.dataset.route === route.name || (route.name === 'editor' && tab.dataset.route === 'list'));
     }
     this.main.replaceChildren(screen.el);
-    document.title = 'Tabata';
+    document.title = 'yFit Tabata Timer';
   }
 
   /** Starts a routine. Must be called from a user gesture so audio can start. */
@@ -116,6 +116,8 @@ export class App {
   private applySettings(): void {
     this.beeper.setVolume('work', this.settings.volume);
     this.beeper.setVolume('rest', this.settings.restVolume);
+    this.beeper.setStyle('work', this.settings.workStyle);
+    this.beeper.setStyle('rest', this.settings.restStyle);
     this.beeper.setMuted(this.settings.muted);
     const style = document.documentElement.style;
     style.setProperty('--digit-color', this.settings.digitColor);

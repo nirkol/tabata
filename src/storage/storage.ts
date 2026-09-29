@@ -1,3 +1,4 @@
+import { BEEP_STYLES, type BeepStyle } from '../audio/beeper';
 import { isValidRoutine, newId, sampleRoutine, type Routine } from '../routines/model';
 
 export interface Settings {
@@ -5,6 +6,10 @@ export interface Settings {
   volume: number;
   /** Rest beep volume (Get Ready, Rest, Set Rest countdowns), 0–1. */
   restVolume: number;
+  workStyle: BeepStyle;
+  restStyle: BeepStyle;
+  /** Show "Set remaining" and "Total remaining" on the Run screen. */
+  showRemaining: boolean;
   muted: boolean;
   digitColor: string;
   /** Digit height, % of window height (10–60). */
@@ -14,6 +19,9 @@ export interface Settings {
 export const DEFAULT_SETTINGS: Settings = {
   volume: 0.7,
   restVolume: 0.7,
+  workStyle: 'bell',
+  restStyle: 'soft',
+  showRemaining: true,
   muted: false,
   digitColor: '#FFFFFF',
   digitSizePct: 40,
@@ -80,6 +88,10 @@ export function sanitizeSettings(value: unknown): Settings {
   const v = value as Record<string, unknown>;
   if (typeof v.volume === 'number' && v.volume >= 0 && v.volume <= 1) s.volume = v.volume;
   if (typeof v.restVolume === 'number' && v.restVolume >= 0 && v.restVolume <= 1) s.restVolume = v.restVolume;
+  const isStyle = (x: unknown): x is BeepStyle => typeof x === 'string' && (BEEP_STYLES as readonly string[]).includes(x);
+  if (isStyle(v.workStyle)) s.workStyle = v.workStyle;
+  if (isStyle(v.restStyle)) s.restStyle = v.restStyle;
+  if (typeof v.showRemaining === 'boolean') s.showRemaining = v.showRemaining;
   if (typeof v.muted === 'boolean') s.muted = v.muted;
   if (typeof v.digitColor === 'string' && /^#[0-9a-f]{6}$/i.test(v.digitColor) && !isReddish(v.digitColor)) {
     s.digitColor = v.digitColor.toUpperCase();

@@ -30,48 +30,64 @@ interface Tone {
   decay?: boolean;
   /** Pitch at the end, as a multiple of the start pitch (a quick drop sounds percussive). */
   sweepTo?: number;
+  /** Pitch warble: `rate` Hz, ± `depth` Hz. */
+  vibrato?: { rate: number; depth: number };
 }
 
+/** The selectable beep styles (Settings). Work and rest each use one of them. */
+export const BEEP_STYLES = ['bell', 'soft', 'whistle', 'chime', 'drum'] as const;
+export type BeepStyle = (typeof BEEP_STYLES)[number];
+
+export const BEEP_STYLE_LABELS: Record<BeepStyle, string> = {
+  bell: 'Gym bell',
+  soft: 'Soft beep',
+  whistle: 'Whistle',
+  chime: 'Chime',
+  drum: 'Drum',
+};
+
+/** Default styles: a gym bell for work, a soft beep for rest. */
+export const DEFAULT_BEEP_STYLES: Record<BeepSound, BeepStyle> = { work: 'bell', rest: 'soft' };
+
 /**
- * Short countdown beep and the long phase-change beep (SPEC §4.4), in two sounds.
- * Work: a woody "tock" for the countdown and a boxing-ring bell for the phase
- * change, so it sounds like a gym timer rather than a medical monitor.
- * Rest: a lower, softer, rounder beep.
+ * Each style has a short countdown beep and a long phase-change beep (SPEC §4.4).
+ * None of them is a plain square-wave "monitor" beep.
  */
-const TONES: Record<BeepSound, Record<Exclude<BeepKind, 'finish'>, Tone>> = {
-  work: {
-    short: {
-      freq: 1250,
-      durationSec: 0.12,
-      wave: 'sine',
-      peak: 0.9,
-      decay: true,
-      sweepTo: 0.6,
-      partials: [
-        { ratio: 1, gain: 1 },
-        { ratio: 2.3, gain: 0.35 },
-      ],
-    },
+const STYLES: Record<BeepStyle, Record<Exclude<BeepKind, 'finish'>, Tone>> = {
+  // Woody "tock" + boxing-ring bell (inharmonic overtones give the metallic ring).
+  bell: {
+    short: { freq: 1250, durationSec: 0.12, wave: 'sine', peak: 0.9, decay: true, sweepTo: 0.6, partials: [{ ratio: 1, gain: 1 }, { ratio: 2.3, gain: 0.35 }] },
     long: {
-      // Inharmonic overtones give the metallic ring of a bell.
       freq: 760,
       durationSec: 1.1,
       wave: 'sine',
       peak: 0.7,
       decay: true,
-      partials: [
-        { ratio: 1, gain: 1 },
-        { ratio: 2.76, gain: 0.55 },
-        { ratio: 5.4, gain: 0.3 },
-        { ratio: 8.93, gain: 0.12 },
-      ],
+      partials: [{ ratio: 1, gain: 1 }, { ratio: 2.76, gain: 0.55 }, { ratio: 5.4, gain: 0.3 }, { ratio: 8.93, gain: 0.12 }],
     },
   },
-  rest: {
+  // Lower, rounder, gentle beep.
+  soft: {
     short: { freq: 587, durationSec: 0.15, wave: 'triangle', peak: 0.8 },
     long: { freq: 880, durationSec: 0.6, wave: 'triangle', peak: 0.8 },
   },
+  // Coach's whistle: high pitch with a fast warble.
+  whistle: {
+    short: { freq: 2300, durationSec: 0.12, wave: 'sine', peak: 0.5, vibrato: { rate: 30, depth: 60 } },
+    long: { freq: 2300, durationSec: 0.7, wave: 'sine', peak: 0.5, vibrato: { rate: 28, depth: 90 } },
+  },
+  // Marimba-like chime.
+  chime: {
+    short: { freq: 1047, durationSec: 0.35, wave: 'sine', peak: 0.9, decay: true, partials: [{ ratio: 1, gain: 1 }, { ratio: 4, gain: 0.25 }] },
+    long: { freq: 523, durationSec: 1.4, wave: 'sine', peak: 0.9, decay: true, partials: [{ ratio: 1, gain: 1 }, { ratio: 2, gain: 0.5 }, { ratio: 3, gain: 0.3 }, { ratio: 4.2, gain: 0.15 }] },
+  },
+  // Punchy drum hit; a higher "click" overtone keeps it audible on laptop speakers.
+  drum: {
+    short: { freq: 180, durationSec: 0.22, wave: 'sine', peak: 1, decay: true, sweepTo: 0.5, partials: [{ ratio: 1, gain: 1 }, { ratio: 5.5, gain: 0.25 }] },
+    long: { freq: 130, durationSec: 0.9, wave: 'sine', peak: 1, decay: true, sweepTo: 0.45, partials: [{ ratio: 1, gain: 1 }, { ratio: 1.5, gain: 0.4 }, { ratio: 6, gain: 0.2 }] },
+  },
 };
+
 /** "Finished" sound: three strikes of the long tone, this far apart. */
 const FINISH_SPACING_SEC = 0.85;
 const RAMP_SEC = 0.005;
@@ -95,6 +111,7 @@ export class Beeper {
   private master: GainNode | null = null;
   private buses: Partial<Record<BeepSound, GainNode>> = {};
   private volumes: Record<BeepSound, number> = { work: 0.7, rest: 0.7 };
+  private styles: Record<BeepSound, BeepStyle> = { ...DEFAULT_BEEP_STYLES };
   private muted = false;
   private readonly live = new Set<OscillatorNode>();
 
@@ -124,6 +141,15 @@ export class Beeper {
     if (this.ctx.state === 'suspended') void this.ctx.resume();
   }
 
+  /** Chooses the beep style of the work or the rest beeps; applies to beeps scheduled from now on. */
+  setStyle(sound: BeepSound, style: BeepStyle): void {
+    this.styles[sound] = style;
+  }
+
+  getStyle(sound: BeepSound): BeepStyle {
+    return this.styles[sound];
+  }
+
   /** Volume (0–1) of the work or the rest beeps. */
   setVolume(sound: BeepSound, volume: number): void {
     this.volumes[sound] = Math.min(1, Math.max(0, volume));
@@ -151,8 +177,9 @@ export class Beeper {
   test(sound: BeepSound): void {
     this.unlock();
     if (!this.ctx) return;
-    this.tone(sound, TONES[sound].short, this.ctx.currentTime);
-    this.tone(sound, TONES[sound].long, this.ctx.currentTime + 0.35);
+    const tones = STYLES[this.styles[sound]];
+    this.tone(sound, tones.short, this.ctx.currentTime);
+    this.tone(sound, tones.long, this.ctx.currentTime + 0.4);
   }
 
   /**
@@ -200,7 +227,7 @@ export class Beeper {
   }
 
   private play(beep: Beep, when: number): void {
-    const tones = TONES[beep.sound];
+    const tones = STYLES[this.styles[beep.sound]];
     if (beep.kind === 'finish') {
       for (let i = 0; i < 3; i++) this.tone(beep.sound, tones.long, when + i * FINISH_SPACING_SEC);
     } else {
@@ -236,6 +263,23 @@ export class Beeper {
       osc.type = tone.wave;
       osc.frequency.setValueAtTime(tone.freq * p.ratio, start);
       if (tone.sweepTo) osc.frequency.exponentialRampToValueAtTime(tone.freq * p.ratio * tone.sweepTo, end);
+      let lfo: OscillatorNode | null = null;
+      if (tone.vibrato) {
+        lfo = ctx.createOscillator();
+        const depth = ctx.createGain();
+        lfo.frequency.setValueAtTime(tone.vibrato.rate, start);
+        depth.gain.setValueAtTime(tone.vibrato.depth * p.ratio, start);
+        lfo.connect(depth);
+        depth.connect(osc.frequency);
+        lfo.onended = () => {
+          if (lfo) this.live.delete(lfo);
+          lfo?.disconnect();
+          depth.disconnect();
+        };
+        this.live.add(lfo);
+        lfo.start(start);
+        lfo.stop(end);
+      }
       osc.connect(level);
       level.connect(env);
       osc.onended = () => {

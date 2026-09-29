@@ -86,7 +86,7 @@ export function runScreen(app: App, routine: Routine): Screen {
       h('span', { class: 'sep' }, '│'),
       intervalsLeft,
     ),
-    h('div', { class: 'run-info run-info-secondary' }, next, h('div', { class: 'run-remaining' }, setRemaining, h('span', { class: 'sep' }, '│'), totalRemaining), h('span')),
+    h('div', { class: 'run-info run-info-secondary' }, next, h('div', { class: 'run-remaining', 'data-testid': 'run-remaining', hidden: !app.settings.showRemaining }, setRemaining, h('span', { class: 'sep' }, '│'), totalRemaining), h('span')),
     h('div', { class: 'run-controls' }, pauseBtn, startOverBtn, stopBtn),
   );
 
@@ -128,7 +128,7 @@ export function runScreen(app: App, routine: Routine): Screen {
       lastStatus = s.status;
       onStatusChange(s);
     }
-    document.title = done ? 'DONE – Tabata' : `${text} ${label}${s.status === 'paused' ? ' (paused)' : ''} – Tabata`;
+    document.title = done ? 'DONE – yFit Tabata Timer' : `${text} ${label}${s.status === 'paused' ? ' (paused)' : ''} – yFit Tabata Timer`;
   }
 
   function onStatusChange(s: Snapshot): void {
