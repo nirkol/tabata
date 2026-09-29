@@ -1,4 +1,4 @@
-import { DEFAULT_SETTINGS, SETTINGS_LIMITS, exportData, importData, isReddish } from '../storage/storage';
+import { DEFAULT_SETTINGS, SETTINGS_LIMITS, isReddish } from '../storage/storage';
 import type { App, Screen } from './app';
 import { confirmDialog } from './dialog';
 import { h } from './dom';
@@ -95,32 +95,6 @@ export function settingsScreen(app: App): Screen {
   // The preview box stands for the whole window, so digits take the same share of its height.
   const preview = h('div', { class: 'size-preview', 'data-testid': 'size-preview' }, h('span', { class: 'preview-digits' }, '0:20'));
 
-  // --- Data: export / import ---
-  const importMsg = h('div', { class: 'import-msg', 'data-testid': 'import-msg' });
-  const fileInput = h('input', { type: 'file', accept: '.json,application/json', hidden: true, 'data-testid': 'import-file' });
-  fileInput.addEventListener('change', async () => {
-    const file = fileInput.files?.[0];
-    fileInput.value = '';
-    if (!file) return;
-    try {
-      const { routines, skipped } = importData(await file.text());
-      app.saveRoutines([...app.routines, ...routines]);
-      importMsg.textContent = `Imported ${routines.length} routine${routines.length === 1 ? '' : 's'}` + (skipped ? ` (${skipped} invalid skipped).` : '.');
-      importMsg.classList.remove('error');
-    } catch (err) {
-      importMsg.textContent = (err as Error).message;
-      importMsg.classList.add('error');
-    }
-  });
-  function doExport(): void {
-    const blob = new Blob([exportData(app.routines, app.settings)], { type: 'application/json' });
-    const a = h('a', { href: URL.createObjectURL(blob), download: 'tabata-routines.json' });
-    document.body.append(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-  }
-
   async function reset(): Promise<void> {
     if (!(await confirmDialog('Reset all settings to their defaults? Routines are not affected.', 'Reset'))) return;
     app.updateSettings(DEFAULT_SETTINGS);
@@ -155,19 +129,6 @@ export function settingsScreen(app: App): Screen {
           size.el,
         ),
         preview,
-      ),
-    ),
-    h(
-      'div',
-      { class: 'panel' },
-      h(
-        'div',
-        { class: 'row' },
-        h('h2', { class: 'inline-title' }, 'Data'),
-        h('button', { type: 'button', class: 'btn', 'data-testid': 'export', title: 'Save your routines to a file (backup, or to move them to the Mac app)', onclick: doExport }, 'Export routines'),
-        h('button', { type: 'button', class: 'btn', 'data-testid': 'import', title: 'Add routines from an exported file', onclick: () => fileInput.click() }, 'Import routines'),
-        fileInput,
-        importMsg,
       ),
     ),
   );

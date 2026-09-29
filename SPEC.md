@@ -207,7 +207,7 @@ Beep volume and Mute can also be changed from the Run screen (§4.2).
 - The Run screen background is dark (near black) so that the digits have high contrast.
 - Settings apply immediately and persist.
 - A "Reset to defaults" button.
-- The Settings screen is compact: each slider sits on the same row as its − / + control, the digit-size preview sits beside the color and size controls, Export/Import share one row, and Reset to defaults is in the page header.
+- The Settings screen is compact: each slider sits on the same row as its − / + control, the digit-size preview sits beside the color and size controls, and Reset to defaults is in the page header.
 
 ---
 
@@ -241,7 +241,7 @@ Beep volume and Mute can also be changed from the Run screen (§4.2).
 }
 ```
 
-- **Export / Import** routines as a `.json` file. This is a backup, and it is the way to move data from the web simulation into the Mac app.
+- There is no Export / Import of routines (removed by product decision).
 - Storage access goes through a small `storage` module. That way Phase 2 can swap in file-based storage without touching the UI.
 
 ---
@@ -274,7 +274,7 @@ Beep volume and Mute can also be changed from the Run screen (§4.2).
 - Mac-specific needs:
   - Prevent **App Nap** or throttling while a routine is running, so timing and beeps stay accurate in the background.
   - Prevent display sleep while running.
-  - Routines are stored in a JSON file in the app's data folder instead of `localStorage`, and they can be imported from the web version's export.
+  - Routines are stored in a JSON file in the app's data folder instead of `localStorage`. Routines are not carried over from the web version; they are created again in the Mac app.
 
 ---
 
@@ -313,6 +313,7 @@ Beep volume and Mute can also be changed from the Run screen (§4.2).
 | Beeps | 4 short beeps + 1 long 5th beep at the phase change |
 | Colors | Same color for all phases; only the last 5 s turn red |
 | Admin | No PIN |
+| Export / Import | Removed from Settings; routines are not moved between the web version and the Mac app |
 | Routine list | No Duplicate button (Start, Edit, Delete only) |
 | Run-screen info | Set counter only at the start of the Work/Rest row; "Set remaining" and "Total remaining" together in the center; volume slider + mute in the top-right corner |
 | Run-screen controls | Only Pause and Stop (no Skip or Restart); at the end: Start over and Back to routines |

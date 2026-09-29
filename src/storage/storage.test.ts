@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_SETTINGS, KEYS, LocalAppStorage, exportData, importData, isReddish, sanitizeSettings, type KeyValueStore } from './storage';
+import { DEFAULT_SETTINGS, KEYS, LocalAppStorage, isReddish, sanitizeSettings, type KeyValueStore } from './storage';
 import { createRoutine, DEFAULT_FIELDS } from '../routines/model';
 
 function memoryStore(): KeyValueStore & { data: Map<string, string> } {
@@ -67,22 +67,5 @@ describe('isReddish', () => {
   it('flags reds but not other colors', () => {
     for (const red of ['#FF0000', '#FF3B30', '#E53935', '#D00000', '#ff1a4b']) expect(isReddish(red), red).toBe(true);
     for (const ok of ['#FFFFFF', '#000000', '#FFD60A', '#30D158', '#0A84FF', '#FF9500', '#FFC0CB', '#400000']) expect(isReddish(ok), ok).toBe(false);
-  });
-});
-
-describe('export / import', () => {
-  it('round-trips routines with fresh ids', () => {
-    const r = createRoutine({ name: 'Mine', ...DEFAULT_FIELDS, sets: 3 });
-    const { routines, skipped } = importData(exportData([r], DEFAULT_SETTINGS));
-    expect(skipped).toBe(0);
-    expect(routines).toHaveLength(1);
-    expect(routines[0]).toMatchObject({ name: 'Mine', sets: 3 });
-    expect(routines[0].id).not.toBe(r.id);
-  });
-
-  it('reports invalid files', () => {
-    expect(() => importData('nope')).toThrow('not valid JSON');
-    expect(() => importData('{}')).toThrow('does not contain');
-    expect(importData(JSON.stringify({ routines: [{ name: 'x' }] }))).toEqual({ routines: [], skipped: 1 });
   });
 });

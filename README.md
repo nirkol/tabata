@@ -38,7 +38,7 @@ npm run typecheck
 
 - **Routines** tab: start, edit or delete routines. Press **Enter** to start the highlighted routine (the one used last).
 - **Run screen:** **Space** pauses and resumes, **Esc** stops (after a confirmation), and **F** toggles fullscreen.
-- **Settings** tab: beep volume and a test beep, mute, counter digit color (red is reserved for the last 5 seconds) and size, export or import routines as a `.json` file, and reset to defaults.
+- **Settings** tab: beep volume and a test beep, mute, counter digit color (red is reserved for the last 5 seconds) and size, and reset to defaults.
 
 ## How the timing works
 
@@ -54,7 +54,7 @@ src/
   timer/format.ts      m:ss formatting and parsing
   routines/model.ts    Routine type, limits, validation, default names
   audio/beeper.ts      Web Audio beep scheduling, volume, mute
-  storage/storage.ts   Persistence interface + localStorage implementation, import/export
+  storage/storage.ts   Persistence interface + localStorage implementation
   ui/                  Screens (list, editor, run, settings) and the − / + number control
   main.ts              Entry point
 public/sw.js           Service worker for offline use

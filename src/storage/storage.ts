@@ -1,4 +1,4 @@
-import { createRoutine, isValidRoutine, newId, sampleRoutine, type Routine } from '../routines/model';
+import { isValidRoutine, newId, sampleRoutine, type Routine } from '../routines/model';
 
 export interface Settings {
   /** 0–1 */
@@ -162,37 +162,4 @@ export class LocalAppStorage implements AppStorage {
     if (id === null) this.store.removeItem(KEYS.lastUsed);
     else this.store.setItem(KEYS.lastUsed, id);
   }
-}
-
-/** Export file format (SPEC §7). */
-export function exportData(routines: Routine[], settings: Settings): string {
-  return JSON.stringify({ version: DATA_VERSION, routines, settings }, null, 2);
-}
-
-export interface ImportResult {
-  routines: Routine[];
-  skipped: number;
-}
-
-/**
- * Parses an export file. Imported routines always get fresh ids, so they are added
- * next to the existing ones instead of overwriting them.
- */
-export function importData(json: string): ImportResult {
-  let data: unknown;
-  try {
-    data = JSON.parse(json);
-  } catch {
-    throw new Error('The file is not valid JSON.');
-  }
-  const list = (data as { routines?: unknown })?.routines;
-  if (!Array.isArray(list)) throw new Error('The file does not contain any routines.');
-  const routines: Routine[] = [];
-  let skipped = 0;
-  for (const item of list) {
-    const r = sanitizeRoutine(item);
-    if (r) routines.push(createRoutine(r));
-    else skipped++;
-  }
-  return { routines, skipped };
 }
