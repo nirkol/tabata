@@ -187,6 +187,8 @@ h2 {
 .stat {
   display: flex;
   flex-direction: column;
+  align-items: center;
+  text-align: center;
 }
 .stat dt {
   color: var(--muted);
