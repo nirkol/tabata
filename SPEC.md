@@ -280,12 +280,12 @@ Both beep volumes and Mute can also be changed from the Run screen (§4.2).
 - Wrap the Phase 1 frontend with **Tauri** (small app, ~10 MB, native WebKit).
 - Output: a `.dmg` installer that drags the app into Applications.
 - Target: **both Apple Silicon (arm64) and Intel (x86_64) Macs**. Build a single **universal binary** (`tauri build --target universal-apple-darwin`) so one `.dmg` works on both.
-- Minimum macOS version: 11 (Big Sur), which is the Tauri 2 minimum.
+- Minimum macOS version: **10.15 Catalina**, the oldest version Tauri 2 supports, so older Macs (roughly 2012 and newer) can run it. The web code is compiled for the older WebKit these systems use (Safari 13+).
 - **Unsigned build is acceptable.** The first launch shows a Gatekeeper warning, and the user right-clicks → Open once. The README must explain this step.
 - Mac-specific needs:
   - Prevent **App Nap** or throttling while a routine is running, so timing and beeps stay accurate in the background.
   - Prevent display sleep while running.
-  - Routines are stored in a JSON file in the app's data folder instead of `localStorage`. Routines are not carried over from the web version; they are created again in the Mac app.
+  - Routines are stored in a JSON file in the app's data folder (`~/Library/Application Support/com.yfit.tabatatimer/store.json`) instead of `localStorage`. Routines are not carried over from the web version; they are created again in the Mac app.
 
 ---
 
@@ -334,5 +334,6 @@ Both beep volumes and Mute can also be changed from the Run screen (§4.2).
 | Beep sounds | 5 selectable styles, all variations of a workout-timer beep (Classic, Soft, High, Low beep, Gym bell), chosen separately for work and rest |
 | Remaining times | "Cycle remaining" / "Total remaining" can be hidden in Settings |
 | App name | "yFit Tabata Timer" (top-left, larger, display font; also the browser tab title) |
-| Mac hardware | Universal binary for Apple Silicon and Intel |
+| Mac hardware | Universal binary for Apple Silicon and Intel, macOS 10.15+ (older Macs supported) |
+| Mac build | Built by a GitHub Actions workflow on a GitHub-hosted Mac; the .dmg is published as a GitHub Release. Ad-hoc signed (not notarized). |
 | Exercise names, voice, history | Not needed |

@@ -1,0 +1,106 @@
+# Builds the yFit Tabata Timer Mac app (SPEC §9) on a GitHub-hosted Mac.
+#
+# Output: one universal .dmg installer (Apple Silicon + Intel, macOS 10.15+), published
+# as a GitHub Release so it can be downloaded with one click, and kept as a workflow
+# artifact too.
+name: Mac app
+
+on:
+  push:
+    branches: [main, claude/eager-volta-0mvaxv]
+    paths:
+      - 'src/**'
+      - 'src-tauri/**'
+      - 'public/**'
+      - 'index.html'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'vite.config.ts'
+      - '.github/workflows/mac-app.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write # to create the release with the .dmg
+
+concurrency:
+  group: mac-app-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install Rust (Apple Silicon + Intel targets)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Test
+        run: |
+          npm run typecheck
+          npm test
+
+      - name: Build universal app and .dmg
+        run: npx tauri build --target universal-apple-darwin
+
+      - name: Check the app bundle
+        run: |
+          APP="src-tauri/target/universal-apple-darwin/release/bundle/macos/yFit Tabata Timer.app"
+          lipo -info "$APP/Contents/MacOS/"*            # must list x86_64 and arm64
+          codesign --verify --deep --verbose=2 "$APP"   # ad-hoc signature (required on Apple Silicon)
+          plutil -p "$APP/Contents/Info.plist" | grep -E "LSMinimumSystemVersion|NSAppSleepDisabled|CFBundleIdentifier"
+
+      - name: Collect installer
+        id: dmg
+        run: |
+          VERSION=$(node -p "require('./src-tauri/tauri.conf.json').version")
+          SRC=$(ls src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg | head -1)
+          OUT="yFit-Tabata-Timer-${VERSION}-mac.dmg"
+          cp "$SRC" "$OUT"
+          echo "file=$OUT" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          ls -lh "$OUT"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: yFit-Tabata-Timer-mac
+          path: ${{ steps.dmg.outputs.file }}
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: mac-v${{ steps.dmg.outputs.version }}-build.${{ github.run_number }}
+          target_commitish: ${{ github.sha }}
+          name: yFit Tabata Timer ${{ steps.dmg.outputs.version }} for Mac (build ${{ github.run_number }})
+          files: ${{ steps.dmg.outputs.file }}
+          make_latest: true
+          body: |
+            **Download `${{ steps.dmg.outputs.file }}` below**, then follow the install steps.
+
+            Works on Apple Silicon (M1/M2/M3/M4) and Intel Macs, macOS 10.15 Catalina or newer.
+
+            ### Install
+            1. Open the downloaded `.dmg` and drag **yFit Tabata Timer** onto the **Applications** folder.
+            2. Open **Applications** and double-click **yFit Tabata Timer**.
+            3. The app isn't from the App Store, so macOS blocks it the first time:
+               - **macOS 15 Sequoia or newer:** click **Done**, then open **System Settings → Privacy & Security**, scroll down and click **Open Anyway** next to "yFit Tabata Timer", and confirm.
+               - **macOS 14 or older:** right-click (or Control-click) the app → **Open** → **Open**.
+            4. From then on it opens normally.
+
+            If macOS says the app **"is damaged"**, open Terminal and run:
+            `xattr -dr com.apple.quarantine "/Applications/yFit Tabata Timer.app"`

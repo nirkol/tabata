@@ -1,0 +1,49 @@
+{
+  "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
+  "productName": "yFit Tabata Timer",
+  "version": "0.1.0",
+  "identifier": "com.yfit.tabatatimer",
+  "build": {
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:5173",
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "yFit Tabata Timer",
+        "width": 1180,
+        "height": 800,
+        "minWidth": 760,
+        "minHeight": 560,
+        "resizable": true,
+        "fullscreen": false,
+        "center": true,
+        "backgroundColor": "#0b0b0d",
+        "backgroundThrottling": "disabled"
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["app", "dmg"],
+    "category": "HealthcareFitness",
+    "shortDescription": "Tabata interval timer",
+    "copyright": "yFit",
+    "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.icns", "icons/icon.ico"],
+    "macOS": {
+      "minimumSystemVersion": "10.15",
+      "signingIdentity": "-",
+      "dmg": {
+        "windowSize": { "width": 600, "height": 380 },
+        "appPosition": { "x": 160, "y": 190 },
+        "applicationFolderPosition": { "x": 440, "y": 190 }
+      }
+    }
+  }
+}

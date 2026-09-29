@@ -4,6 +4,7 @@ import { formatClock, formatCountdown } from '../timer/format';
 import type { App, Screen } from './app';
 import { confirmDialog } from './dialog';
 import { h } from './dom';
+import { isNative, setNativeKeepAwake, toggleFullscreen as platformToggleFullscreen } from '../platform/native';
 
 /** How often the screen refreshes when the tab is hidden (rAF doesn't run then). */
 const BACKGROUND_TICK_MS = 250;
@@ -221,13 +222,18 @@ export function runScreen(app: App, routine: Routine): Screen {
   }
 
   function toggleFullscreen(): void {
-    if (document.fullscreenElement) void document.exitFullscreen?.();
-    else void document.documentElement.requestFullscreen?.().catch(() => undefined);
+    void platformToggleFullscreen().catch(() => undefined);
   }
 
   // --- Screen Wake Lock (SPEC §4.6) ---
+  // In the Mac app the native side keeps the display awake; in the browser, the Wake Lock API.
   let wakeLock: WakeLockSentinel | null = null;
+  let nativeAwake = false;
   async function requestWakeLock(): Promise<void> {
+    if (isNative()) {
+      if (!nativeAwake && engine.getStatus() !== 'done') nativeAwake = await setNativeKeepAwake(true);
+      return;
+    }
     try {
       if ('wakeLock' in navigator && !wakeLock && engine.getStatus() !== 'done') {
         wakeLock = await navigator.wakeLock.request('screen');
@@ -238,6 +244,10 @@ export function runScreen(app: App, routine: Routine): Screen {
     }
   }
   async function releaseWakeLock(): Promise<void> {
+    if (nativeAwake) {
+      nativeAwake = false;
+      await setNativeKeepAwake(false);
+    }
     const lock = wakeLock;
     wakeLock = null;
     await lock?.release().catch(() => undefined);

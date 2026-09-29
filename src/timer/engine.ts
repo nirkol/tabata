@@ -196,7 +196,8 @@ export class TimerEngine {
 
   /** End of a set, including its Rest between sets, in ms. */
   setEndMs(set: number): number {
-    return this.phases.filter((p) => p.set === set).at(-1)!.endMs;
+    const inSet = this.phases.filter((p) => p.set === set);
+    return inSet[inSet.length - 1].endMs; // (no Array.at: older Mac WebKit lacks it)
   }
 
   snapshot(): Snapshot {
