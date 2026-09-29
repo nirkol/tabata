@@ -1,3 +1,4 @@
+import '@fontsource/barlow-condensed/latin-700.css';
 import './styles.css';
 import { LocalAppStorage } from './storage/storage';
 import { App } from './ui/app';

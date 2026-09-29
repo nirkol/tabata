@@ -175,7 +175,11 @@ h2 {
 }
 .card-title {
   margin: 0 0 4px;
-  font-size: 20px;
+  /* Bundled display font (works offline). Condensed, so 24px reads ~10% larger than the old 20px. */
+  font-family: 'Barlow Condensed', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 700;
+  font-size: 24px;
+  letter-spacing: 0.03em;
   overflow-wrap: anywhere;
 }
 .card-stats {
