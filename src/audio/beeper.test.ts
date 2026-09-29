@@ -143,10 +143,10 @@ describe('Beeper', () => {
 
     const { ctx, started } = fakeContext();
     const b = new Beeper(() => ctx);
-    b.setStyle('rest', 'drum');
+    b.setStyle('rest', 'low');
     b.startRun(beepSchedule(buildPhases(routine)), 0, 1);
-    // Get Ready now uses the drum; the work beeps keep the default bell.
-    expect(started.filter((o) => o.start === 101)[0].freq).toBe(180);
+    // Get Ready now uses the low beep; the work beeps keep the default bell.
+    expect(started.filter((o) => o.start === 101)[0].freq).toBe(440);
     expect(started.filter((o) => o.start === 121)[0].freq).toBe(1250);
     expect(b.getStyle('work')).toBe('bell');
   });

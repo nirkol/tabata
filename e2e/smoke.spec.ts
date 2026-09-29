@@ -140,15 +140,15 @@ test('settings: beep styles and hiding the remaining times', async ({ page }) =>
   await page.getByTestId('nav-settings').click();
   await expect(page.getByTestId('work-style')).toHaveValue('bell');
   await expect(page.getByTestId('rest-style')).toHaveValue('soft');
-  await expect(page.getByTestId('work-style').locator('option')).toHaveText(['Gym bell', 'Soft beep', 'Whistle', 'Chime', 'Drum']);
-  await page.getByTestId('work-style').selectOption('whistle');
-  await page.getByTestId('rest-style').selectOption('chime');
+  await expect(page.getByTestId('work-style').locator('option')).toHaveText(['Classic beep', 'Soft beep', 'High beep', 'Low beep', 'Gym bell']);
+  await page.getByTestId('work-style').selectOption('high');
+  await page.getByTestId('rest-style').selectOption('low');
   await page.getByTestId('show-remaining').uncheck();
 
   await page.reload();
   await page.getByTestId('nav-settings').click();
-  await expect(page.getByTestId('work-style')).toHaveValue('whistle');
-  await expect(page.getByTestId('rest-style')).toHaveValue('chime');
+  await expect(page.getByTestId('work-style')).toHaveValue('high');
+  await expect(page.getByTestId('rest-style')).toHaveValue('low');
   await expect(page.getByTestId('show-remaining')).not.toBeChecked();
 
   await page.getByTestId('nav-routines').click();

@@ -30,20 +30,18 @@ interface Tone {
   decay?: boolean;
   /** Pitch at the end, as a multiple of the start pitch (a quick drop sounds percussive). */
   sweepTo?: number;
-  /** Pitch warble: `rate` Hz, ± `depth` Hz. */
-  vibrato?: { rate: number; depth: number };
 }
 
 /** The selectable beep styles (Settings). Work and rest each use one of them. */
-export const BEEP_STYLES = ['bell', 'soft', 'whistle', 'chime', 'drum'] as const;
+export const BEEP_STYLES = ['classic', 'soft', 'high', 'low', 'bell'] as const;
 export type BeepStyle = (typeof BEEP_STYLES)[number];
 
 export const BEEP_STYLE_LABELS: Record<BeepStyle, string> = {
-  bell: 'Gym bell',
+  classic: 'Classic beep',
   soft: 'Soft beep',
-  whistle: 'Whistle',
-  chime: 'Chime',
-  drum: 'Drum',
+  high: 'High beep',
+  low: 'Low beep',
+  bell: 'Gym bell',
 };
 
 /** Default styles: a gym bell for work, a soft beep for rest. */
@@ -51,9 +49,30 @@ export const DEFAULT_BEEP_STYLES: Record<BeepSound, BeepStyle> = { work: 'bell',
 
 /**
  * Each style has a short countdown beep and a long phase-change beep (SPEC §4.4).
- * None of them is a plain square-wave "monitor" beep.
+ * They are all variations of an interval-timer beep, so every choice still sounds
+ * like a workout timer.
  */
 const STYLES: Record<BeepStyle, Record<Exclude<BeepKind, 'finish'>, Tone>> = {
+  // The original electronic interval-timer beep.
+  classic: {
+    short: { freq: 880, durationSec: 0.15, wave: 'square', peak: 0.3 },
+    long: { freq: 1320, durationSec: 0.6, wave: 'square', peak: 0.3 },
+  },
+  // Rounder and gentler.
+  soft: {
+    short: { freq: 587, durationSec: 0.15, wave: 'triangle', peak: 0.8 },
+    long: { freq: 880, durationSec: 0.6, wave: 'triangle', peak: 0.8 },
+  },
+  // Short, crisp and high: cuts through loud music.
+  high: {
+    short: { freq: 1760, durationSec: 0.1, wave: 'sine', peak: 0.6, partials: [{ ratio: 1, gain: 1 }, { ratio: 2, gain: 0.2 }] },
+    long: { freq: 2093, durationSec: 0.5, wave: 'sine', peak: 0.6, partials: [{ ratio: 1, gain: 1 }, { ratio: 2, gain: 0.2 }] },
+  },
+  // Deeper and fuller; the overtone keeps it audible on laptop speakers.
+  low: {
+    short: { freq: 440, durationSec: 0.18, wave: 'triangle', peak: 0.9, partials: [{ ratio: 1, gain: 1 }, { ratio: 2, gain: 0.35 }] },
+    long: { freq: 660, durationSec: 0.7, wave: 'triangle', peak: 0.9, partials: [{ ratio: 1, gain: 1 }, { ratio: 2, gain: 0.35 }] },
+  },
   // Woody "tock" + boxing-ring bell (inharmonic overtones give the metallic ring).
   bell: {
     short: { freq: 1250, durationSec: 0.12, wave: 'sine', peak: 0.9, decay: true, sweepTo: 0.6, partials: [{ ratio: 1, gain: 1 }, { ratio: 2.3, gain: 0.35 }] },
@@ -65,26 +84,6 @@ const STYLES: Record<BeepStyle, Record<Exclude<BeepKind, 'finish'>, Tone>> = {
       decay: true,
       partials: [{ ratio: 1, gain: 1 }, { ratio: 2.76, gain: 0.55 }, { ratio: 5.4, gain: 0.3 }, { ratio: 8.93, gain: 0.12 }],
     },
-  },
-  // Lower, rounder, gentle beep.
-  soft: {
-    short: { freq: 587, durationSec: 0.15, wave: 'triangle', peak: 0.8 },
-    long: { freq: 880, durationSec: 0.6, wave: 'triangle', peak: 0.8 },
-  },
-  // Coach's whistle: high pitch with a fast warble.
-  whistle: {
-    short: { freq: 2300, durationSec: 0.12, wave: 'sine', peak: 0.5, vibrato: { rate: 30, depth: 60 } },
-    long: { freq: 2300, durationSec: 0.7, wave: 'sine', peak: 0.5, vibrato: { rate: 28, depth: 90 } },
-  },
-  // Marimba-like chime.
-  chime: {
-    short: { freq: 1047, durationSec: 0.35, wave: 'sine', peak: 0.9, decay: true, partials: [{ ratio: 1, gain: 1 }, { ratio: 4, gain: 0.25 }] },
-    long: { freq: 523, durationSec: 1.4, wave: 'sine', peak: 0.9, decay: true, partials: [{ ratio: 1, gain: 1 }, { ratio: 2, gain: 0.5 }, { ratio: 3, gain: 0.3 }, { ratio: 4.2, gain: 0.15 }] },
-  },
-  // Punchy drum hit; a higher "click" overtone keeps it audible on laptop speakers.
-  drum: {
-    short: { freq: 180, durationSec: 0.22, wave: 'sine', peak: 1, decay: true, sweepTo: 0.5, partials: [{ ratio: 1, gain: 1 }, { ratio: 5.5, gain: 0.25 }] },
-    long: { freq: 130, durationSec: 0.9, wave: 'sine', peak: 1, decay: true, sweepTo: 0.45, partials: [{ ratio: 1, gain: 1 }, { ratio: 1.5, gain: 0.4 }, { ratio: 6, gain: 0.2 }] },
   },
 };
 
@@ -263,23 +262,6 @@ export class Beeper {
       osc.type = tone.wave;
       osc.frequency.setValueAtTime(tone.freq * p.ratio, start);
       if (tone.sweepTo) osc.frequency.exponentialRampToValueAtTime(tone.freq * p.ratio * tone.sweepTo, end);
-      let lfo: OscillatorNode | null = null;
-      if (tone.vibrato) {
-        lfo = ctx.createOscillator();
-        const depth = ctx.createGain();
-        lfo.frequency.setValueAtTime(tone.vibrato.rate, start);
-        depth.gain.setValueAtTime(tone.vibrato.depth * p.ratio, start);
-        lfo.connect(depth);
-        depth.connect(osc.frequency);
-        lfo.onended = () => {
-          if (lfo) this.live.delete(lfo);
-          lfo?.disconnect();
-          depth.disconnect();
-        };
-        this.live.add(lfo);
-        lfo.start(start);
-        lfo.stop(end);
-      }
       osc.connect(level);
       level.connect(env);
       osc.onended = () => {

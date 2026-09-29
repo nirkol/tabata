@@ -201,8 +201,8 @@ The admin area is a plain **Settings screen with no PIN or password**. It holds 
 |---|---|---|---|
 | Work beep volume | − / + number control (§5.3, step 5 %) + slider + **"Test"** button | 0 – 100 % | 70 % |
 | Rest beep volume | Same control as the work beep volume, for the rest sound (Get Ready, Rest, Rest between sets) | 0 – 100 % | 70 % |
-| Work beep sound | Dropdown next to the work volume; plays the sound when changed | Gym bell / Soft beep / Whistle / Chime / Drum | Gym bell |
-| Rest beep sound | Dropdown next to the rest volume; plays the sound when changed | Gym bell / Soft beep / Whistle / Chime / Drum | Soft beep |
+| Work beep sound | Dropdown next to the work volume; plays the sound when changed | Classic beep / Soft beep / High beep / Low beep / Gym bell | Gym bell |
+| Rest beep sound | Dropdown next to the rest volume; plays the sound when changed | Classic beep / Soft beep / High beep / Low beep / Gym bell | Soft beep |
 | Show remaining times | Checkbox: show "Set remaining" and "Total remaining" on the Run screen | on / off | on |
 | Counter digit color | Color picker (with a few presets) | any color except red, which is reserved for the last 5 s | White `#FFFFFF` |
 | Counter digit size | − / + number control (§5.3, step 5 %) + slider, with live preview | 10 – 60 % of window height | 40 % |
@@ -328,7 +328,7 @@ Both beep volumes and Mute can also be changed from the Run screen (§4.2).
 | Run-screen info | Set counter only at the start of the Work/Rest row; "Set remaining" and "Total remaining" together in the center; volume slider + mute in the top-right corner |
 | Run-screen controls | Only Pause and Stop (no Skip or Restart); at the end: Start over and Back to routines |
 | Mac packaging | Tauri, unsigned build accepted |
-| Beep sounds | 5 selectable styles, chosen separately for work and rest |
+| Beep sounds | 5 selectable styles, all variations of a workout-timer beep (Classic, Soft, High, Low beep, Gym bell), chosen separately for work and rest |
 | Remaining times | "Set remaining" / "Total remaining" can be hidden in Settings |
 | App name | "yFit Tabata Timer" (top-left, larger, display font; also the browser tab title) |
 | Mac hardware | Universal binary for Apple Silicon and Intel |

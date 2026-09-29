@@ -59,8 +59,9 @@ describe('LocalAppStorage', () => {
 
 describe('sanitizeSettings', () => {
   it('keeps valid beep styles and the show-remaining toggle', () => {
-    expect(sanitizeSettings({ workStyle: 'whistle', restStyle: 'drum', showRemaining: false })).toMatchObject({ workStyle: 'whistle', restStyle: 'drum', showRemaining: false });
-    expect(sanitizeSettings({ workStyle: 'kazoo', showRemaining: 'no' })).toMatchObject({ workStyle: 'bell', restStyle: 'soft', showRemaining: true });
+    expect(sanitizeSettings({ workStyle: 'high', restStyle: 'low', showRemaining: false })).toMatchObject({ workStyle: 'high', restStyle: 'low', showRemaining: false });
+    // Unknown (or removed) styles fall back to the defaults.
+    expect(sanitizeSettings({ workStyle: 'whistle', restStyle: 'drum', showRemaining: 'no' })).toMatchObject({ workStyle: 'bell', restStyle: 'soft', showRemaining: true });
   });
 
   it('rejects out-of-range or red values', () => {
