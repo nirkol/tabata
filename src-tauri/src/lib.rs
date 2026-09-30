@@ -68,11 +68,28 @@ fn set_keep_awake(on: bool, state: State<'_, Awake>) -> Result<(), String> {
     Ok(())
 }
 
+/// Says "Ten!" out loud with macOS's built-in voice (the 10-seconds-left call).
+/// The text is fixed, and `say` runs without a shell.
+#[tauri::command]
+fn say_ten(volume: f32) -> Result<(), String> {
+    #[cfg(target_os = "macos")]
+    {
+        let v = if volume.is_finite() { volume.clamp(0.0, 1.0) } else { 1.0 };
+        std::process::Command::new("/usr/bin/say")
+            .args(["-r", "230", &format!("[[volm {v:.2}]] Ten!")])
+            .spawn()
+            .map_err(|e| e.to_string())?;
+    }
+    #[cfg(not(target_os = "macos"))]
+    let _ = volume;
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .manage(Awake::default())
-        .invoke_handler(tauri::generate_handler![load_store, save_store, set_keep_awake])
+        .invoke_handler(tauri::generate_handler![load_store, save_store, set_keep_awake, say_ten])
         .run(tauri::generate_context!())
         .expect("error while running yFit Workout Timer");
 }

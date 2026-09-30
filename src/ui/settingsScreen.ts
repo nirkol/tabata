@@ -4,6 +4,7 @@ import type { App, Screen } from './app';
 import { confirmDialog } from './dialog';
 import { h } from './dom';
 import { createNumberInput } from './numberInput';
+import { sayTen } from '../platform/voice';
 
 const COLOR_PRESETS = ['#30D158', '#FFFFFF', '#FFD60A', '#64D2FF', '#0A84FF', '#BF5AF2'];
 
@@ -50,6 +51,11 @@ export function settingsScreen(app: App): Screen {
   }
   const workVolume = volumeRow('volume', 'work', 'Work beeps');
   const restVolume = volumeRow('restVolume', 'rest', 'Rest beeps (Get Ready, Rest, Rest between cycles)');
+
+  const tenCall = h('input', { type: 'checkbox', class: 'toggle', id: 'ten-call', 'data-testid': 'ten-call' });
+  tenCall.checked = app.settings.tenCall;
+  tenCall.addEventListener('change', () => app.updateSettings({ tenCall: tenCall.checked }));
+  const tenTest = h('button', { type: 'button', class: 'btn', 'data-testid': 'test-ten', onclick: () => sayTen(app.settings.muted ? 0 : app.settings.volume) }, '🔊 Test');
 
   const showRemaining = h('input', { type: 'checkbox', class: 'toggle', id: 'show-remaining', 'data-testid': 'show-remaining' });
   showRemaining.checked = app.settings.showRemaining;
@@ -142,6 +148,7 @@ export function settingsScreen(app: App): Screen {
       h('div', { class: 'row' }, h('h2', {}, 'Sound'), h('label', { class: 'toggle-row', for: 'mute-toggle' }, mute, h('span', {}, 'Mute all beeps'))),
       workVolume,
       restVolume,
+      h('div', { class: 'row' }, h('label', { class: 'toggle-row', for: 'ten-call' }, tenCall, h('span', {}, 'Voice “Ten!” 10 seconds before the end of each work period')), tenTest),
     ),
     h(
       'div',

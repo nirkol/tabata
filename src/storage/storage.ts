@@ -10,6 +10,8 @@ export interface Settings {
   restStyle: BeepStyle;
   /** Show "Set remaining" and "Total remaining" on the Run screen. */
   showRemaining: boolean;
+  /** Spoken "Ten!" 10 s before the end of each Work period. */
+  tenCall: boolean;
   muted: boolean;
   digitColor: string;
   /** Digit height, % of window height (10–60). */
@@ -22,6 +24,7 @@ export const DEFAULT_SETTINGS: Settings = {
   workStyle: 'bell',
   restStyle: 'soft',
   showRemaining: true,
+  tenCall: true,
   muted: false,
   digitColor: '#30D158',
   digitSizePct: 40,
@@ -92,6 +95,7 @@ export function sanitizeSettings(value: unknown): Settings {
   if (isStyle(v.workStyle)) s.workStyle = v.workStyle;
   if (isStyle(v.restStyle)) s.restStyle = v.restStyle;
   if (typeof v.showRemaining === 'boolean') s.showRemaining = v.showRemaining;
+  if (typeof v.tenCall === 'boolean') s.tenCall = v.tenCall;
   if (typeof v.muted === 'boolean') s.muted = v.muted;
   if (typeof v.digitColor === 'string' && /^#[0-9a-f]{6}$/i.test(v.digitColor) && !isReddish(v.digitColor)) {
     s.digitColor = v.digitColor.toUpperCase();

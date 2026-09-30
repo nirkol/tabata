@@ -183,6 +183,43 @@ test('timeline shows the whole plan and moves with the workout', async ({ page }
   expect(await markerLeft()).toBeGreaterThan(first);
 });
 
+test('"Ten!" is spoken 10 s before the end of each work period, and can be turned off', async ({ page }) => {
+  // Record speech instead of playing it.
+  await page.addInitScript(() => {
+    const w = window as unknown as { __spoken: { text: string; t: number }[] };
+    w.__spoken = [];
+    Object.defineProperty(window, 'speechSynthesis', {
+      configurable: true,
+      value: { speak: (u: SpeechSynthesisUtterance) => w.__spoken.push({ text: u.text, t: performance.now() }), cancel: () => undefined },
+    });
+  });
+  await fresh(page, '?speed=5');
+  await page.evaluate(() => {
+    const now = new Date().toISOString();
+    // G5 W20 R15 W20 → two work periods, one 15 s rest (no call during rest).
+    localStorage.setItem('tabata.v1.routines', JSON.stringify({ version: 1, routines: [{ id: 'x', name: 'Ten test', workSec: 20, restSec: 15, intervals: 2, sets: 1, setRestSec: 60, createdAt: now, updatedAt: now }] }));
+  });
+  await page.reload();
+  await expect(page.getByTestId('nav-settings')).toBeVisible();
+  await page.getByTestId('nav-settings').click();
+  await expect(page.getByTestId('ten-call')).toBeChecked();
+  await page.getByTestId('nav-routines').click();
+  await page.getByTestId('start').click();
+  await expect(page.getByTestId('run-phase')).toHaveText('DONE', { timeout: 20000 });
+  const spoken = await page.evaluate(() => (window as unknown as { __spoken: { text: string }[] }).__spoken.map((s) => s.text));
+  expect(spoken).toEqual(['Ten!', 'Ten!']);
+
+  // Turned off: no call.
+  await page.getByTestId('stop').click();
+  await page.getByTestId('nav-settings').click();
+  await page.getByTestId('ten-call').uncheck();
+  await page.evaluate(() => ((window as unknown as { __spoken: unknown[] }).__spoken.length = 0));
+  await page.getByTestId('nav-routines').click();
+  await page.getByTestId('start').click();
+  await expect(page.getByTestId('run-phase')).toHaveText('DONE', { timeout: 20000 });
+  expect(await page.evaluate(() => (window as unknown as { __spoken: unknown[] }).__spoken.length)).toBe(0);
+});
+
 test('stop pauses the routine while asking for confirmation', async ({ page }) => {
   await fresh(page);
   await page.getByTestId('start').click();

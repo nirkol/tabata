@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { TimerEngine, beepSchedule, buildPhases, intervalsLeft, totalDurationSec, type Phase } from './engine';
+import { TimerEngine, beepSchedule, buildPhases, intervalsLeft, tenCallDue, totalDurationSec, type Phase } from './engine';
 
 const base = { workSec: 20, restSec: 10, intervals: 3, sets: 2, setRestSec: 60 };
 
@@ -238,6 +238,45 @@ describe('setRemainingMs', () => {
     expect(e.snapshot()).toMatchObject({ setRemainingMs: 80000, phase: { kind: 'work', set: 2 } });
     c.advance(80000);
     expect(e.snapshot().setRemainingMs).toBe(0);
+  });
+});
+
+describe('tenCallDue ("Ten!" 10 s before the end of Work)', () => {
+  it('fires once per Work period, only for work, only around 10 s left', () => {
+    const c = fakeClock();
+    const e = new TimerEngine({ workSec: 20, restSec: 15, intervals: 2, sets: 1, setRestSec: 60 }, c.now); // G5 W20 R15 W20
+    e.start();
+    let last = -1;
+    const calls: number[] = [];
+    // Step through the whole run in 100 ms ticks.
+    for (let t = 0; t <= 60000; t += 100) {
+      const s = e.snapshot();
+      if (tenCallDue(s, last)) {
+        last = s.phaseIndex;
+        calls.push(Math.round(s.elapsedMs));
+      }
+      c.advance(100);
+    }
+    // Work 1: 5–25 s → call at 15 s. Rest (25–40 s, 15 s long) gets none. Work 2: 40–60 s → call at 50 s.
+    expect(calls).toEqual([15000, 50000]);
+  });
+
+  it('skips work periods of 10 s or less, paused runs and late catch-ups', () => {
+    const c = fakeClock();
+    const short = new TimerEngine({ workSec: 10, restSec: 5, intervals: 1, sets: 1, setRestSec: 60 }, c.now);
+    short.start();
+    c.advance(5000); // start of the 10 s work
+    expect(tenCallDue(short.snapshot(), -1)).toBe(false);
+
+    const e = new TimerEngine({ workSec: 30, restSec: 5, intervals: 1, sets: 1, setRestSec: 60 }, c.now);
+    e.start();
+    c.advance(5000 + 20000); // exactly 10 s left
+    expect(tenCallDue(e.snapshot(), -1)).toBe(true);
+    e.pause();
+    expect(tenCallDue(e.snapshot(), -1)).toBe(false);
+    e.resume();
+    c.advance(3000); // 7 s left: too late, skipped
+    expect(tenCallDue(e.snapshot(), -1)).toBe(false);
   });
 });
 

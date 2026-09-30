@@ -66,6 +66,23 @@ export interface Beep {
 export const COUNTDOWN_BEEPS = [4, 3, 2, 1] as const;
 /** The digits and ring turn red when this many seconds (or fewer) remain. */
 export const WARNING_SEC = 5;
+/** The spoken "Ten!" call comes this many seconds before the end of a Work period. */
+export const TEN_CALL_SEC = 10;
+/** A late call (e.g. after the window was hidden) is skipped once this much time has passed. */
+export const TEN_CALL_WINDOW_MS = 1500;
+
+/**
+ * True when the "Ten!" call is due: during a running Work period longer than 10 s, in the
+ * moment its remaining time crosses 10 s, and not already called for this phase.
+ * Rest, Cycle Rest and Get Ready never get it.
+ */
+export function tenCallDue(s: Snapshot, lastCalledPhase: number): boolean {
+  const p = s.phase;
+  if (s.status !== 'running' || !p || p.kind !== 'work' || p.durationSec <= TEN_CALL_SEC) return false;
+  if (s.phaseIndex === lastCalledPhase) return false;
+  const past = TEN_CALL_SEC * 1000 - s.phaseRemainingMs;
+  return past >= 0 && past < TEN_CALL_WINDOW_MS;
+}
 
 /**
  * Every beep of a run (SPEC §4.4): short beeps at 4/3/2/1 s before the end of each
