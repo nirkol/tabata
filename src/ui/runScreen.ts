@@ -154,7 +154,10 @@ export function runScreen(app: App, routine: Routine): Screen {
     praiseTimer = setTimeout(() => {
       const s = engine.snapshot();
       const stillThere = final ? s.status === 'done' : s.status === 'running' && s.phase?.kind === 'setRest';
-      if (stillThere && !app.settings.muted) sayText(text, app.settings.volume);
+      if (!stillThere || app.settings.muted) return;
+      // A quick "ta-da" fanfare, then the statement in an excited voice.
+      const fanfareMs = app.beeper.fanfare();
+      praiseTimer = setTimeout(() => sayText(text, app.settings.volume), fanfareMs);
     }, delay);
   }
   function showPraise(text: string | null): void {

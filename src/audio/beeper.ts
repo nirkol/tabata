@@ -87,6 +87,8 @@ const STYLES: Record<BeepStyle, Record<Exclude<BeepKind, 'finish'>, Tone>> = {
   },
 };
 
+/** Length of the encouragement fanfare; the voice starts right after it. */
+export const FANFARE_MS = 650;
 /** "Finished" sound: three strikes of the long tone, this far apart. */
 const FINISH_SPACING_SEC = 0.85;
 const RAMP_SEC = 0.005;
@@ -170,6 +172,33 @@ export class Beeper {
     const now = this.ctx.currentTime;
     this.master.gain.setValueAtTime(this.muted ? 0 : 1, now);
     for (const sound of ['work', 'rest'] as const) this.buses[sound]?.gain.setValueAtTime(this.volumes[sound], now);
+  }
+
+  /**
+   * A short, bright "ta-da" fanfare (four rising notes of a major chord) played right before
+   * the end-of-cycle encouragement, on the work volume. Returns its length in ms.
+   */
+  fanfare(): number {
+    this.unlock();
+    if (!this.ctx) return 0;
+    const t0 = this.ctx.currentTime + 0.02;
+    const notes = [523.25, 659.25, 783.99, 1046.5]; // C5 E5 G5 C6
+    notes.forEach((freq, i) => {
+      const last = i === notes.length - 1;
+      this.tone('work', {
+        freq,
+        durationSec: last ? 0.55 : 0.13,
+        wave: 'triangle',
+        peak: 0.85,
+        decay: last,
+        partials: [
+          { ratio: 1, gain: 1 },
+          { ratio: 2, gain: 0.3 },
+          { ratio: 3, gain: 0.12 },
+        ],
+      }, t0 + i * 0.11);
+    });
+    return FANFARE_MS;
   }
 
   /** Plays a short and a long beep of one sound now (the "Test" buttons). */

@@ -74,7 +74,9 @@ export function settingsScreen(app: App): Screen {
       const text = pickPraise(app.settings.praises, lastTested);
       if (!text) return;
       lastTested = text;
-      sayText(text, app.settings.muted ? 0 : app.settings.volume);
+      if (app.settings.muted) return;
+      const fanfareMs = app.beeper.fanfare();
+      setTimeout(() => sayText(text, app.settings.volume), fanfareMs);
     },
   }, '🔊 Test');
   const praiseInputs = app.settings.praises.map((text, i) => {

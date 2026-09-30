@@ -151,6 +151,16 @@ describe('Beeper', () => {
     expect(b.getStyle('work')).toBe('bell');
   });
 
+  it('plays a four-note rising "ta-da" fanfare on the work volume', () => {
+    const { ctx, started } = fakeContext();
+    const b = new Beeper(() => ctx);
+    const ms = b.fanfare();
+    expect(ms).toBeGreaterThan(400);
+    const notes = uniqueStarts(started).map((t) => started.find((o) => +o.start.toFixed(6) === t)!.freq);
+    expect(notes).toHaveLength(4);
+    for (let i = 1; i < notes.length; i++) expect(notes[i]).toBeGreaterThan(notes[i - 1]);
+  });
+
   it('uses a different sound for rest beeps than for work beeps', () => {
     const { ctx, started } = fakeContext();
     const b = new Beeper(() => ctx);

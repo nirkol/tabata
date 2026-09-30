@@ -109,10 +109,19 @@ fn say_text(text: String, volume: f32) -> Result<(), String> {
     #[cfg(target_os = "macos")]
     {
         let v = if volume.is_finite() { volume.clamp(0.0, 1.0) } else { 1.0 };
-        std::process::Command::new("/usr/bin/say")
-            .args(["-r", "200", &format!("[[volm {v:.2}]] {clean}")])
-            .spawn()
-            .map_err(|e| e.to_string())?;
+        // Upbeat delivery: higher pitch base, lively pitch changes and emphasis.
+        let line = format!("[[volm {v:.2}]] [[pbas 56]] [[pmod 80]] [[emph +]] {clean}");
+        // Prefer the expressive "Samantha" voice; fall back to the system voice if it's missing.
+        std::thread::spawn(move || {
+            let ok = std::process::Command::new("/usr/bin/say")
+                .args(["-v", "Samantha", "-r", "195", &line])
+                .status()
+                .map(|s| s.success())
+                .unwrap_or(false);
+            if !ok {
+                let _ = std::process::Command::new("/usr/bin/say").args(["-r", "195", &line]).status();
+            }
+        });
     }
     #[cfg(not(target_os = "macos"))]
     let _ = volume;
