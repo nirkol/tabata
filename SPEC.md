@@ -121,7 +121,7 @@ The **volume controls** sit at the **lower right**, on the same row as Pause / S
 - The progress indicator is a ring around the digits that empties as the phase elapses. It animates smoothly and does not jump once per second.
 
 ### 4.4 Audio cues
-Every phase (Get Ready, Work, Rest, Cycle Rest) ends with a countdown of **5 beeps** (default: 4 short + 1 long) or **3 beeps** (2 short at 2 s and 1 s + 1 long), chosen in Settings **separately for work and for rest**. The 5-beep version:
+Every phase (Get Ready, Work, Rest, Cycle Rest) ends with the same **5-beep countdown**:
 
 | Remaining time | Sound |
 |---|---|
@@ -212,7 +212,6 @@ The admin area is a plain **Settings screen with no PIN or password**. It holds 
 |---|---|---|---|
 | Work beep volume | − / + number control (§5.3, step 5 %) + slider + **"Test"** button | 0 – 100 % | 70 % |
 | Rest beep volume | Same control as the work beep volume, for the rest sound (Get Ready, Rest, Rest between cycles) | 0 – 100 % | 70 % |
-| Countdown beeps (work / rest) | 3 | 5 switch on each of the Work beeps and Rest beeps rows | 3 or 5 | 5 |
 | Work beep sound | Dropdown next to the work volume; plays the sound when changed | Classic beep / Soft beep / High beep / Low beep / Gym bell | Gym bell |
 | Rest beep sound | Dropdown next to the rest volume; plays the sound when changed | Classic beep / Soft beep / High beep / Low beep / Gym bell | Soft beep |
 | Show remaining times | Checkbox: show "Cycle remaining" and "Total remaining" on the Run screen | on / off | on |
