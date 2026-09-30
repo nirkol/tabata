@@ -1,4 +1,4 @@
-# yFit Tabata Timer
+# yFit Workout Timer
 
 An interval-training stopwatch for trainers. Create named routines (work / rest / rounds / cycles), then run them with huge, easy-to-read digits and countdown beeps.
 
@@ -11,17 +11,19 @@ The full product spec is in [SPEC.md](SPEC.md). The same app runs in two ways:
 
 Works on **Apple Silicon (M1–M4) and Intel Macs**, **macOS 10.15 Catalina or newer**.
 
-1. Download the latest **`yFit-Tabata-Timer-…-mac.dmg`** from the [Releases page](../../releases/latest). You can copy the `.dmg` to another Mac with a USB stick, AirDrop or email.
-2. Open the `.dmg` and drag **yFit Tabata Timer** onto **Applications**.
+1. Download the latest **`yFit-Workout-Timer-…-mac.dmg`** from the [Releases page](../../releases/latest). You can copy the `.dmg` to another Mac with a USB stick, AirDrop or email.
+2. Open the `.dmg` and drag **yFit Workout Timer** onto **Applications**.
 3. Open it from **Applications**. The app isn't from the App Store, so macOS blocks it the first time:
-   - **macOS 15 Sequoia or newer:** click **Done**, open **System Settings → Privacy & Security**, scroll down, click **Open Anyway** next to "yFit Tabata Timer" and confirm.
+   - **macOS 15 Sequoia or newer:** click **Done**, open **System Settings → Privacy & Security**, scroll down, click **Open Anyway** next to "yFit Workout Timer" and confirm.
    - **macOS 14 or older:** right-click (Control-click) the app → **Open** → **Open**.
 4. After that it opens normally.
+
+> **Upgrading from "yFit Tabata Timer"?** The app was renamed. After installing **yFit Workout Timer**, drag the old **yFit Tabata Timer** from Applications to the Trash. Your routines and settings carry over automatically.
 
 If macOS says the app **"is damaged"**, run this once in Terminal:
 
 ```bash
-xattr -dr com.apple.quarantine "/Applications/yFit Tabata Timer.app"
+xattr -dr com.apple.quarantine "/Applications/yFit Workout Timer.app"
 ```
 
 In the Mac app, routines and settings are saved in `~/Library/Application Support/com.yfit.tabatatimer/store.json`. The display stays awake while a routine runs, and App Nap is disabled so timing and beeps stay accurate in the background.

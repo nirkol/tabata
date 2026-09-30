@@ -46,7 +46,7 @@ export class App {
     this.nav = h(
       'header',
       { class: 'topbar' },
-      h('div', { class: 'brand', 'data-testid': 'brand' }, h('span', { class: 'brand-accent' }, 'yFit'), ' Tabata Timer'),
+      h('div', { class: 'brand', 'data-testid': 'brand' }, h('span', { class: 'brand-accent' }, 'yFit'), ' Workout Timer'),
       h(
         'nav',
         { class: 'tabs' },
@@ -90,7 +90,7 @@ export class App {
       else tab.removeAttribute('title');
     }
     this.main.replaceChildren(screen.el);
-    document.title = 'yFit Tabata Timer';
+    document.title = 'yFit Workout Timer';
   }
 
   /** Starts a routine. Must be called from a user gesture so audio can start. */

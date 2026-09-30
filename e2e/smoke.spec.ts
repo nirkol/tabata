@@ -25,8 +25,8 @@ async function fresh(page: Page, query = '') {
 
 test('first launch shows the sample routine', async ({ page }) => {
   await fresh(page);
-  await expect(page.getByTestId('brand')).toHaveText('yFit Tabata Timer');
-  await expect(page).toHaveTitle('yFit Tabata Timer');
+  await expect(page.getByTestId('brand')).toHaveText('yFit Workout Timer');
+  await expect(page).toHaveTitle('yFit Workout Timer');
   await expect(page.getByTestId('routine-card')).toHaveCount(1);
   await expect(page.getByTestId('routine-name')).toHaveText('Classic Tabata');
   await expect(page.getByTestId('routine-stats').locator('.stat')).toHaveText(['Work0:20', 'Rest0:10', 'Rounds8', 'Cycles1', 'Total3:55']);
@@ -87,7 +87,7 @@ test('smoke: create a routine, run it, pause, resume and finish (speed flag)', a
   await expect(page.getByTestId('run-set-info')).toHaveText('Cycle 2 / 2', { timeout: 10000 });
   await expect(page.getByTestId('run-phase')).toHaveText('DONE', { timeout: 15000 });
   await expect(page.getByTestId('run-digits')).toHaveText('0:00');
-  await expect(page).toHaveTitle('DONE – yFit Tabata Timer');
+  await expect(page).toHaveTitle('DONE – yFit Workout Timer');
 
   const beeps = await page.evaluate(() => (window as unknown as { __beeps: unknown[] }).__beeps.length);
   expect(beeps).toBeGreaterThan(0);

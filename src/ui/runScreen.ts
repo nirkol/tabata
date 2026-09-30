@@ -156,7 +156,7 @@ export function runScreen(app: App, routine: Routine): Screen {
       lastStatus = s.status;
       onStatusChange(s);
     }
-    document.title = done ? 'DONE – yFit Tabata Timer' : `${text} ${label}${s.status === 'paused' ? ' (paused)' : ''} – yFit Tabata Timer`;
+    document.title = done ? 'DONE – yFit Workout Timer' : `${text} ${label}${s.status === 'paused' ? ' (paused)' : ''} – yFit Workout Timer`;
   }
 
   function onStatusChange(s: Snapshot): void {

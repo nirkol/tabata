@@ -1,4 +1,4 @@
-# Builds the yFit Tabata Timer Mac app (SPEC §9) on a GitHub-hosted Mac.
+# Builds the yFit Workout Timer Mac app (SPEC §9) on a GitHub-hosted Mac.
 #
 # Output: one universal .dmg installer (Apple Silicon + Intel, macOS 10.15+), published
 # as a GitHub Release so it can be downloaded with one click, and kept as a workflow
@@ -60,7 +60,7 @@ jobs:
 
       - name: Check the app bundle
         run: |
-          APP="src-tauri/target/universal-apple-darwin/release/bundle/macos/yFit Tabata Timer.app"
+          APP="src-tauri/target/universal-apple-darwin/release/bundle/macos/yFit Workout Timer.app"
           lipo -info "$APP/Contents/MacOS/"*            # must list x86_64 and arm64
           codesign --verify --deep --verbose=2 "$APP"   # ad-hoc signature (required on Apple Silicon)
           plutil -p "$APP/Contents/Info.plist" | grep -E "LSMinimumSystemVersion|NSAppSleepDisabled|CFBundleIdentifier"
@@ -70,7 +70,7 @@ jobs:
         run: |
           VERSION=$(node -p "require('./src-tauri/tauri.conf.json').version")
           SRC=$(ls src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg | head -1)
-          OUT="yFit-Tabata-Timer-${VERSION}-mac.dmg"
+          OUT="yFit-Workout-Timer-${VERSION}-mac.dmg"
           cp "$SRC" "$OUT"
           echo "file=$OUT" >> "$GITHUB_OUTPUT"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
@@ -78,7 +78,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: yFit-Tabata-Timer-mac
+          name: yFit-Workout-Timer-mac
           path: ${{ steps.dmg.outputs.file }}
 
       - name: Publish release
@@ -86,7 +86,7 @@ jobs:
         with:
           tag_name: mac-v${{ steps.dmg.outputs.version }}-build.${{ github.run_number }}
           target_commitish: ${{ github.sha }}
-          name: yFit Tabata Timer ${{ steps.dmg.outputs.version }} for Mac (build ${{ github.run_number }})
+          name: yFit Workout Timer ${{ steps.dmg.outputs.version }} for Mac (build ${{ github.run_number }})
           files: ${{ steps.dmg.outputs.file }}
           make_latest: true
           body: |
@@ -95,12 +95,12 @@ jobs:
             Works on Apple Silicon (M1/M2/M3/M4) and Intel Macs, macOS 10.15 Catalina or newer.
 
             ### Install
-            1. Open the downloaded `.dmg` and drag **yFit Tabata Timer** onto the **Applications** folder.
-            2. Open **Applications** and double-click **yFit Tabata Timer**.
+            1. Open the downloaded `.dmg` and drag **yFit Workout Timer** onto the **Applications** folder.
+            2. Open **Applications** and double-click **yFit Workout Timer**.
             3. The app isn't from the App Store, so macOS blocks it the first time:
-               - **macOS 15 Sequoia or newer:** click **Done**, then open **System Settings → Privacy & Security**, scroll down and click **Open Anyway** next to "yFit Tabata Timer", and confirm.
+               - **macOS 15 Sequoia or newer:** click **Done**, then open **System Settings → Privacy & Security**, scroll down and click **Open Anyway** next to "yFit Workout Timer", and confirm.
                - **macOS 14 or older:** right-click (or Control-click) the app → **Open** → **Open**.
             4. From then on it opens normally.
 
             If macOS says the app **"is damaged"**, open Terminal and run:
-            `xattr -dr com.apple.quarantine "/Applications/yFit Tabata Timer.app"`
+            `xattr -dr com.apple.quarantine "/Applications/yFit Workout Timer.app"`

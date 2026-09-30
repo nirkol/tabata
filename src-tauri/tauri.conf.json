@@ -1,6 +1,6 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "yFit Tabata Timer",
+  "productName": "yFit Workout Timer",
   "version": "0.1.0",
   "identifier": "com.yfit.tabatatimer",
   "build": {
@@ -13,7 +13,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "yFit Tabata Timer",
+        "title": "yFit Workout Timer",
         "width": 1180,
         "height": 800,
         "minWidth": 760,

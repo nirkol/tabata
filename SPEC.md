@@ -1,4 +1,4 @@
-# yFit Tabata Timer: Product Spec
+# yFit Workout Timer: Product Spec
 
 > **Status:** v1.0, ready for implementation. All open questions are resolved (see the decision log in §12).
 > **Audience:** Claude Code, which will implement this spec.
@@ -156,7 +156,7 @@ Implementation requirements:
 - Because background timers may be delayed, phase advancement must also be computed from timestamps. When the tab comes back into focus, the engine immediately catches up to the correct phase.
 - The `AudioContext` is created or resumed on the first user click (the Start button), because browsers block autoplay otherwise.
 - Request a **Screen Wake Lock** while running, so the display doesn't sleep mid-workout.
-- Show the remaining time and phase in the **browser tab title**, for example `0:17 WORK – Tabata`.
+- Show the remaining time and phase in the **browser tab title**, for example `0:17 WORK – yFit Workout Timer`.
 
 ---
 
@@ -339,7 +339,7 @@ Both beep volumes and Mute can also be changed from the Run screen (§4.2).
 | Mac packaging | Tauri, unsigned build accepted |
 | Beep sounds | 5 selectable styles, all variations of a workout-timer beep (Classic, Soft, High, Low beep, Gym bell), chosen separately for work and rest |
 | Remaining times | "Cycle remaining" / "Total remaining" can be hidden in Settings |
-| App name | "yFit Tabata Timer" (top-left, larger, display font; also the browser tab title) |
+| App name | "yFit Workout Timer" (formerly "yFit Tabata Timer"): top-left header, window and browser tab title, Mac app and installer name. The Mac bundle identifier stays `com.yfit.tabatatimer` so saved data is kept. |
 | Mac hardware | Universal binary for Apple Silicon and Intel, macOS 10.15+ (older Macs supported) |
 | Mac build | Built by a GitHub Actions workflow on a GitHub-hosted Mac; the .dmg is published as a GitHub Release. Ad-hoc signed (not notarized). |
 | Exercise names, voice, history | Not needed |

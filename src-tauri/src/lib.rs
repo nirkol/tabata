@@ -1,4 +1,4 @@
-//! Native side of the yFit Tabata Timer Mac app (SPEC §9).
+//! Native side of the yFit Workout Timer Mac app (SPEC §9).
 //!
 //! The UI is the Phase 1 web app. This file adds what the Mac needs on top:
 //! - routines and settings saved to a JSON file in the app's data folder,
@@ -56,7 +56,7 @@ fn set_keep_awake(on: bool, state: State<'_, Awake>) -> Result<(), String> {
                 .display(true)
                 .idle(true)
                 .reason("A workout routine is running")
-                .app_name("yFit Tabata Timer")
+                .app_name("yFit Workout Timer")
                 .app_reverse_domain("com.yfit.tabatatimer")
                 .create()
                 .map_err(|e| e.to_string())?;
@@ -74,5 +74,5 @@ pub fn run() {
         .manage(Awake::default())
         .invoke_handler(tauri::generate_handler![load_store, save_store, set_keep_awake])
         .run(tauri::generate_context!())
-        .expect("error while running yFit Tabata Timer");
+        .expect("error while running yFit Workout Timer");
 }
