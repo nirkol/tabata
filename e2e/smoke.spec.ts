@@ -310,7 +310,13 @@ test('routines can be reordered by dragging the handle or with the keyboard', as
   await page.mouse.down();
   await page.mouse.move(first!.x + 50, first!.y + 10, { steps: 12 });
   await expect(page.locator('[data-id="D"]')).toHaveClass(/dragging/);
+  // A "Drop here" slot marks where it will land (at the top), and the card is shifted to the right.
+  await expect(page.getByTestId('drop-slot')).toBeVisible();
+  expect(await page.getByTestId('routine-list').locator('> *').first().getAttribute('data-testid')).toBe('drop-slot');
+  const lifted = await page.locator('[data-id="D"]').boundingBox();
+  expect(lifted!.x).toBeGreaterThan(first!.x + 25);
   await page.mouse.up();
+  await expect(page.getByTestId('drop-slot')).toHaveCount(0);
   await expect.poll(names).toEqual(['Routine D', 'Routine A', 'Routine B', 'Routine C']);
   // Dropping doesn't select a card (A stays the highlighted one).
   await expect(page.locator('[data-id="D"]')).not.toHaveClass(/dragging/);

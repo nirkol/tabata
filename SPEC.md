@@ -164,13 +164,15 @@ Implementation requirements:
 
 ### 5.1 List
 - Shows all saved routines as cards with the name and **labeled** values, so it's clear which number is which: `WORK 0:20 · REST 0:10 · ROUNDS 8 · CYCLES 2 · REST BETWEEN CYCLES 1:00 · TOTAL 8:45`. Rest between cycles is shown only when there are 2+ cycles.
-- Each card has **Start**, **Edit** and **Delete** buttons (no Duplicate).
+- Each card has **Start**, **Edit** (pencil icon) and **Delete** (trash icon) buttons (no Duplicate).
 - **Delete** asks for confirmation.
 - A **"+ New Routine"** button opens the editor, prefilled with the defaults and the next free `Routine N` name.
 - On first launch, the app creates one sample routine: "Classic Tabata" (20/10 × 8 × 1).
 - The last-used routine is highlighted (blue edge and a "LAST USED" tag).
 - Visual style: premium dark cards with soft depth and a hover lift; values in the display font with thin dividers; the total in accent blue; **Start** is the prominent button while Edit and Delete are quiet (Delete turns red on hover); the header shows the number of routines.
 - **Reorder routines:** each card has a ☰ drag handle on its right edge. Drag it with the mouse to move the routine up or down (the list scrolls when dragging near its top or bottom edge), or focus the handle and press ↑ / ↓. The new order is saved.
+  - While dragging, the card lifts, follows the pointer and is shifted ~1 cm to the right; a dashed **“Drop here”** slot marks where it will land, the other cards slide out of the way, and on release the card glides into the slot. Keyboard moves are animated too. (No animation when the system asks for reduced motion.)
+- **Edit** and **Delete** are icon buttons (pencil and trash) with tooltips.
 - **Long lists scroll:** only the routine cards scroll (with an always-visible scrollbar); the top bar, the "Routines" title and "+ New Routine" stay in place. The highlighted routine is scrolled into view when the list opens, and the scroll position is kept when a card is selected.
 
 ### 5.2 Editor
