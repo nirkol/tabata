@@ -21,6 +21,25 @@ export function sayCue(cue: VoiceCue, volume: number): void {
   speakInBrowser(WORDS[cue], v);
 }
 
+/** Makes a statement sound right when spoken (e.g. "yFit" → "Why Fit"). */
+export function forSpeech(text: string): string {
+  return text.replace(/\byFit\b/gi, 'Why Fit').trim();
+}
+
+/** Speaks a free-text statement (the end-of-cycle encouragement). */
+export function sayText(text: string, volume: number): void {
+  const v = Math.min(1, Math.max(0, volume));
+  const spoken = forSpeech(text);
+  if (v === 0 || !spoken) return;
+  if (isNative()) {
+    void import('@tauri-apps/api/core')
+      .then((core) => core.invoke('say_text', { text: spoken, volume: v }))
+      .catch(() => speakInBrowser(spoken, v));
+    return;
+  }
+  speakInBrowser(spoken, v);
+}
+
 function speakInBrowser(text: string, volume: number): void {
   const synth = typeof window !== 'undefined' ? window.speechSynthesis : undefined;
   if (!synth || typeof SpeechSynthesisUtterance === 'undefined') return;

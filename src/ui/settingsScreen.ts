@@ -1,10 +1,10 @@
 import { BEEP_STYLES, BEEP_STYLE_LABELS, type BeepStyle } from '../audio/beeper';
-import { DEFAULT_SETTINGS, SETTINGS_LIMITS, isReddish } from '../storage/storage';
+import { DEFAULT_SETTINGS, PRAISE_MAX_LENGTH, SETTINGS_LIMITS, isReddish, pickPraise } from '../storage/storage';
 import type { App, Screen } from './app';
 import { confirmDialog } from './dialog';
 import { h } from './dom';
 import { createNumberInput } from './numberInput';
-import { sayCue } from '../platform/voice';
+import { sayCue, sayText } from '../platform/voice';
 
 const COLOR_PRESETS = ['#30D158', '#FFFFFF', '#FFD60A', '#64D2FF', '#0A84FF', '#BF5AF2'];
 
@@ -60,6 +60,41 @@ export function settingsScreen(app: App): Screen {
   startCall.checked = app.settings.startCall;
   startCall.addEventListener('change', () => app.updateSettings({ startCall: startCall.checked }));
   const startTest = h('button', { type: 'button', class: 'btn', 'data-testid': 'test-start', onclick: () => sayCue('start', app.settings.muted ? 0 : app.settings.volume) }, '🔊 Test');
+
+  // --- Encouragement at the end of each cycle: toggle, test, 10 editable statements ---
+  const praiseCall = h('input', { type: 'checkbox', class: 'toggle', id: 'praise-call', 'data-testid': 'praise-call' });
+  praiseCall.checked = app.settings.praiseCall;
+  praiseCall.addEventListener('change', () => app.updateSettings({ praiseCall: praiseCall.checked }));
+  let lastTested: string | null = null;
+  const praiseTest = h('button', {
+    type: 'button',
+    class: 'btn',
+    'data-testid': 'test-praise',
+    onclick: () => {
+      const text = pickPraise(app.settings.praises, lastTested);
+      if (!text) return;
+      lastTested = text;
+      sayText(text, app.settings.muted ? 0 : app.settings.volume);
+    },
+  }, '🔊 Test');
+  const praiseInputs = app.settings.praises.map((text, i) => {
+    const input = h('input', {
+      type: 'text',
+      class: 'text-input praise-input',
+      dir: 'auto',
+      maxlength: PRAISE_MAX_LENGTH,
+      placeholder: '(empty: skipped)',
+      'aria-label': `Encouraging statement ${i + 1}`,
+      'data-testid': `praise-${i + 1}`,
+    });
+    input.value = text;
+    input.addEventListener('input', () => {
+      const next = [...app.settings.praises];
+      next[i] = input.value;
+      app.updateSettings({ praises: next });
+    });
+    return h('label', { class: 'praise-item' }, h('span', { class: 'praise-num' }, `${i + 1}`), input);
+  });
 
   const showRemaining = h('input', { type: 'checkbox', class: 'toggle', id: 'show-remaining', 'data-testid': 'show-remaining' });
   showRemaining.checked = app.settings.showRemaining;
@@ -154,6 +189,12 @@ export function settingsScreen(app: App): Screen {
       restVolume,
       h('div', { class: 'row' }, h('label', { class: 'toggle-row', for: 'start-call' }, startCall, h('span', {}, 'Voice “Start!” at the start of each work period')), startTest),
       h('div', { class: 'row' }, h('label', { class: 'toggle-row', for: 'ten-call' }, tenCall, h('span', {}, 'Voice “Ten!” 10 seconds before the end of each work period')), tenTest),
+    ),
+    h(
+      'div',
+      { class: 'panel' },
+      h('div', { class: 'row' }, h('h2', {}, 'Encouragement'), h('label', { class: 'toggle-row', for: 'praise-call' }, praiseCall, h('span', {}, 'Say one of these (at random) at the end of each cycle')), praiseTest),
+      h('div', { class: 'praise-grid' }, ...praiseInputs),
     ),
     h(
       'div',

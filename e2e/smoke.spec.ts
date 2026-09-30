@@ -210,6 +210,7 @@ test('voice cues: "Start!" when work begins, "Ten!" 10 s before it ends; each ca
   };
 
   await page.getByTestId('nav-settings').click();
+  await page.getByTestId('praise-call').uncheck(); // this test is about Start / Ten only
   await expect(page.getByTestId('start-call')).toBeChecked();
   await expect(page.getByTestId('ten-call')).toBeChecked();
   await runToEnd();
@@ -228,6 +229,63 @@ test('voice cues: "Start!" when work begins, "Ten!" 10 s before it ends; each ca
   await page.getByTestId('start-call').uncheck();
   await runToEnd();
   expect(await spoken()).toEqual([]);
+});
+
+test('encouragement is spoken at the end of each cycle, from the editable list', async ({ page }) => {
+  await page.addInitScript(() => {
+    const w = window as unknown as { __spoken: string[] };
+    w.__spoken = [];
+    Object.defineProperty(window, 'speechSynthesis', {
+      configurable: true,
+      value: { speak: (u: SpeechSynthesisUtterance) => w.__spoken.push(u.text), cancel: () => undefined },
+    });
+  });
+  await fresh(page, '?speed=10');
+  await page.evaluate(() => {
+    const now = new Date().toISOString();
+    // 2 cycles of one 10 s work: G5 W10 S20 W10 → cycle ends after the first work and at the end.
+    localStorage.setItem('tabata.v1.routines', JSON.stringify({ version: 1, routines: [{ id: 'p', name: 'Praise test', workSec: 10, restSec: 5, intervals: 1, sets: 2, setRestSec: 20, createdAt: now, updatedAt: now }] }));
+  });
+  await page.reload();
+  const spoken = () => page.evaluate(() => (window as unknown as { __spoken: string[] }).__spoken.slice());
+  const praises = ['Great job!', 'You did it!', 'Well done!', 'Way to go!', "You're the best!", 'Wooow whooo!', 'That was great!', 'Why Fit rocks!', 'Be your best!', 'Make it happen!'];
+
+  // Settings: the list is pre-filled; switch off the other voice cues to keep the log simple.
+  await page.getByTestId('nav-settings').click();
+  await expect(page.getByTestId('praise-call')).toBeChecked();
+  await expect(page.getByTestId('praise-1')).toHaveValue('Great job!');
+  await expect(page.getByTestId('praise-10')).toHaveValue('Make it happen!');
+  await page.getByTestId('start-call').uncheck();
+  await page.getByTestId('ten-call').uncheck();
+
+  await page.getByTestId('nav-routines').click();
+  await page.getByTestId('start').click();
+  // During the Rest between cycles the statement is shown under the counter; hidden during work.
+  await expect(page.getByTestId('run-phase')).toHaveText('CYCLE REST', { timeout: 10000 });
+  await expect(page.getByTestId('run-praise')).toBeVisible();
+  const shown = await page.getByTestId('run-praise').textContent();
+  expect(praises.map((p) => p.replace('Why Fit', 'yFit'))).toContain(shown);
+  await expect(page.getByTestId('run-phase')).toHaveText('WORK', { timeout: 10000 });
+  await expect(page.getByTestId('run-praise')).toBeHidden();
+  await expect(page.getByTestId('run-phase')).toHaveText('DONE', { timeout: 15000 });
+  await expect.poll(spoken, { timeout: 5000 }).toHaveLength(2); // the last one comes after the finish bells
+  await expect(page.getByTestId('run-praise')).toBeVisible();
+  const said = await spoken();
+  for (const text of said) expect(praises).toContain(text);
+  expect(said[0]).not.toBe(said[1]); // never the same one twice in a row
+
+  // Edit the list: only one statement left → that one is said.
+  await page.getByTestId('stop').click();
+  await page.getByTestId('nav-settings').click();
+  for (let i = 1; i <= 10; i++) await page.getByTestId(`praise-${i}`).fill(i === 4 ? 'Crushed it!' : '');
+  await page.reload();
+  await page.getByTestId('nav-settings').click();
+  await expect(page.getByTestId('praise-4')).toHaveValue('Crushed it!');
+  await page.evaluate(() => ((window as unknown as { __spoken: string[] }).__spoken.length = 0));
+  await page.getByTestId('nav-routines').click();
+  await page.getByTestId('start').click();
+  await expect(page.getByTestId('run-phase')).toHaveText('DONE', { timeout: 15000 });
+  await expect.poll(spoken, { timeout: 5000 }).toEqual(['Crushed it!', 'Crushed it!']);
 });
 
 test('stop pauses the routine while asking for confirmation', async ({ page }) => {

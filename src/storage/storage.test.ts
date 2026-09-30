@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_SETTINGS, KEYS, LocalAppStorage, isReddish, sanitizeSettings, type KeyValueStore } from './storage';
+import { DEFAULT_PRAISES, DEFAULT_SETTINGS, KEYS, LocalAppStorage, isReddish, pickPraise, sanitizeSettings, type KeyValueStore } from './storage';
 import { createRoutine, DEFAULT_FIELDS } from '../routines/model';
 
 function memoryStore(): KeyValueStore & { data: Map<string, string> } {
@@ -70,6 +70,41 @@ describe('sanitizeSettings', () => {
 
   it('rejects out-of-range or red values', () => {
     expect(sanitizeSettings({ volume: 2, digitSizePct: 5, digitColor: '#FF0000', muted: 'yes' })).toEqual(DEFAULT_SETTINGS);
+  });
+});
+
+describe('encouragement statements', () => {
+  it('defaults to the 10 statements, switched on', () => {
+    const s = sanitizeSettings({});
+    expect(s.praiseCall).toBe(true);
+    expect(s.praises).toEqual([...DEFAULT_PRAISES]);
+    expect(s.praises).toHaveLength(10);
+    expect(s.praises[0]).toBe('Great job!');
+    expect(s.praises[9]).toBe('Make it happen!');
+  });
+
+  it('keeps edited statements, pads to 10 and trims overlong ones', () => {
+    const s = sanitizeSettings({ praiseCall: false, praises: ['Go go go!', 5, 'x'.repeat(100)] });
+    expect(s.praiseCall).toBe(false);
+    expect(s.praises).toHaveLength(10);
+    expect(s.praises[0]).toBe('Go go go!');
+    expect(s.praises[1]).toBe('');
+    expect(s.praises[2]).toHaveLength(60);
+  });
+
+  it('does not share the default list between settings objects', () => {
+    const a = sanitizeSettings({});
+    a.praises[0] = 'changed';
+    expect(sanitizeSettings({}).praises[0]).toBe('Great job!');
+  });
+
+  it('picks at random, skipping empty statements and the previous one', () => {
+    expect(pickPraise(['', '  ', ''], null)).toBeNull();
+    expect(pickPraise(['', 'Only one', ''], 'Only one')).toBe('Only one');
+    const list = ['A', 'B', 'C'];
+    for (let i = 0; i < 50; i++) expect(pickPraise(list, 'B')).not.toBe('B');
+    expect(pickPraise(list, null, () => 0)).toBe('A');
+    expect(pickPraise(list, null, () => 0.99)).toBe('C');
   });
 });
 

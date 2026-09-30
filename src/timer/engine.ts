@@ -72,6 +72,17 @@ export const TEN_CALL_SEC = 10;
 export const TEN_CALL_WINDOW_MS = 1500;
 
 /**
+ * True when a cycle has just ended and the next one follows (the Rest between cycles begins),
+ * within a short window, once per phase. The end of the last cycle is the end of the run.
+ */
+export function cycleEndDue(s: Snapshot, lastCalledPhase: number): boolean {
+  const p = s.phase;
+  if (s.status !== 'running' || !p || p.kind !== 'setRest' || s.phaseIndex === lastCalledPhase) return false;
+  const sinceStart = p.durationSec * 1000 - s.phaseRemainingMs;
+  return sinceStart >= 0 && sinceStart < TEN_CALL_WINDOW_MS;
+}
+
+/**
  * True when the spoken "Start!" is due: at the start of each running Work period (within a
  * short window, so a late catch-up is skipped), once per phase.
  */

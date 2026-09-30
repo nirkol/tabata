@@ -1,6 +1,7 @@
 import type { Routine } from '../routines/model';
-import { PHASE_LABELS, TimerEngine, beepSchedule, startCallDue, tenCallDue, type Snapshot } from '../timer/engine';
-import { sayCue } from '../platform/voice';
+import { PHASE_LABELS, TimerEngine, beepSchedule, cycleEndDue, startCallDue, tenCallDue, type Snapshot } from '../timer/engine';
+import { pickPraise } from '../storage/storage';
+import { sayCue, sayText } from '../platform/voice';
 import { formatClock, formatCountdown } from '../timer/format';
 import type { App, Screen } from './app';
 import { confirmDialog } from './dialog';
@@ -10,6 +11,8 @@ import { isNative, setNativeKeepAwake, toggleFullscreen as platformToggleFullscr
 /** How often the screen refreshes when the tab is hidden (rAF doesn't run then). */
 const BACKGROUND_TICK_MS = 250;
 const RING_STROKE = 8;
+/** The final encouragement waits for the finish sound (three bell strikes) to end. */
+const PRAISE_AFTER_FINISH_MS = 2300;
 
 /** The Run view (SPEC §4). */
 export function runScreen(app: App, routine: Routine): Screen {
@@ -31,7 +34,9 @@ export function runScreen(app: App, routine: Routine): Screen {
   ring.setAttribute('pathLength', '100');
   ring.setAttribute('data-testid', 'run-ring');
   svg.append(track, ring);
-  const ringBox = h('div', { class: 'ring-box' }, digits);
+  // Encouraging statement shown under the digits during the Rest between cycles (and at the end).
+  const praiseLine = h('div', { class: 'run-praise', dir: 'auto', hidden: true, 'data-testid': 'run-praise' });
+  const ringBox = h('div', { class: 'ring-box' }, h('div', { class: 'ring-content' }, digits, praiseLine));
   ringBox.prepend(svg);
   // The phase label sits right above the counter, so the two read as one unit.
   const stage = h('div', { class: 'run-stage' }, phaseLabel, ringBox);
@@ -127,6 +132,25 @@ export function runScreen(app: App, routine: Routine): Screen {
 
   let tenCalledPhase = -1;
   let startCalledPhase = -1;
+  let praisedPhase = -1;
+  let lastPraise: string | null = null;
+  let praiseTimer: ReturnType<typeof setTimeout> | undefined;
+  /** End of a cycle: shows a random encouraging statement under the digits and speaks it. */
+  function praise(): void {
+    if (!app.settings.praiseCall) return;
+    const text = pickPraise(app.settings.praises, lastPraise);
+    if (!text) return;
+    lastPraise = text;
+    showPraise(text);
+    if (!app.settings.muted) sayText(text, app.settings.volume);
+  }
+  function showPraise(text: string | null): void {
+    const show = text !== null;
+    if (show === !praiseLine.hidden && praiseLine.textContent === (text ?? '')) return;
+    praiseLine.textContent = text ?? '';
+    praiseLine.hidden = !show;
+    fit(); // the digits make room for the statement
+  }
 
   function render(): void {
     const s = engine.snapshot();
@@ -136,6 +160,12 @@ export function runScreen(app: App, routine: Routine): Screen {
       startCalledPhase = s.phaseIndex;
       if (app.settings.startCall && !app.settings.muted) sayCue('start', app.settings.volume);
     }
+    // End of a cycle (the Rest between cycles begins): encouragement, shown for the whole rest.
+    if (cycleEndDue(s, praisedPhase)) {
+      praisedPhase = s.phaseIndex;
+      praise();
+    }
+    if (s.status !== 'done' && s.phase?.kind !== 'setRest' && !praiseLine.hidden) showPraise(null);
     if (tenCallDue(s, tenCalledPhase)) {
       tenCalledPhase = s.phaseIndex;
       if (app.settings.tenCall && !app.settings.muted) sayCue('ten', app.settings.volume);
@@ -188,6 +218,8 @@ export function runScreen(app: App, routine: Routine): Screen {
       startOverBtn.hidden = false;
       stopBtn.textContent = '← Back to routines';
       void releaseWakeLock();
+      // End of the last cycle: encouragement, after the finish bells.
+      praiseTimer = setTimeout(praise, PRAISE_AFTER_FINISH_MS);
     } else {
       pauseBtn.textContent = s.status === 'paused' ? '▶ RESUME' : 'PAUSE';
     }
@@ -199,7 +231,7 @@ export function runScreen(app: App, routine: Routine): Screen {
     digits.style.fontSize = `${target}px`;
     const pad = RING_STROKE * 2 + 24;
     const maxW = stage.clientWidth - pad;
-    const maxH = stage.clientHeight - pad - phaseLabel.offsetHeight;
+    const maxH = stage.clientHeight - pad - phaseLabel.offsetHeight - (praiseLine.hidden ? 0 : praiseLine.offsetHeight);
     if (maxW > 0 && maxH > 0) {
       const scale = Math.min(1, maxW / digits.scrollWidth, maxH / digits.offsetHeight);
       if (scale < 1) digits.style.fontSize = `${Math.floor(target * scale)}px`;
@@ -339,6 +371,7 @@ export function runScreen(app: App, routine: Routine): Screen {
       }
     },
     destroy() {
+      clearTimeout(praiseTimer);
       cancelAnimationFrame(raf);
       clearInterval(bgTimer);
       document.removeEventListener('visibilitychange', onVisibility);

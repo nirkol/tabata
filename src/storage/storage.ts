@@ -14,10 +14,41 @@ export interface Settings {
   tenCall: boolean;
   /** Spoken "Start!" at the start of each Work period. */
   startCall: boolean;
+  /** Spoken encouragement at the end of each cycle, picked at random from `praises`. */
+  praiseCall: boolean;
+  /** Up to 10 encouraging statements (empty ones are skipped). */
+  praises: string[];
   muted: boolean;
   digitColor: string;
   /** Digit height, % of window height (10–60). */
   digitSizePct: number;
+}
+
+/** Encouraging statements spoken at the end of a cycle (editable in Settings). */
+export const DEFAULT_PRAISES: readonly string[] = [
+  'Great job!',
+  'You did it!',
+  'Well done!',
+  'Way to go!',
+  "You're the best!",
+  'Wooow whooo!',
+  'That was great!',
+  'yFit rocks!',
+  'Be your best!',
+  'Make it happen!',
+];
+export const PRAISE_COUNT = 10;
+export const PRAISE_MAX_LENGTH = 60;
+
+/**
+ * Picks a random statement, skipping empty ones and (when possible) the one used last time.
+ * Returns null if every statement is empty.
+ */
+export function pickPraise(praises: readonly string[], previous: string | null, random: () => number = Math.random): string | null {
+  const options = praises.map((p) => p.trim()).filter((p) => p.length > 0);
+  if (options.length === 0) return null;
+  const fresh = options.length > 1 ? options.filter((p) => p !== previous) : options;
+  return fresh[Math.floor(random() * fresh.length) % fresh.length];
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -28,6 +59,8 @@ export const DEFAULT_SETTINGS: Settings = {
   showRemaining: true,
   tenCall: true,
   startCall: true,
+  praiseCall: true,
+  praises: [...DEFAULT_PRAISES],
   muted: false,
   digitColor: '#30D158',
   digitSizePct: 40,
@@ -89,7 +122,7 @@ export function sanitizeRoutine(value: unknown): Routine | null {
 }
 
 export function sanitizeSettings(value: unknown): Settings {
-  const s = { ...DEFAULT_SETTINGS };
+  const s = { ...DEFAULT_SETTINGS, praises: [...DEFAULT_SETTINGS.praises] };
   if (!value || typeof value !== 'object') return s;
   const v = value as Record<string, unknown>;
   if (typeof v.volume === 'number' && v.volume >= 0 && v.volume <= 1) s.volume = v.volume;
@@ -100,6 +133,12 @@ export function sanitizeSettings(value: unknown): Settings {
   if (typeof v.showRemaining === 'boolean') s.showRemaining = v.showRemaining;
   if (typeof v.tenCall === 'boolean') s.tenCall = v.tenCall;
   if (typeof v.startCall === 'boolean') s.startCall = v.startCall;
+  if (typeof v.praiseCall === 'boolean') s.praiseCall = v.praiseCall;
+  if (Array.isArray(v.praises)) {
+    const list = v.praises.slice(0, PRAISE_COUNT).map((x) => (typeof x === 'string' ? x.slice(0, PRAISE_MAX_LENGTH) : ''));
+    while (list.length < PRAISE_COUNT) list.push('');
+    s.praises = list;
+  }
   if (typeof v.muted === 'boolean') s.muted = v.muted;
   if (typeof v.digitColor === 'string' && /^#[0-9a-f]{6}$/i.test(v.digitColor) && !isReddish(v.digitColor)) {
     s.digitColor = v.digitColor.toUpperCase();

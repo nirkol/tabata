@@ -90,11 +90,40 @@ fn say_cue(cue: String, volume: f32) -> Result<(), String> {
     Ok(())
 }
 
+/// Speaks a short free-text statement (the end-of-cycle encouragement) with macOS's voice.
+/// The text is limited to 80 characters, control characters and `say`'s embedded
+/// "[[ ]]" commands are removed, and `say` runs without a shell.
+#[tauri::command]
+fn say_text(text: String, volume: f32) -> Result<(), String> {
+    let clean: String = text
+        .chars()
+        .filter(|c| !c.is_control())
+        .take(80)
+        .collect::<String>()
+        .replace("[[", "")
+        .replace("]]", "");
+    let clean = clean.trim().to_string();
+    if clean.is_empty() {
+        return Ok(());
+    }
+    #[cfg(target_os = "macos")]
+    {
+        let v = if volume.is_finite() { volume.clamp(0.0, 1.0) } else { 1.0 };
+        std::process::Command::new("/usr/bin/say")
+            .args(["-r", "200", &format!("[[volm {v:.2}]] {clean}")])
+            .spawn()
+            .map_err(|e| e.to_string())?;
+    }
+    #[cfg(not(target_os = "macos"))]
+    let _ = volume;
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .manage(Awake::default())
-        .invoke_handler(tauri::generate_handler![load_store, save_store, set_keep_awake, say_cue])
+        .invoke_handler(tauri::generate_handler![load_store, save_store, set_keep_awake, say_cue, say_text])
         .run(tauri::generate_context!())
         .expect("error while running yFit Workout Timer");
 }

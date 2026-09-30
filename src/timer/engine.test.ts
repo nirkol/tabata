@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { TimerEngine, beepSchedule, buildPhases, intervalsLeft, startCallDue, tenCallDue, totalDurationSec, type Phase } from './engine';
+import { TimerEngine, beepSchedule, buildPhases, cycleEndDue, intervalsLeft, startCallDue, tenCallDue, totalDurationSec, type Phase } from './engine';
 
 const base = { workSec: 20, restSec: 10, intervals: 3, sets: 2, setRestSec: 60 };
 
@@ -312,6 +312,27 @@ describe('startCallDue ("Start!" when a Work period begins)', () => {
     }
     // G5 W20 R15 W20 S30 W20 R15 W20 → work starts at 5, 40, 90, 125 s.
     expect(calls).toEqual([5000, 40000, 90000, 125000]);
+  });
+});
+
+describe('cycleEndDue (encouragement at the end of a cycle)', () => {
+  it('fires once when each Rest between cycles begins', () => {
+    const c = fakeClock();
+    const e = new TimerEngine({ workSec: 20, restSec: 10, intervals: 2, sets: 3, setRestSec: 30 }, c.now);
+    e.start();
+    let last = -1;
+    const calls: number[] = [];
+    for (let t = 0; t <= 200000; t += 100) {
+      const s = e.snapshot();
+      if (cycleEndDue(s, last)) {
+        last = s.phaseIndex;
+        calls.push(Math.round(s.elapsedMs));
+      }
+      c.advance(100);
+    }
+    // G5 | W20 R10 W20 | S30 | W20 R10 W20 | S30 | W20 R10 W20 → cycle ends at 55 s and 135 s
+    // (the last cycle ends with the run itself).
+    expect(calls).toEqual([55000, 135000]);
   });
 });
 
