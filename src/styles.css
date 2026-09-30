@@ -875,6 +875,16 @@ kbd {
   align-items: center;
   justify-content: center;
 }
+.run-next {
+  position: absolute;
+  left: calc(100% + 18px);
+  bottom: 6px;
+  white-space: nowrap;
+  color: var(--muted);
+  font-size: clamp(16px, 2.8vh, 28px);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
 .ring {
   position: absolute;
   inset: 0;

@@ -38,6 +38,8 @@ export function runScreen(app: App, routine: Routine): Screen {
   const intervalsLeft = h('span', { 'data-testid': 'run-intervals' });
   const setRemaining = h('span', { 'data-testid': 'run-set-remaining' });
   const next = h('span', { class: 'run-next', 'data-testid': 'run-next' });
+  // "Next: …" sits just outside the counter box, at its bottom-right corner.
+  ringBox.append(next);
   const totalRemaining = h('span', { 'data-testid': 'run-total' });
   const pauseBtn = h('button', { type: 'button', class: 'btn btn-run btn-primary', 'data-testid': 'pause', onclick: () => togglePause() }, 'PAUSE');
   const startOverBtn = h('button', { type: 'button', class: 'btn btn-run btn-primary', 'data-testid': 'start-over', hidden: true, onclick: () => app.startRoutine(routine.id) }, '↻ Start over');
@@ -106,7 +108,7 @@ export function runScreen(app: App, routine: Routine): Screen {
       h('span', { class: 'sep' }, '│'),
       intervalsLeft,
     ),
-    h('div', { class: 'run-info run-info-secondary' }, next, h('div', { class: 'run-remaining', 'data-testid': 'run-remaining', hidden: !app.settings.showRemaining }, setRemaining, h('span', { class: 'sep' }, '│'), totalRemaining), h('span')),
+    h('div', { class: 'run-info run-info-secondary' }, h('span'), h('div', { class: 'run-remaining', 'data-testid': 'run-remaining', hidden: !app.settings.showRemaining }, setRemaining, h('span', { class: 'sep' }, '│'), totalRemaining), h('span')),
     // Bottom row: Pause / Stop in the center, volume controls on the right.
     h(
       'div',

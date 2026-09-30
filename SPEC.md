@@ -112,7 +112,7 @@ A thin bar across the top of the Run screen shows the **whole workout plan** as 
 7. **Cycle remaining**: time left in the current cycle. A cycle runs from its first Work period until the next cycle starts, so it includes the Rest between cycles. During Get Ready it shows the full length of cycle 1.
 8. **Total time remaining** for the whole routine.
 
-The bottom row shows the Next phase on the left, and Cycle remaining next to Total remaining in the center.
+**Next** (e.g. `Next: REST 0:10`) sits just outside the counter box, at its bottom-right corner. Cycle remaining and Total remaining are shown together, centered, below the Work/Rest row.
 
 The **volume controls** sit at the **lower right**, on the same row as Pause / Stop: a mute button and two volume sliders stacked on top of each other, labeled **Work volume** (top) and **Rest volume** (beneath it), each 0–100 % in 5 % steps with its current value. Changes apply immediately and are saved to Settings. Moving a slider above 0 % while muted unmutes. The fullscreen button stays in the top-right corner.
 
