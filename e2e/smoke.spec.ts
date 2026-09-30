@@ -324,6 +324,27 @@ test('Hebrew routine names: right-to-left by default', async ({ page }) => {
   expect(await english.evaluate((el) => getComputedStyle(el).direction)).toBe('ltr');
 });
 
+test('Instructions and About pages (icon tabs)', async ({ page }) => {
+  await fresh(page);
+  // Icon-only tabs with accessible names and tooltips.
+  await expect(page.getByTestId('nav-help')).toHaveAttribute('aria-label', 'Instructions');
+  await expect(page.getByTestId('nav-help')).toHaveAttribute('title', 'Instructions');
+  await expect(page.getByTestId('nav-about')).toHaveAttribute('aria-label', 'About');
+  await page.getByTestId('nav-help').click();
+  await expect(page.getByRole('heading', { name: 'Instructions' })).toBeVisible();
+  await expect(page.locator('.help-section')).toHaveCount(6);
+  await expect(page.locator('.help-screen')).toContainText('Rest between cycles');
+  await page.getByTestId('nav-about').click();
+  await expect(page.getByTestId('about-version')).toHaveText(/^Version \d+\.\d+\.\d+$/);
+  await expect(page.getByTestId('about-credit')).toHaveText('Created by yFit · © 2026');
+  await expect(page.locator('.about-icon')).toBeVisible();
+  // Locked like the other tabs while editing a routine.
+  await page.getByTestId('nav-routines').click();
+  await page.getByTestId('new-routine').click();
+  await expect(page.getByTestId('nav-help')).toBeDisabled();
+  await expect(page.getByTestId('nav-about')).toBeDisabled();
+});
+
 test('editor can only be left with Save or Cancel', async ({ page }) => {
   await fresh(page);
   await page.getByTestId('new-routine').click();

@@ -7,6 +7,20 @@ import { editorScreen } from './editorScreen';
 import { listScreen } from './listScreen';
 import { runScreen } from './runScreen';
 import { settingsScreen } from './settingsScreen';
+import { helpScreen } from './helpScreen';
+import { aboutScreen } from './aboutScreen';
+
+const ICON_HELP =
+  '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><path d="M9.3 9.2a2.8 2.8 0 0 1 5.4 1c0 1.9-2.7 2.4-2.7 4"/><circle cx="12" cy="17.4" r="0.6" fill="currentColor"/></svg>';
+const ICON_ABOUT =
+  '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><path d="M12 11v6"/><circle cx="12" cy="7.6" r="0.6" fill="currentColor"/></svg>';
+
+/** An icon-only navigation tab with a tooltip and an accessible name. */
+function iconTab(route: string, label: string, svg: string, onclick: () => void): HTMLButtonElement {
+  const b = h('button', { class: 'tab tab-icon', 'data-route': route, 'data-testid': `nav-${route}`, 'aria-label': label, 'data-tip': label, onclick });
+  b.innerHTML = svg;
+  return b;
+}
 
 export interface Screen {
   el: HTMLElement;
@@ -20,7 +34,13 @@ export interface Screen {
   lockNav?: string;
 }
 
-type Route = { name: 'list' } | { name: 'editor'; routineId: string | null } | { name: 'settings' } | { name: 'run'; routineId: string };
+type Route =
+  | { name: 'list' }
+  | { name: 'editor'; routineId: string | null }
+  | { name: 'settings' }
+  | { name: 'help' }
+  | { name: 'about' }
+  | { name: 'run'; routineId: string };
 
 export class App {
   routines: Routine[];
@@ -52,6 +72,8 @@ export class App {
         { class: 'tabs' },
         h('button', { class: 'tab', 'data-route': 'list', 'data-testid': 'nav-routines', onclick: () => this.go({ name: 'list' }) }, 'Routines'),
         h('button', { class: 'tab', 'data-route': 'settings', 'data-testid': 'nav-settings', onclick: () => this.go({ name: 'settings' }) }, 'Settings'),
+        iconTab('help', 'Instructions', ICON_HELP, () => this.go({ name: 'help' })),
+        iconTab('about', 'About', ICON_ABOUT, () => this.go({ name: 'about' })),
       ),
     );
     this.root.append(this.nav, this.main);
@@ -71,6 +93,12 @@ export class App {
       case 'editor':
         screen = editorScreen(this, route.routineId);
         break;
+      case 'help':
+        screen = helpScreen(this);
+        break;
+      case 'about':
+        screen = aboutScreen(this);
+        break;
       case 'settings':
         screen = settingsScreen(this);
         break;
@@ -86,7 +114,9 @@ export class App {
     for (const tab of this.nav.querySelectorAll<HTMLButtonElement>('.tab')) {
       tab.classList.toggle('active', tab.dataset.route === route.name || (route.name === 'editor' && tab.dataset.route === 'list'));
       tab.disabled = !!screen.lockNav;
+      // Tooltip: why it's locked, else the icon tab's name ("Instructions" / "About").
       if (screen.lockNav) tab.title = screen.lockNav;
+      else if (tab.dataset.tip) tab.title = tab.dataset.tip;
       else tab.removeAttribute('title');
     }
     this.main.replaceChildren(screen.el);

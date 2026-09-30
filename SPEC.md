@@ -204,6 +204,11 @@ Every numeric field (Work, Rest, Rest between cycles, Rounds, Cycles, and the nu
 
 ---
 
+## 5a. Instructions and About
+The top bar has two icon buttons next to **Routines** and **Settings** (tooltips “Instructions” and “About”):
+- **Instructions** (?): how to use the timer — creating routines, running a workout, sounds and voice, managing routines, settings, tips.
+- **About** (i): app icon and name, **version number** (from the app version in `src-tauri/tauri.conf.json`) and **“Created by yFit · © 2026”**.
+
 ## 6. Settings (Admin)
 
 The admin area is a plain **Settings screen with no PIN or password**. It holds routine management (§5) and the settings below.
