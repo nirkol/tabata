@@ -699,6 +699,44 @@ kbd {
   padding: 4px 12px;
   font-size: 20px;
 }
+/* Workout timeline (top of the Run screen). */
+.timeline {
+  position: relative;
+  height: 16px;
+  margin: 8px 0 2px;
+}
+.tl-layer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.tl-plan {
+  opacity: 0.38;
+}
+.tl-seg {
+  flex-basis: 0;
+  min-width: 1px;
+  /* Thin black gap between segments. */
+  box-shadow: inset -1px 0 0 #000;
+}
+.tl-work {
+  background: var(--work-color);
+}
+.tl-rest {
+  background: var(--rest-color);
+}
+.tl-marker {
+  position: absolute;
+  top: -5px;
+  bottom: -5px;
+  width: 4px;
+  margin-left: -2px;
+  border-radius: 2px;
+  background: #fff;
+  box-shadow: 0 0 0 2px #000, 0 0 10px rgba(255, 255, 255, 0.6);
+}
 .run-phase {
   text-align: center;
   font-size: clamp(28px, 8vh, 96px);

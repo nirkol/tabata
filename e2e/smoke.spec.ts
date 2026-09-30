@@ -169,6 +169,20 @@ test('settings: beep styles and hiding the remaining times', async ({ page }) =>
   await expect(page.getByTestId('run-remaining')).toBeVisible();
 });
 
+test('timeline shows the whole plan and moves with the workout', async ({ page }) => {
+  await fresh(page, '?speed=10');
+  await page.getByTestId('start').click();
+  // Classic Tabata: Get Ready + 8 work + 7 rest = 16 segments.
+  const plan = page.getByTestId('timeline').locator('.tl-plan .tl-seg');
+  await expect(plan).toHaveCount(16);
+  await expect(page.locator('.tl-plan .tl-work')).toHaveCount(8);
+  await expect(page.locator('.tl-plan .tl-rest')).toHaveCount(8);
+  const markerLeft = () => page.getByTestId('timeline-marker').evaluate((el) => parseFloat((el as HTMLElement).style.left));
+  const first = await markerLeft();
+  await page.waitForTimeout(1500);
+  expect(await markerLeft()).toBeGreaterThan(first);
+});
+
 test('stop pauses the routine while asking for confirmation', async ({ page }) => {
   await fresh(page);
   await page.getByTestId('start').click();

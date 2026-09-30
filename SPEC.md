@@ -99,6 +99,9 @@ This screen is used mid-workout, often from several meters away, so readability 
 └───────────────────────────────────────────────────────────┘
 ```
 
+### 4.1a Workout timeline
+A thin bar across the top of the Run screen shows the **whole workout plan** as one segment per phase, sized by its duration: **Work** in the work color (default green), **Get Ready, Rest and Rest between cycles** in red. The finished part is shown bright and the rest dimmed, and a white marker shows the current position. It moves smoothly and freezes while paused.
+
 ### 4.2 Required display elements
 1. **Countdown for the current phase** in very large digits, formatted `m:ss` (for example `0:17`, `2:30`).
 2. **Phase label**: GET READY / WORK / REST / CYCLE REST / DONE, in large capital letters.

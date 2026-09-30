@@ -64,6 +64,24 @@ export function runScreen(app: App, routine: Routine): Screen {
   const restVolume = volumeControl('restVolume', 'Rest volume', 'run-volume-rest');
   const fullscreenBtn = h('button', { type: 'button', class: 'btn btn-icon', title: 'Fullscreen (F)', 'aria-label': 'Toggle fullscreen', onclick: () => toggleFullscreen() }, '⛶');
 
+  // --- Workout timeline: one segment per phase, sized by duration (work color / red for rest).
+  // A dim base layer shows the plan; a bright copy is revealed up to the current point.
+  const segment = (p: (typeof engine.phases)[number]) =>
+    h('div', {
+      class: `tl-seg ${p.kind === 'work' ? 'tl-work' : 'tl-rest'}`,
+      style: `flex-grow:${p.durationSec}`,
+      title: `${PHASE_LABELS[p.kind]} ${formatClock(p.durationSec)}`,
+    });
+  const tlDone = h('div', { class: 'tl-layer tl-done', 'data-testid': 'timeline-done' }, ...engine.phases.map(segment));
+  const tlMarker = h('div', { class: 'tl-marker', 'data-testid': 'timeline-marker' });
+  const timeline = h(
+    'div',
+    { class: 'timeline', 'data-testid': 'timeline', 'aria-hidden': 'true' },
+    h('div', { class: 'tl-layer tl-plan' }, ...engine.phases.map(segment)),
+    tlDone,
+    tlMarker,
+  );
+
   const el = h(
     'section',
     { class: 'run-screen', 'data-testid': 'run-screen' },
@@ -74,6 +92,7 @@ export function runScreen(app: App, routine: Routine): Screen {
       app.speed !== 1 ? h('div', { class: 'speed-badge' }, `×${app.speed} speed (dev)`) : null,
       h('div', { class: 'run-top-right' }, h('div', { class: 'run-volume-group' }, muteBtn, h('div', { class: 'run-volume-stack' }, workVolume.el, restVolume.el)), fullscreenBtn),
     ),
+    timeline,
     phaseLabel,
     stage,
     h(
@@ -118,6 +137,11 @@ export function runScreen(app: App, routine: Routine): Screen {
     el.classList.toggle('paused', s.status === 'paused');
     el.classList.toggle('done', done);
     ring.style.strokeDashoffset = String(100 * (1 - (done ? 0 : s.phaseFractionRemaining)));
+    const pct = Math.min(100, (s.elapsedMs / s.totalMs) * 100);
+    const clip = `inset(0 ${100 - pct}% 0 0)`;
+    tlDone.style.clipPath = clip;
+    tlDone.style.setProperty('-webkit-clip-path', clip); // older macOS WebKit
+    tlMarker.style.left = `${pct}%`;
 
     intervalsLeft.textContent = `Rounds left: ${s.intervalsLeft} / ${routine.intervals}`;
     next.textContent = done ? '' : `Next: ${s.nextPhase ? `${PHASE_LABELS[s.nextPhase.kind]} ${formatClock(s.nextPhase.durationSec)}` : PHASE_LABELS.done}`;
