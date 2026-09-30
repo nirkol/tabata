@@ -114,7 +114,7 @@ A thin bar across the top of the Run screen shows the **whole workout plan** as 
 
 The bottom row shows the Next phase on the left, and Cycle remaining next to Total remaining in the center.
 
-The top-right corner has the **volume controls**: a mute button, then two volume sliders stacked on top of each other, labeled **Work volume** (top) and **Rest volume** (beneath it), each 0–100 % in 5 % steps with its current value, and the fullscreen button. Changes apply immediately and are saved to Settings. Moving the slider above 0 % while muted unmutes.
+The **volume controls** sit at the **lower right**, on the same row as Pause / Stop: a mute button and two volume sliders stacked on top of each other, labeled **Work volume** (top) and **Rest volume** (beneath it), each 0–100 % in 5 % steps with its current value. Changes apply immediately and are saved to Settings. Moving a slider above 0 % while muted unmutes. The fullscreen button stays in the top-right corner.
 
 ### 4.3 Colors and progress indicator
 - **Color by phase:** during **Work** the digits and ring use the **work color** chosen in Settings (default **green**). During **Rest, Cycle Rest and Get Ready** they are always **red**. The color stays the same for the whole phase; the last 5 seconds are announced by the beeps.

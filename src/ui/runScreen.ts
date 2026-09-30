@@ -90,7 +90,7 @@ export function runScreen(app: App, routine: Routine): Screen {
       { class: 'run-top' },
       h('div', { class: 'run-name' }, 'Routine: “', h('bdi', {}, routine.name), '”'),
       app.speed !== 1 ? h('div', { class: 'speed-badge' }, `×${app.speed} speed (dev)`) : null,
-      h('div', { class: 'run-top-right' }, h('div', { class: 'run-volume-group' }, muteBtn, h('div', { class: 'run-volume-stack' }, workVolume.el, restVolume.el)), fullscreenBtn),
+      h('div', { class: 'run-top-right' }, fullscreenBtn),
     ),
     timeline,
     phaseLabel,
@@ -107,7 +107,14 @@ export function runScreen(app: App, routine: Routine): Screen {
       intervalsLeft,
     ),
     h('div', { class: 'run-info run-info-secondary' }, next, h('div', { class: 'run-remaining', 'data-testid': 'run-remaining', hidden: !app.settings.showRemaining }, setRemaining, h('span', { class: 'sep' }, '│'), totalRemaining), h('span')),
-    h('div', { class: 'run-controls' }, pauseBtn, startOverBtn, stopBtn),
+    // Bottom row: Pause / Stop in the center, volume controls on the right.
+    h(
+      'div',
+      { class: 'run-bottom' },
+      h('div', { class: 'run-bottom-side' }),
+      h('div', { class: 'run-controls' }, pauseBtn, startOverBtn, stopBtn),
+      h('div', { class: 'run-bottom-side run-bottom-right' }, h('div', { class: 'run-volume-group', 'data-testid': 'run-volume-group' }, muteBtn, h('div', { class: 'run-volume-stack' }, workVolume.el, restVolume.el))),
+    ),
   );
 
   // --- Rendering ---

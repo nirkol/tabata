@@ -939,11 +939,33 @@ kbd {
   color: var(--muted);
   font-size: clamp(14px, 2.4vh, 24px);
 }
+.run-bottom {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 16px;
+  margin-top: 8px;
+}
+.run-bottom-right {
+  display: flex;
+  justify-content: flex-end;
+}
 .run-controls {
   display: flex;
   justify-content: center;
   gap: 24px;
-  margin-top: 8px;
+}
+/* Narrow windows: volume controls go under the buttons. */
+@media (max-width: 1000px) {
+  .run-bottom {
+    grid-template-columns: 1fr;
+  }
+  .run-bottom-side:first-child {
+    display: none;
+  }
+  .run-bottom-right {
+    justify-content: center;
+  }
 }
 .btn-run {
   min-height: 72px;
