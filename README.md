@@ -30,7 +30,7 @@ In the Mac app, routines and settings are saved in `~/Library/Application Suppor
 
 ### How the Mac app is built
 
-A Mac app can only be built on a Mac, so GitHub builds it: the [Mac app workflow](.github/workflows/mac-app.yml) runs on a GitHub-hosted Mac whenever the app code changes, builds one **universal** `.dmg` (Apple Silicon + Intel), and publishes it as a GitHub Release. You can also start it by hand from the **Actions** tab (**Mac app → Run workflow**).
+A Mac app can only be built on a Mac, so GitHub builds it: the [Mac app workflow](.github/workflows/mac-app.yml) runs on a GitHub-hosted Mac, builds one **universal** `.dmg` (Apple Silicon + Intel), and publishes it as a GitHub Release. It runs **only when requested**: from the **Actions** tab choose **Mac app → Run workflow**.
 
 To build on your own Mac instead (needs Node.js 20+ and [Rust](https://rustup.rs)):
 

@@ -341,5 +341,5 @@ Both beep volumes and Mute can also be changed from the Run screen (§4.2).
 | Remaining times | "Cycle remaining" / "Total remaining" can be hidden in Settings |
 | App name | "yFit Workout Timer" (formerly "yFit Tabata Timer"): top-left header, window and browser tab title, Mac app and installer name. The Mac bundle identifier stays `com.yfit.tabatatimer` so saved data is kept. |
 | Mac hardware | Universal binary for Apple Silicon and Intel, macOS 10.15+ (older Macs supported) |
-| Mac build | Built by a GitHub Actions workflow on a GitHub-hosted Mac; the .dmg is published as a GitHub Release. Ad-hoc signed (not notarized). |
+| Mac build | Built by a GitHub Actions workflow on a GitHub-hosted Mac, **only when explicitly requested** (manual run, not on every push); the .dmg is published as a GitHub Release. Ad-hoc signed (not notarized). |
 | Exercise names, voice, history | Not needed |

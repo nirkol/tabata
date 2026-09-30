@@ -6,17 +6,8 @@
 name: Mac app
 
 on:
-  push:
-    branches: [main, claude/eager-volta-0mvaxv]
-    paths:
-      - 'src/**'
-      - 'src-tauri/**'
-      - 'public/**'
-      - 'index.html'
-      - 'package.json'
-      - 'package-lock.json'
-      - 'vite.config.ts'
-      - '.github/workflows/mac-app.yml'
+  # Manual only: builds run when requested (Actions tab → Mac app → Run workflow),
+  # not automatically on every push.
   workflow_dispatch:
 
 permissions:
