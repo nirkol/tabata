@@ -170,6 +170,7 @@ Implementation requirements:
 - On first launch, the app creates one sample routine: "Classic Tabata" (20/10 × 8 × 1).
 - The last-used routine is highlighted (blue edge and a "LAST USED" tag).
 - Visual style: premium dark cards with soft depth and a hover lift; values in the display font with thin dividers; the total in accent blue; **Start** is the prominent button while Edit and Delete are quiet (Delete turns red on hover); the header shows the number of routines.
+- **Reorder routines:** each card has a ☰ drag handle on its right edge. Drag it with the mouse to move the routine up or down (the list scrolls when dragging near its top or bottom edge), or focus the handle and press ↑ / ↓. The new order is saved.
 - **Long lists scroll:** only the routine cards scroll (with an always-visible scrollbar); the top bar, the "Routines" title and "+ New Routine" stay in place. The highlighted routine is scrolled into view when the list opens, and the scroll position is kept when a card is selected.
 
 ### 5.2 Editor
@@ -332,7 +333,7 @@ Both beep volumes and Mute can also be changed from the Run screen (§4.2).
 | Hebrew names | Routine names are right-to-left by default |
 | Admin | No PIN |
 | Export / Import | Removed from Settings; routines are not moved between the web version and the Mac app |
-| Routine list | No Duplicate button (Start, Edit, Delete only) |
+| Routine list | No Duplicate button (Start, Edit, Delete only); ☰ handle to reorder by drag (or ↑ / ↓) |
 | Run-screen info | Cycle counter only at the start of the Work/Rest row; "Cycle remaining" and "Total remaining" together in the center; volume slider + mute in the top-right corner |
 | Leaving screens | Stop on the Run screen pauses the routine and asks for confirmation (Cancel resumes); the routine editor can only be left with Save or Cancel |
 | Run-screen controls | Only Pause and Stop (no Skip or Restart); at the end: Start over and Back to routines |

@@ -291,6 +291,43 @@ test('editor: validation, press-and-hold and typed values', async ({ page }) => 
   await expect(page.getByTestId('save')).toBeDisabled();
 });
 
+test('routines can be reordered by dragging the handle or with the keyboard', async ({ page }) => {
+  await fresh(page);
+  await page.evaluate(() => {
+    const now = new Date().toISOString();
+    const routines = ['A', 'B', 'C', 'D'].map((n) => ({ id: n, name: `Routine ${n}`, workSec: 20, restSec: 10, intervals: 8, sets: 1, setRestSec: 60, createdAt: now, updatedAt: now }));
+    localStorage.setItem('tabata.v1.routines', JSON.stringify({ version: 1, routines }));
+    localStorage.setItem('tabata.v1.lastUsed', 'A');
+  });
+  await page.reload();
+  const names = () => page.getByTestId('routine-name').allTextContents();
+  expect(await names()).toEqual(['Routine A', 'Routine B', 'Routine C', 'Routine D']);
+
+  // Drag D's handle to the top.
+  const handle = page.locator('[data-id="D"]').getByTestId('drag-handle');
+  const first = await page.locator('[data-id="A"]').boundingBox();
+  await handle.hover();
+  await page.mouse.down();
+  await page.mouse.move(first!.x + 50, first!.y + 10, { steps: 12 });
+  await expect(page.locator('[data-id="D"]')).toHaveClass(/dragging/);
+  await page.mouse.up();
+  await expect.poll(names).toEqual(['Routine D', 'Routine A', 'Routine B', 'Routine C']);
+  // Dropping doesn't select a card (A stays the highlighted one).
+  await expect(page.locator('[data-id="D"]')).not.toHaveClass(/dragging/);
+  await expect(page.locator('[data-id="A"]')).toHaveClass(/selected/);
+  await expect(page.locator('[data-id="D"]')).not.toHaveClass(/selected/);
+
+  // Keyboard: focus A's handle and press ↓ twice.
+  await page.locator('[data-id="A"]').getByTestId('drag-handle').focus();
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('ArrowDown');
+  await expect.poll(names).toEqual(['Routine D', 'Routine B', 'Routine C', 'Routine A']);
+
+  // The order is saved.
+  await page.reload();
+  expect(await names()).toEqual(['Routine D', 'Routine B', 'Routine C', 'Routine A']);
+});
+
 test('long routine list scrolls while the header stays visible', async ({ page }) => {
   await fresh(page);
   await page.evaluate(() => {
