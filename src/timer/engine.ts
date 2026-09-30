@@ -72,6 +72,17 @@ export const TEN_CALL_SEC = 10;
 export const TEN_CALL_WINDOW_MS = 1500;
 
 /**
+ * True when the spoken "Start!" is due: at the start of each running Work period (within a
+ * short window, so a late catch-up is skipped), once per phase.
+ */
+export function startCallDue(s: Snapshot, lastCalledPhase: number): boolean {
+  const p = s.phase;
+  if (s.status !== 'running' || !p || p.kind !== 'work' || s.phaseIndex === lastCalledPhase) return false;
+  const sinceStart = p.durationSec * 1000 - s.phaseRemainingMs;
+  return sinceStart >= 0 && sinceStart < TEN_CALL_WINDOW_MS;
+}
+
+/**
  * True when the "Ten!" call is due: during a running Work period longer than 10 s, in the
  * moment its remaining time crosses 10 s, and not already called for this phase.
  * Rest, Cycle Rest and Get Ready never get it.

@@ -132,6 +132,7 @@ Every phase (Get Ready, Work, Rest, Cycle Rest) ends with the same **5-beep coun
 - The beeps start at the moment the digits turn red (the last 5 seconds) and fall exactly on the second boundaries.
 - If a phase is shorter than 5 s, only the beeps that fit inside it are played, plus the long beep at 0.
 - **Two beep sounds:** countdowns that end a **Work** period use the *work sound*: a short woody "tock" for the countdown beeps and a boxing-ring bell strike for the long beep, so it sounds like a gym timer rather than a medical monitor. Countdowns that end **Get Ready, Rest or Rest between cycles** (the ones that lead into Work) use a different *rest sound* (lower, softer). The final "finished" sound is three bell strikes. Each sound has its own volume (§6).
+- **Spoken "Start!"**: at the start of every **Work** period a voice calls out **"Start!"** (together with the phase-change beep). Never for rest. Follows the work volume and Mute; can be turned off in Settings.
 - **Spoken "Ten!"**: 10 seconds before the end of every **Work** period (only when the work period is longer than 10 s), a voice calls out **"Ten!"**, on top of the normal beeps (the 5-second countdown is unchanged). Rest, Cycle Rest and Get Ready never get it. It follows the work volume and Mute, and can be turned off in Settings. A call that would come late (e.g. after the window was hidden) is skipped. Web version: Web Speech API; Mac app: macOS's built-in `say` voice.
 - Beeps are **generated** with the Web Audio API (oscillator), not audio files. This keeps timing sample-accurate.
 - Volumes come from Settings (§6).
@@ -216,6 +217,7 @@ The admin area is a plain **Settings screen with no PIN or password**. It holds 
 | Work color | Color picker (with a few presets) for the digits and ring during Work | any color except red, which is reserved for rest | Green `#30D158` |
 | Counter digit size | − / + number control (§5.3, step 5 %) + slider, with live preview | 10 – 60 % of window height | 40 % |
 | Mute | Toggle, also available on the run screen | on / off | off |
+| "Start!" call | Toggle + Test button: voice "Start!" at the start of each work period | on / off | on |
 | "Ten!" call | Toggle + Test button: voice "Ten!" 10 s before the end of each work period | on / off | on |
 
 Both beep volumes and Mute can also be changed from the Run screen (§4.2).

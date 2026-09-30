@@ -1,6 +1,6 @@
 import type { Routine } from '../routines/model';
-import { PHASE_LABELS, TimerEngine, beepSchedule, tenCallDue, type Snapshot } from '../timer/engine';
-import { sayTen } from '../platform/voice';
+import { PHASE_LABELS, TimerEngine, beepSchedule, startCallDue, tenCallDue, type Snapshot } from '../timer/engine';
+import { sayCue } from '../platform/voice';
 import { formatClock, formatCountdown } from '../timer/format';
 import type { App, Screen } from './app';
 import { confirmDialog } from './dialog';
@@ -125,14 +125,19 @@ export function runScreen(app: App, routine: Routine): Screen {
   let lastStatus = '';
 
   let tenCalledPhase = -1;
+  let startCalledPhase = -1;
 
   function render(): void {
     const s = engine.snapshot();
     app.beeper.sync(s.elapsedMs);
-    // Spoken "Ten!" 10 s before the end of a Work period (on top of the 5-second beeps).
+    // Voice cues on top of the beeps: "Start!" when a Work period begins, "Ten!" 10 s before it ends.
+    if (startCallDue(s, startCalledPhase)) {
+      startCalledPhase = s.phaseIndex;
+      if (app.settings.startCall && !app.settings.muted) sayCue('start', app.settings.volume);
+    }
     if (tenCallDue(s, tenCalledPhase)) {
       tenCalledPhase = s.phaseIndex;
-      if (app.settings.tenCall && !app.settings.muted) sayTen(app.settings.volume);
+      if (app.settings.tenCall && !app.settings.muted) sayCue('ten', app.settings.volume);
     }
     const done = s.status === 'done';
     const phase = s.phase;

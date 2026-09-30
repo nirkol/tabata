@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { TimerEngine, beepSchedule, buildPhases, intervalsLeft, tenCallDue, totalDurationSec, type Phase } from './engine';
+import { TimerEngine, beepSchedule, buildPhases, intervalsLeft, startCallDue, tenCallDue, totalDurationSec, type Phase } from './engine';
 
 const base = { workSec: 20, restSec: 10, intervals: 3, sets: 2, setRestSec: 60 };
 
@@ -277,6 +277,26 @@ describe('tenCallDue ("Ten!" 10 s before the end of Work)', () => {
     e.resume();
     c.advance(3000); // 7 s left: too late, skipped
     expect(tenCallDue(e.snapshot(), -1)).toBe(false);
+  });
+});
+
+describe('startCallDue ("Start!" when a Work period begins)', () => {
+  it('fires once at the start of every Work period, never for rest', () => {
+    const c = fakeClock();
+    const e = new TimerEngine({ workSec: 20, restSec: 15, intervals: 2, sets: 2, setRestSec: 30 }, c.now);
+    e.start();
+    let last = -1;
+    const calls: number[] = [];
+    for (let t = 0; t <= 200000; t += 100) {
+      const s = e.snapshot();
+      if (startCallDue(s, last)) {
+        last = s.phaseIndex;
+        calls.push(Math.round(s.elapsedMs));
+      }
+      c.advance(100);
+    }
+    // G5 W20 R15 W20 S30 W20 R15 W20 → work starts at 5, 40, 90, 125 s.
+    expect(calls).toEqual([5000, 40000, 90000, 125000]);
   });
 });
 
