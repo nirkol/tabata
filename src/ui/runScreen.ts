@@ -31,7 +31,8 @@ export function runScreen(app: App, routine: Routine): Screen {
   svg.append(track, ring);
   const ringBox = h('div', { class: 'ring-box' }, digits);
   ringBox.prepend(svg);
-  const stage = h('div', { class: 'run-stage' }, ringBox);
+  // The phase label sits right above the counter, so the two read as one unit.
+  const stage = h('div', { class: 'run-stage' }, phaseLabel, ringBox);
 
   const setInfo = h('span', { 'data-testid': 'run-set-info' });
   const intervalsLeft = h('span', { 'data-testid': 'run-intervals' });
@@ -93,7 +94,6 @@ export function runScreen(app: App, routine: Routine): Screen {
       h('div', { class: 'run-top-right' }, fullscreenBtn),
     ),
     timeline,
-    phaseLabel,
     stage,
     h(
       'div',
@@ -183,7 +183,7 @@ export function runScreen(app: App, routine: Routine): Screen {
     digits.style.fontSize = `${target}px`;
     const pad = RING_STROKE * 2 + 24;
     const maxW = stage.clientWidth - pad;
-    const maxH = stage.clientHeight - pad;
+    const maxH = stage.clientHeight - pad - phaseLabel.offsetHeight;
     if (maxW > 0 && maxH > 0) {
       const scale = Math.min(1, maxW / digits.scrollWidth, maxH / digits.offsetHeight);
       if (scale < 1) digits.style.fontSize = `${Math.floor(target * scale)}px`;

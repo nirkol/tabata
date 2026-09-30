@@ -814,14 +814,14 @@ kbd {
 /* Workout timeline (top of the Run screen). */
 .timeline {
   position: relative;
-  height: 16px;
+  height: 18px; /* 10% thicker than the original 16px */
   margin: 8px 0 2px;
 }
 .tl-layer {
   position: absolute;
   inset: 0;
   display: flex;
-  border-radius: 8px;
+  border-radius: 9px;
   overflow: hidden;
 }
 .tl-plan {
@@ -861,8 +861,12 @@ kbd {
   flex: 1;
   min-height: 0;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+}
+.run-stage .run-phase {
+  margin-bottom: 1.2vh;
 }
 .ring-box {
   position: relative;
