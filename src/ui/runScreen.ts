@@ -11,8 +11,10 @@ import { isNative, setNativeKeepAwake, toggleFullscreen as platformToggleFullscr
 /** How often the screen refreshes when the tab is hidden (rAF doesn't run then). */
 const BACKGROUND_TICK_MS = 250;
 const RING_STROKE = 8;
-/** The final encouragement waits for the finish sound (three bell strikes) to end. */
-const PRAISE_AFTER_FINISH_MS = 2300;
+/** The encouragement is spoken this long after the last beep of the cycle's work. */
+const PRAISE_SPEAK_DELAY_MS = 2000;
+/** At the end of the run, the last of the three finish bell strikes starts this late. */
+const FINISH_LAST_STRIKE_MS = 1700;
 
 /** The Run view (SPEC §4). */
 export function runScreen(app: App, routine: Routine): Screen {
@@ -128,6 +130,7 @@ export function runScreen(app: App, routine: Routine): Screen {
 
   // --- Rendering ---
   let lastDigitsText = '';
+  let smallDigits = false;
   let lastStatus = '';
 
   let tenCalledPhase = -1;
@@ -135,14 +138,24 @@ export function runScreen(app: App, routine: Routine): Screen {
   let praisedPhase = -1;
   let lastPraise: string | null = null;
   let praiseTimer: ReturnType<typeof setTimeout> | undefined;
-  /** End of a cycle: shows a random encouraging statement under the digits and speaks it. */
-  function praise(): void {
+  /**
+   * End of a cycle: shows a random encouraging statement under the digits right away, and
+   * speaks it 2 s after the last beep (only if the run is still at that point, not paused/left).
+   */
+  function praise(final: boolean): void {
     if (!app.settings.praiseCall) return;
     const text = pickPraise(app.settings.praises, lastPraise);
     if (!text) return;
     lastPraise = text;
     showPraise(text);
-    if (!app.settings.muted) sayText(text, app.settings.volume);
+    clearTimeout(praiseTimer);
+    // (Divided by the dev speed flag so sped-up test runs keep the same proportions; 1× in the app.)
+    const delay = (PRAISE_SPEAK_DELAY_MS + (final ? FINISH_LAST_STRIKE_MS : 0)) / engine.speed;
+    praiseTimer = setTimeout(() => {
+      const s = engine.snapshot();
+      const stillThere = final ? s.status === 'done' : s.status === 'running' && s.phase?.kind === 'setRest';
+      if (stillThere && !app.settings.muted) sayText(text, app.settings.volume);
+    }, delay);
   }
   function showPraise(text: string | null): void {
     const show = text !== null;
@@ -163,7 +176,7 @@ export function runScreen(app: App, routine: Routine): Screen {
     // End of a cycle (the Rest between cycles begins): encouragement, shown for the whole rest.
     if (cycleEndDue(s, praisedPhase)) {
       praisedPhase = s.phaseIndex;
-      praise();
+      praise(false);
     }
     if (s.status !== 'done' && s.phase?.kind !== 'setRest' && !praiseLine.hidden) showPraise(null);
     if (tenCallDue(s, tenCalledPhase)) {
@@ -179,8 +192,11 @@ export function runScreen(app: App, routine: Routine): Screen {
     phaseLabel.textContent = label;
     const text = done ? '0:00' : formatCountdown(s.phaseRemainingMs);
     if (text !== digits.textContent) digits.textContent = text;
-    if (text.length !== lastDigitsText.length) {
+    // During the Rest between cycles the counter is 20% smaller, making room for the statement.
+    const small = !done && phase?.kind === 'setRest';
+    if (text.length !== lastDigitsText.length || small !== smallDigits) {
       lastDigitsText = text;
+      smallDigits = small;
       fit();
     }
     el.classList.toggle('warning', s.warning);
@@ -218,8 +234,8 @@ export function runScreen(app: App, routine: Routine): Screen {
       startOverBtn.hidden = false;
       stopBtn.textContent = '← Back to routines';
       void releaseWakeLock();
-      // End of the last cycle: encouragement, after the finish bells.
-      praiseTimer = setTimeout(praise, PRAISE_AFTER_FINISH_MS);
+      // End of the last cycle: encouragement (spoken 2 s after the last finish bell).
+      praise(true);
     } else {
       pauseBtn.textContent = s.status === 'paused' ? '▶ RESUME' : 'PAUSE';
     }
@@ -227,7 +243,7 @@ export function runScreen(app: App, routine: Routine): Screen {
 
   /** Sizes the digits (setting = % of window height) and caps them to the available space. */
   function fit(): void {
-    const target = (app.settings.digitSizePct / 100) * window.innerHeight;
+    const target = (app.settings.digitSizePct / 100) * window.innerHeight * (smallDigits ? 0.8 : 1);
     digits.style.fontSize = `${target}px`;
     const pad = RING_STROKE * 2 + 24;
     const maxW = stage.clientWidth - pad;

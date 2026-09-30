@@ -193,12 +193,6 @@ export function settingsScreen(app: App): Screen {
     h(
       'div',
       { class: 'panel' },
-      h('div', { class: 'row' }, h('h2', {}, 'Encouragement'), h('label', { class: 'toggle-row', for: 'praise-call' }, praiseCall, h('span', {}, 'Say one of these (at random) at the end of each cycle')), praiseTest),
-      h('div', { class: 'praise-grid' }, ...praiseInputs),
-    ),
-    h(
-      'div',
-      { class: 'panel' },
       h('h2', {}, 'Counter display'),
       h(
         'div',
@@ -213,6 +207,12 @@ export function settingsScreen(app: App): Screen {
         ),
         preview,
       ),
+    ),
+    h(
+      'div',
+      { class: 'panel' },
+      h('div', { class: 'row' }, h('h2', {}, 'Encouragement'), h('label', { class: 'toggle-row', for: 'praise-call' }, praiseCall, h('span', {}, 'Say one of these (at random) at the end of each cycle')), praiseTest),
+      h('div', { class: 'praise-grid' }, ...praiseInputs),
     ),
   );
   return { el };
