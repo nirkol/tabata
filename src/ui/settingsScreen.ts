@@ -46,7 +46,32 @@ export function settingsScreen(app: App): Screen {
     });
     const test = h('button', { type: 'button', class: 'btn', 'data-testid': sound === 'work' ? 'test-beep' : 'test-beep-rest', onclick: () => app.beeper.test(sound) }, '🔊 Test');
     // Compact layout: the slider, sound choice and Test button sit on the same row as the − / + control.
-    input.el.querySelector('.stepper')!.append(slider, style, test);
+    // Countdown length: 3 or 5 beeps at the end of the phase.
+    const countKey = sound === 'work' ? 'workBeeps' : 'restBeeps';
+    const countSwitch = h('div', { class: 'segmented', role: 'radiogroup', 'aria-label': `${label}: countdown beeps`, 'data-testid': `${sound}-beeps` });
+    const renderCount = () =>
+      countSwitch.replaceChildren(
+        ...([3, 5] as const).map((n) =>
+          h(
+            'button',
+            {
+              type: 'button',
+              role: 'radio',
+              'aria-checked': String(app.settings[countKey] === n),
+              class: 'segment' + (app.settings[countKey] === n ? ' active' : ''),
+              'data-testid': `${sound}-beeps-${n}`,
+              onclick: () => {
+                app.updateSettings({ [countKey]: n });
+                renderCount();
+              },
+            },
+            `${n}`,
+          ),
+        ),
+        h('span', { class: 'segment-label' }, 'beeps'),
+      );
+    renderCount();
+    input.el.querySelector('.stepper')!.append(slider, style, test, countSwitch);
     return input.el;
   }
   const workVolume = volumeRow('volume', 'work', 'Work beeps');

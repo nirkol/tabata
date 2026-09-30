@@ -63,6 +63,9 @@ describe('sanitizeSettings', () => {
     expect(sanitizeSettings({}).tenCall).toBe(true);
     expect(sanitizeSettings({ tenCall: false }).tenCall).toBe(false);
     expect(sanitizeSettings({}).startCall).toBe(true);
+    expect(sanitizeSettings({})).toMatchObject({ workBeeps: 5, restBeeps: 5 });
+    expect(sanitizeSettings({ workBeeps: 3, restBeeps: 3 })).toMatchObject({ workBeeps: 3, restBeeps: 3 });
+    expect(sanitizeSettings({ workBeeps: 4, restBeeps: '3' })).toMatchObject({ workBeeps: 5, restBeeps: 5 });
     expect(sanitizeSettings({ startCall: false }).startCall).toBe(false);
     // Unknown (or removed) styles fall back to the defaults.
     expect(sanitizeSettings({ workStyle: 'whistle', restStyle: 'drum', showRemaining: 'no' })).toMatchObject({ workStyle: 'bell', restStyle: 'soft', showRemaining: true });

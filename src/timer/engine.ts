@@ -64,6 +64,17 @@ export interface Beep {
 
 /** Last-seconds countdown length: short beeps at 4, 3, 2, 1 s remaining (SPEC §4.4). */
 export const COUNTDOWN_BEEPS = [4, 3, 2, 1] as const;
+/** How many beeps end a phase: 5 (4 short + long) or 3 (2 short + long). Chosen in Settings. */
+export type BeepCount = 3 | 5;
+
+export interface BeepOptions {
+  /** The spoken "Start!" replaces the long beep at the end of rest-type phases. */
+  voiceStart?: boolean;
+  /** Countdown length at the end of Work periods (default 5). */
+  workBeeps?: BeepCount;
+  /** Countdown length at the end of Get Ready / Rest / Cycle Rest (default 5). */
+  restBeeps?: BeepCount;
+}
 /** The digits and ring turn red when this many seconds (or fewer) remain. */
 export const WARNING_SEC = 5;
 /** The spoken "Ten!" call comes this many seconds before the end of a Work period. */
@@ -111,11 +122,13 @@ export function tenCallDue(s: Snapshot, lastCalledPhase: number): boolean {
  * phase (only those that fit inside the phase), then a long beep at the phase change.
  * The very last phase ends with the "finish" sound instead of the long beep.
  */
-export function beepSchedule(phases: readonly Phase[], opts: { voiceStart?: boolean } = {}): Beep[] {
+export function beepSchedule(phases: readonly Phase[], opts: BeepOptions = {}): Beep[] {
   const beeps: Beep[] = [];
   phases.forEach((p, idx) => {
     const sound: BeepSound = p.kind === 'work' ? 'work' : 'rest';
-    for (const s of COUNTDOWN_BEEPS) {
+    const count = (p.kind === 'work' ? opts.workBeeps : opts.restBeeps) ?? 5;
+    // Short beeps at (count-1)…1 s before the end: 4,3,2,1 for 5 beeps, 2,1 for 3 beeps.
+    for (const s of COUNTDOWN_BEEPS.filter((sec) => sec < count)) {
       if (s < p.durationSec) beeps.push({ atMs: p.endMs - s * 1000, kind: 'short', sound });
     }
     const last = idx === phases.length - 1;

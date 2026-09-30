@@ -125,6 +125,21 @@ describe('beepSchedule (SPEC §4.4)', () => {
     expect(longs(beepSchedule(phases))).toHaveLength(phases.length - 1);
   });
 
+  it('3-beep countdowns: 2 short beeps + the long one, chosen separately for work and rest', () => {
+    const phases = buildPhases({ ...base, sets: 1, intervals: 2 }); // G5 W20 R10 W20
+    const rel = (list: ReturnType<typeof beepSchedule>, p: Phase) =>
+      list.filter((b) => b.atMs > p.startMs && b.atMs <= p.endMs).map((b) => (p.endMs - b.atMs) / 1000);
+    const workOnly3 = beepSchedule(phases, { workBeeps: 3 });
+    expect(rel(workOnly3, phases[1])).toEqual([2, 1, 0]); // work: 3 beeps
+    expect(rel(workOnly3, phases[2])).toEqual([4, 3, 2, 1, 0]); // rest: still 5
+    const restOnly3 = beepSchedule(phases, { restBeeps: 3 });
+    expect(rel(restOnly3, phases[0])).toEqual([2, 1, 0]); // Get Ready counts as rest
+    expect(rel(restOnly3, phases[2])).toEqual([2, 1, 0]);
+    expect(rel(restOnly3, phases[1])).toEqual([4, 3, 2, 1, 0]);
+    // With "Start!" on, a 3-beep rest ends with 2 short beeps and the voice.
+    expect(rel(beepSchedule(phases, { restBeeps: 3, voiceStart: true }), phases[2])).toEqual([2, 1]);
+  });
+
   it('only plays the beeps that fit in phases shorter than 5 s', () => {
     const phases = buildPhases({ workSec: 3, restSec: 1, intervals: 2, sets: 1, setRestSec: 60 }); // G5 W3 R1 W3
     const beeps = beepSchedule(phases);

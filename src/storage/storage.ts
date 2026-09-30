@@ -1,4 +1,5 @@
 import { BEEP_STYLES, type BeepStyle } from '../audio/beeper';
+import type { BeepCount } from '../timer/engine';
 import { isValidRoutine, newId, sampleRoutine, type Routine } from '../routines/model';
 
 export interface Settings {
@@ -7,6 +8,10 @@ export interface Settings {
   /** Rest beep volume (Get Ready, Rest, Set Rest countdowns), 0–1. */
   restVolume: number;
   workStyle: BeepStyle;
+  /** Countdown at the end of Work: 5 beeps (4 short + long) or 3 (2 short + long). */
+  workBeeps: BeepCount;
+  /** Countdown at the end of Get Ready / Rest / Rest between cycles. */
+  restBeeps: BeepCount;
   restStyle: BeepStyle;
   /** Show "Set remaining" and "Total remaining" on the Run screen. */
   showRemaining: boolean;
@@ -55,6 +60,8 @@ export const DEFAULT_SETTINGS: Settings = {
   volume: 0.7,
   restVolume: 0.7,
   workStyle: 'bell',
+  workBeeps: 5,
+  restBeeps: 5,
   restStyle: 'soft',
   showRemaining: true,
   tenCall: true,
@@ -129,6 +136,8 @@ export function sanitizeSettings(value: unknown): Settings {
   if (typeof v.restVolume === 'number' && v.restVolume >= 0 && v.restVolume <= 1) s.restVolume = v.restVolume;
   const isStyle = (x: unknown): x is BeepStyle => typeof x === 'string' && (BEEP_STYLES as readonly string[]).includes(x);
   if (isStyle(v.workStyle)) s.workStyle = v.workStyle;
+  if (v.workBeeps === 3 || v.workBeeps === 5) s.workBeeps = v.workBeeps;
+  if (v.restBeeps === 3 || v.restBeeps === 5) s.restBeeps = v.restBeeps;
   if (isStyle(v.restStyle)) s.restStyle = v.restStyle;
   if (typeof v.showRemaining === 'boolean') s.showRemaining = v.showRemaining;
   if (typeof v.tenCall === 'boolean') s.tenCall = v.tenCall;

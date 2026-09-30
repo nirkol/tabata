@@ -145,12 +145,19 @@ test('settings: beep styles and hiding the remaining times', async ({ page }) =>
   await page.getByTestId('work-style').selectOption('high');
   await page.getByTestId('rest-style').selectOption('low');
   await page.getByTestId('show-remaining').uncheck();
+  // Countdown length: 5 beeps by default, 3 can be chosen for work and rest separately.
+  await expect(page.getByTestId('work-beeps-5')).toHaveAttribute('aria-checked', 'true');
+  await page.getByTestId('work-beeps-3').click();
+  await expect(page.getByTestId('work-beeps-3')).toHaveAttribute('aria-checked', 'true');
+  await expect(page.getByTestId('rest-beeps-5')).toHaveAttribute('aria-checked', 'true');
 
   await page.reload();
   await page.getByTestId('nav-settings').click();
   await expect(page.getByTestId('work-style')).toHaveValue('high');
   await expect(page.getByTestId('rest-style')).toHaveValue('low');
   await expect(page.getByTestId('show-remaining')).not.toBeChecked();
+  await expect(page.getByTestId('work-beeps-3')).toHaveAttribute('aria-checked', 'true');
+  await expect(page.getByTestId('rest-beeps-5')).toHaveAttribute('aria-checked', 'true');
 
   await page.getByTestId('nav-routines').click();
   await page.getByTestId('start').click();

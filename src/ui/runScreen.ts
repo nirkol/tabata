@@ -20,7 +20,11 @@ const FINISH_LAST_STRIKE_MS = 1700;
 export function runScreen(app: App, routine: Routine): Screen {
   const engine = new TimerEngine(routine, () => performance.now(), app.speed);
   // With "Start!" on (and not muted), the voice replaces the long beep at the end of rest.
-  const beeps = beepSchedule(engine.phases, { voiceStart: app.settings.startCall && !app.settings.muted });
+  const beeps = beepSchedule(engine.phases, {
+    voiceStart: app.settings.startCall && !app.settings.muted,
+    workBeeps: app.settings.workBeeps,
+    restBeeps: app.settings.restBeeps,
+  });
 
   // --- Elements ---
   const phaseLabel = h('div', { class: 'run-phase', 'data-testid': 'run-phase' });
