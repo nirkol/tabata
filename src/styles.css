@@ -571,6 +571,37 @@ kbd {
   color: var(--muted);
 }
 /* ---------- Routine editor (compact) ---------- */
+/* Everything on the editor is 10% larger than the base sizes. */
+.editor-screen h1 {
+  font-size: 31px;
+}
+.editor-screen .field-label {
+  font-size: 17.5px;
+}
+.editor-screen .text-input,
+.editor-screen .stepper-value {
+  font-size: 20px;
+  min-height: 48px;
+}
+.editor-screen .stepper-value {
+  width: 121px;
+}
+.editor-screen .stepper-btn {
+  width: 48px;
+  height: 48px;
+  font-size: 26px;
+}
+.editor-screen .field-error {
+  font-size: 15.5px;
+}
+.editor-screen .total-preview {
+  font-size: 22px;
+}
+.editor-screen .form-actions .btn {
+  min-height: 48px;
+  padding: 9px 20px;
+  font-size: 17.5px;
+}
 .editor-screen .screen-header {
   margin-bottom: 10px;
 }
