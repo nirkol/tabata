@@ -14,7 +14,8 @@ const RING_STROKE = 8;
 /** The Run view (SPEC §4). */
 export function runScreen(app: App, routine: Routine): Screen {
   const engine = new TimerEngine(routine, () => performance.now(), app.speed);
-  const beeps = beepSchedule(engine.phases);
+  // With "Start!" on (and not muted), the voice replaces the long beep at the end of rest.
+  const beeps = beepSchedule(engine.phases, { voiceStart: app.settings.startCall && !app.settings.muted });
 
   // --- Elements ---
   const phaseLabel = h('div', { class: 'run-phase', 'data-testid': 'run-phase' });

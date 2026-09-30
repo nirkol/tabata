@@ -100,14 +100,18 @@ export function tenCallDue(s: Snapshot, lastCalledPhase: number): boolean {
  * phase (only those that fit inside the phase), then a long beep at the phase change.
  * The very last phase ends with the "finish" sound instead of the long beep.
  */
-export function beepSchedule(phases: readonly Phase[]): Beep[] {
+export function beepSchedule(phases: readonly Phase[], opts: { voiceStart?: boolean } = {}): Beep[] {
   const beeps: Beep[] = [];
   phases.forEach((p, idx) => {
     const sound: BeepSound = p.kind === 'work' ? 'work' : 'rest';
     for (const s of COUNTDOWN_BEEPS) {
       if (s < p.durationSec) beeps.push({ atMs: p.endMs - s * 1000, kind: 'short', sound });
     }
-    beeps.push({ atMs: p.endMs, kind: idx === phases.length - 1 ? 'finish' : 'long', sound });
+    const last = idx === phases.length - 1;
+    // With the spoken "Start!" on, the voice replaces the long beep that ends a rest-type phase
+    // (Get Ready, Rest, Cycle Rest), i.e. the one that marks the start of Work.
+    if (!last && opts.voiceStart && p.kind !== 'work') return;
+    beeps.push({ atMs: p.endMs, kind: last ? 'finish' : 'long', sound });
   });
   return beeps;
 }

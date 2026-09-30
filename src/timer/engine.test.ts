@@ -110,6 +110,21 @@ describe('beepSchedule (SPEC §4.4)', () => {
     }
   });
 
+  it('with the spoken "Start!" on, drops the long beep at the end of rest-type phases only', () => {
+    const phases = buildPhases({ ...base, sets: 2 }); // G5 | W R W R W S | W R W R W
+    const withVoice = beepSchedule(phases, { voiceStart: true });
+    const longs = (list: ReturnType<typeof beepSchedule>) => list.filter((b) => b.kind === 'long').map((b) => b.atMs);
+    // Long beeps remain only at the end of Work periods (work → rest).
+    const workEnds = phases.filter((p, i) => p.kind === 'work' && i < phases.length - 1).map((p) => p.endMs);
+    expect(longs(withVoice)).toEqual(workEnds);
+    // Short countdown beeps and the finish sound are unchanged.
+    const shorts = (list: ReturnType<typeof beepSchedule>) => list.filter((b) => b.kind === 'short');
+    expect(shorts(withVoice)).toEqual(shorts(beepSchedule(phases)));
+    expect(withVoice.at(-1)?.kind).toBe('finish');
+    // Without the voice, every phase change keeps its long beep.
+    expect(longs(beepSchedule(phases))).toHaveLength(phases.length - 1);
+  });
+
   it('only plays the beeps that fit in phases shorter than 5 s', () => {
     const phases = buildPhases({ workSec: 3, restSec: 1, intervals: 2, sets: 1, setRestSec: 60 }); // G5 W3 R1 W3
     const beeps = beepSchedule(phases);
