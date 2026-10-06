@@ -40,6 +40,22 @@ export function runScreen(app: App, routine: Routine): Screen {
   // "Next: …" sits just outside the counter box, at its bottom-right corner.
   ringBox.append(next);
   const totalRemaining = h('span', { 'data-testid': 'run-total' });
+  // Routine progress right under the counter: four boxes of equal size, text centered.
+  const infoBox = (content: HTMLElement) => h('div', { class: 'run-info-box' }, content);
+  const details = h(
+    'div',
+    { class: 'run-details' },
+    h(
+      'div',
+      { class: 'run-info-boxes', 'data-testid': 'run-info' },
+      infoBox(setInfo),
+      infoBox(h('span', {}, `Work ${formatClock(routine.workSec)}`)),
+      infoBox(h('span', {}, `Rest ${formatClock(routine.restSec)}`)),
+      infoBox(intervalsLeft),
+    ),
+    h('div', { class: 'run-remaining', 'data-testid': 'run-remaining', hidden: !app.settings.showRemaining }, setRemaining, h('span', { class: 'sep' }, '│'), totalRemaining),
+  );
+  stage.append(details);
   const pauseBtn = h('button', { type: 'button', class: 'btn btn-run btn-primary', 'data-testid': 'pause', onclick: () => togglePause() }, 'PAUSE');
   const startOverBtn = h('button', { type: 'button', class: 'btn btn-run btn-primary', 'data-testid': 'start-over', hidden: true, onclick: () => app.startRoutine(routine.id) }, '↻ Start over');
   const stopBtn = h('button', { type: 'button', class: 'btn btn-run', 'data-testid': 'stop', onclick: () => void requestStop() }, '■ STOP');
@@ -96,18 +112,6 @@ export function runScreen(app: App, routine: Routine): Screen {
     ),
     timeline,
     stage,
-    h(
-      'div',
-      { class: 'run-info' },
-      setInfo,
-      h('span', { class: 'sep' }, '│'),
-      h('span', {}, `Work ${formatClock(routine.workSec)}`),
-      h('span', { class: 'sep' }, '│'),
-      h('span', {}, `Rest ${formatClock(routine.restSec)}`),
-      h('span', { class: 'sep' }, '│'),
-      intervalsLeft,
-    ),
-    h('div', { class: 'run-info run-info-secondary' }, h('span'), h('div', { class: 'run-remaining', 'data-testid': 'run-remaining', hidden: !app.settings.showRemaining }, setRemaining, h('span', { class: 'sep' }, '│'), totalRemaining), h('span')),
     // Bottom row: Pause / Stop in the center, volume controls on the right.
     h(
       'div',
@@ -240,7 +244,7 @@ export function runScreen(app: App, routine: Routine): Screen {
     digits.style.fontSize = `${target}px`;
     const pad = RING_STROKE * 2 + 24;
     const maxW = stage.clientWidth - pad;
-    const maxH = stage.clientHeight - pad - phaseLabel.offsetHeight - (praiseLine.hidden ? 0 : praiseLine.offsetHeight);
+    const maxH = stage.clientHeight - pad - phaseLabel.offsetHeight - details.offsetHeight - (praiseLine.hidden ? 0 : praiseLine.offsetHeight);
     if (maxW > 0 && maxH > 0) {
       const scale = Math.min(1, maxW / digits.scrollWidth, maxH / digits.offsetHeight);
       if (scale < 1) digits.style.fontSize = `${Math.floor(target * scale)}px`;

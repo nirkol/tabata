@@ -112,7 +112,7 @@ A bar across the top of the Run screen (22.5 px thick) shows the **whole workout
 7. **Cycle remaining**: time left in the current cycle. A cycle runs from its first Work period until the next cycle starts, so it includes the Rest between cycles. During Get Ready it shows the full length of cycle 1.
 8. **Total time remaining** for the whole routine.
 
-**Next** (e.g. `Next: REST 0:10`) sits just outside the counter box, at its bottom-right corner. Cycle remaining and Total remaining are shown together, centered, below the Work/Rest row.
+**Next** (e.g. `Next: REST 0:10`) sits just outside the counter box, at its bottom-right corner. Directly under the counter box, the routine progress is shown in **four boxes of the same size with centered text**: `Cycle 1 / 2` · `Work 0:20` · `Rest 0:10` · `Rounds left: 8 / 8` (2 × 2 in narrow windows). Cycle remaining and Total remaining are shown together, centered, right below the boxes.
 
 The **volume controls** sit at the **lower right**, on the same row as Pause / Stop: a mute button and two volume sliders stacked on top of each other, labeled **Work volume** (top) and **Rest volume** (beneath it), each 0–100 % in 5 % steps with its current value. Changes apply immediately and are saved to Settings. Moving a slider above 0 % while muted unmutes. The fullscreen button stays in the top-right corner.
 
@@ -358,7 +358,7 @@ Both beep volumes and Mute can also be changed from the Run screen (§4.2).
 | Admin | No PIN |
 | Export / Import | Removed from Settings; routines are not moved between the web version and the Mac app |
 | Routine list | No Duplicate button (Start, Edit, Delete only); ☰ handle to reorder by drag (or ↑ / ↓) |
-| Run-screen info | Cycle counter only at the start of the Work/Rest row; "Cycle remaining" and "Total remaining" together in the center; volume slider + mute in the top-right corner |
+| Run-screen info | Cycle, Work, Rest and Rounds left in four equal boxes right under the counter; "Cycle remaining" and "Total remaining" together in the center; volume slider + mute in the top-right corner |
 | Leaving screens | Stop on the Run screen pauses the routine and asks for confirmation (Cancel resumes); the routine editor can only be left with Save or Cancel |
 | Run-screen controls | Only Pause and Stop (no Skip or Restart); at the end: Start over and Back to routines |
 | Mac packaging | Tauri, unsigned build accepted |
