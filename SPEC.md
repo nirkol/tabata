@@ -207,7 +207,7 @@ Every numeric field (Work, Rest, Rest between cycles, Rounds, Cycles, and the nu
 ## 5b. Timers (preset countdown timers)
 A **Timers** tab in the top bar (between Routines and Settings) holds simple single countdowns, e.g. 1, 2 or 10 minutes.
 - **List:** each timer is a **square tile, 4 per row**, in the same style as the routine cards: the **DURATION** large in the middle and at the bottom **▶ Start**, **Edit** (pencil) and **Delete** (trash, asks for confirmation). Timers are always **sorted from short to long**, row by row (shortest at the top left; no manual reordering). The header shows the count and a **“+ New Timer”** button.
-- First use creates four presets: **1, 2, 5 and 10 minutes**.
+- A new installation (no saved timers yet) creates four presets, so the page is never empty on first open: **2, 3, 5 and 10 minutes**. If the user later deletes them all, they are not re-created.
 - **Editor:** **Minutes** (0–180) and **Seconds** (0–59) with the − / + control (§5.3). Duration must be 0:01–3:00:00; a live “Duration” preview is shown. Save / Cancel only (navigation is locked while editing). Timers have **no name**: they are identified by their duration (tiles show only the duration; the Timer screen and the delete dialog refer to it in words, e.g. “2 minutes”).
 - **Timer screen** (full window, like the Run view): the duration in words at the top (e.g. “Timer: 2 minutes”), a **TIMER** label, a **large countdown** inside the same **progress ring** as the Run view (in the work color), **PAUSE / RESUME** and **■ STOP** buttons, and a volume slider with mute at the lower right.
   - Beeps: 4 short work beeps in the last 4 seconds and the finish bell at 0:00.
@@ -368,5 +368,5 @@ Both beep volumes and Mute can also be changed from the Run screen (§4.2).
 | Mac hardware | Universal binary for Apple Silicon and Intel, macOS 10.15+ (older Macs supported) |
 | Mac build | Built by a GitHub Actions workflow on a GitHub-hosted Mac, **only when explicitly requested** (manual run, not on every push); the .dmg is published as a GitHub Release. Ad-hoc signed (not notarized). |
 | Exercise names, voice, history | Not needed |
-| Timers | Top-bar **Timers** tab with preset countdown timers (default 1/2/5/10 min) as square tiles, 4 per row, sorted short to long from the top left; each has Start, Edit, Delete; the Timer screen has a large countdown with the progress ring, Pause and Stop |
+| Timers | Top-bar **Timers** tab with preset countdown timers (default 2/3/5/10 min on a new installation) as square tiles, 4 per row, sorted short to long from the top left; each has Start, Edit, Delete; the Timer screen has a large countdown with the progress ring, Pause and Stop |
 | Top bar | Routines and Timers as large centered buttons; Settings, Instructions and About as text on the right (no icon tabs) |

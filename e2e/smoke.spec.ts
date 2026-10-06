@@ -556,7 +556,7 @@ test('timers: presets sorted short to long, create, edit, delete, run, pause and
   await fresh(page, '?speed=10');
   await page.getByTestId('nav-timers').click();
   await expect(page.getByTestId('nav-timers')).toHaveClass(/active/);
-  await expect(page.getByTestId('timer-duration')).toHaveText(['1:00', '2:00', '5:00', '10:00']);
+  await expect(page.getByTestId('timer-duration')).toHaveText(['2:00', '3:00', '5:00', '10:00']);
   await expect(page.getByTestId('timer-count')).toHaveText('4 timers');
   // Square tiles, 4 per row: the shortest at the top left.
   const boxes = await Promise.all([0, 1, 2, 3].map((i) => page.getByTestId('timer-card').nth(i).boundingBox()));
@@ -566,7 +566,7 @@ test('timers: presets sorted short to long, create, edit, delete, run, pause and
     expect(boxes[i]!.x).toBeGreaterThan(boxes[i - 1]!.x);
   }
 
-  // New 3:30 timer (no name field): it lands between 2 and 5 minutes.
+  // New 3:30 timer (no name field): it lands between 3 and 5 minutes.
   await page.getByTestId('new-timer').click();
   await expect(page.getByTestId('nav-routines')).toBeDisabled();
   await page.getByTestId('minutes-input').fill('3');
@@ -574,7 +574,7 @@ test('timers: presets sorted short to long, create, edit, delete, run, pause and
   await expect(page.getByTestId('timer-name-input')).toHaveCount(0);
   await expect(page.getByTestId('timer-total')).toHaveText('Duration: 3:30');
   await page.getByTestId('save').click();
-  await expect(page.getByTestId('timer-duration')).toHaveText(['1:00', '2:00', '3:30', '5:00', '10:00']);
+  await expect(page.getByTestId('timer-duration')).toHaveText(['2:00', '3:00', '3:30', '5:00', '10:00']);
   await expect(page.getByTestId('timer-name')).toHaveCount(0); // tiles show no name
   // The 5th tile starts the second row, under the first.
   const [first, fifth] = await Promise.all([0, 4].map((i) => page.getByTestId('timer-card').nth(i).boundingBox()));
@@ -585,10 +585,10 @@ test('timers: presets sorted short to long, create, edit, delete, run, pause and
   await page.getByTestId('timer-card').nth(1).getByTestId('edit').click();
   await page.getByTestId('minutes-input').fill('0');
   await expect(page.getByTestId('save')).toBeDisabled();
-  // Edit "2 minutes" to 0:20: it moves to the top.
+  // Edit "3 minutes" to 0:20: it moves to the top.
   await page.getByTestId('seconds-input').fill('20');
   await page.getByTestId('save').click();
-  await expect(page.getByTestId('timer-duration')).toHaveText(['0:20', '1:00', '3:30', '5:00', '10:00']);
+  await expect(page.getByTestId('timer-duration')).toHaveText(['0:20', '2:00', '3:30', '5:00', '10:00']);
 
   // Delete asks first.
   await page.getByTestId('timer-card').last().getByTestId('delete').click();
@@ -598,7 +598,7 @@ test('timers: presets sorted short to long, create, edit, delete, run, pause and
   // Kept after a reload.
   await page.reload();
   await page.getByTestId('nav-timers').click();
-  await expect(page.getByTestId('timer-duration')).toHaveText(['0:20', '1:00', '3:30', '5:00']);
+  await expect(page.getByTestId('timer-duration')).toHaveText(['0:20', '2:00', '3:30', '5:00']);
 
   // Run the 0:20 timer (2 s at ×10): pause, stop-cancel, then it finishes with beeps.
   await page.getByTestId('timer-card').first().getByTestId('start').click();

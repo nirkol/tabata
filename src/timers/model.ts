@@ -16,7 +16,7 @@ export const TIMER_LIMITS = {
 } as const satisfies Record<string, Range>;
 
 /** Presets created on first launch. */
-export const DEFAULT_TIMER_MINUTES = [1, 2, 5, 10] as const;
+export const DEFAULT_TIMER_MINUTES = [2, 3, 5, 10] as const;
 
 export function isValidDuration(sec: number): boolean {
   return Number.isInteger(sec) && sec >= TIMER_LIMITS.durationSec.min && sec <= TIMER_LIMITS.durationSec.max;

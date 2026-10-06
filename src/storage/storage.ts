@@ -233,7 +233,7 @@ export class LocalAppStorage implements AppStorage {
   loadTimers(): PresetTimer[] {
     const data = readJson(this.store, KEYS.timers) as { version?: number; timers?: unknown } | undefined;
     if (data === undefined) {
-      // First use: 1, 2, 5 and 10 minute presets (SPEC §5b).
+      // New installation: 2, 3, 5 and 10 minute presets, so the page isn't empty (SPEC §5b).
       const timers = defaultTimers();
       this.saveTimers(timers);
       return timers;

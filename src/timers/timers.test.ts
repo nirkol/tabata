@@ -38,10 +38,10 @@ describe('timer model', () => {
 });
 
 describe('timer storage', () => {
-  it('creates 1, 2, 5 and 10 minute presets on first use, then keeps what the user saved', () => {
+  it('creates 2, 3, 5 and 10 minute presets on first use, then keeps what the user saved', () => {
     const store = memoryStore();
     const s = new LocalAppStorage(store);
-    expect(s.loadTimers().map((t) => t.durationSec)).toEqual([60, 120, 300, 600]);
+    expect(s.loadTimers().map((t) => t.durationSec)).toEqual([120, 180, 300, 600]);
     expect(store.data.has(KEYS.timers)).toBe(true);
     s.saveTimers([]);
     expect(new LocalAppStorage(store).loadTimers()).toEqual([]);
