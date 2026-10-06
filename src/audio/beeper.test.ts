@@ -178,3 +178,48 @@ describe('Beeper', () => {
     expect(workShort[0].freq).not.toBe(restShort[0].freq);
   });
 });
+
+describe('Beeper clips (Mac voice cues)', () => {
+  function clipContext(decodeOk: boolean) {
+    const sources: { offset: number; started: boolean }[] = [];
+    const buffer = { sampleRate: 1000, getChannelData: () => new Float32Array([0, 0.001, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.5, 0.4]) } as unknown as AudioBuffer;
+    const ctx: AudioContextLike = {
+      currentTime: 5,
+      state: 'running',
+      destination: {} as AudioNode,
+      resume: async () => undefined,
+      createGain: () => ({ gain: { setValueAtTime() {} }, connect() {} }) as unknown as GainNode,
+      createOscillator: () => ({}) as OscillatorNode,
+      createBufferSource: () => {
+        const rec = { offset: NaN, started: false };
+        sources.push(rec);
+        return { buffer: null, connect() {}, start: (_t: number, offset: number) => Object.assign(rec, { offset, started: true }) } as unknown as AudioBufferSourceNode;
+      },
+      decodeAudioData: (_d, ok, err) => (decodeOk ? ok(buffer) : err?.(new Error('bad'))),
+    };
+    return { ctx, sources };
+  }
+
+  it('decodes a clip after unlock and plays it, skipping the leading silence', async () => {
+    const { ctx, sources } = clipContext(true);
+    const b = new Beeper(() => ctx);
+    expect(b.playClip('cue-start')).toBe(false); // no such clip yet
+    b.addClip('cue-start', new ArrayBuffer(100));
+    expect(b.playClip('cue-start')).toBe(true);
+    await new Promise((r) => setTimeout(r, 0));
+    expect(sources).toHaveLength(1);
+    expect(sources[0].started).toBe(true);
+    expect(sources[0].offset).toBeCloseTo(0.01); // 20 silent samples at 1 kHz, minus 10 ms
+  });
+
+  it('calls the fallback when a clip cannot be decoded', async () => {
+    const { ctx, sources } = clipContext(false);
+    const b = new Beeper(() => ctx);
+    b.addClip('cue-ten', new ArrayBuffer(100));
+    let fellBack = false;
+    expect(b.playClip('cue-ten', () => (fellBack = true))).toBe(true);
+    await new Promise((r) => setTimeout(r, 0));
+    expect(fellBack).toBe(true);
+    expect(sources).toHaveLength(0);
+  });
+});

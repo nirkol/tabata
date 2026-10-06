@@ -1,3 +1,4 @@
+import type { Beeper } from '../audio/beeper';
 import { isNative } from './native';
 
 /** The spoken cues: "Start!" when a work period begins, "Ten!" 10 s before it ends. */
@@ -13,12 +14,36 @@ export function sayCue(cue: VoiceCue, volume: number): void {
   const v = Math.min(1, Math.max(0, volume));
   if (v === 0) return;
   if (isNative()) {
-    void import('@tauri-apps/api/core')
-      .then((core) => core.invoke('say_cue', { cue, volume: v }))
-      .catch(() => speakInBrowser(WORDS[cue], v));
+    // Pre-rendered clip through Web Audio: instant and clear (see prepareNativeCues).
+    const say = () =>
+      void import('@tauri-apps/api/core')
+        .then((core) => core.invoke('say_cue', { cue, volume: v }))
+        .catch(() => speakInBrowser(WORDS[cue], v));
+    if (!cueBeeper?.playClip(`cue-${cue}`, say)) say();
     return;
   }
   speakInBrowser(WORDS[cue], v);
+}
+
+let cueBeeper: Beeper | null = null;
+
+/**
+ * Mac app: renders "Start!" and "Ten!" once with macOS's voice and hands the audio to the
+ * beeper, so the cues play instantly (like the beeps) instead of starting `say` every time,
+ * which made them late and clipped. If rendering fails, `say` is used as before.
+ */
+export async function prepareNativeCues(beeper: Beeper): Promise<void> {
+  if (!isNative()) return;
+  const core = await import('@tauri-apps/api/core');
+  for (const cue of ['start', 'ten'] as const) {
+    try {
+      const data = await core.invoke<ArrayBuffer>('render_cue', { cue });
+      if (data && data.byteLength > 44) beeper.addClip(`cue-${cue}`, data);
+    } catch {
+      // Keep the `say` fallback for this cue.
+    }
+  }
+  cueBeeper = beeper;
 }
 
 /** Makes a statement sound right when spoken (e.g. "yFit" → "Why Fit"). */

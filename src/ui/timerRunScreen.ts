@@ -1,4 +1,5 @@
-import { Countdown, countdownBeeps } from '../timers/countdown';
+import { Countdown, countdownBeeps, timerStartCallDue, timerTenCallDue } from '../timers/countdown';
+import { sayCue } from '../platform/voice';
 import { timerTitle, type PresetTimer } from '../timers/model';
 import { formatCountdown } from '../timer/format';
 import { isNative, setNativeKeepAwake, toggleFullscreen as platformToggleFullscreen } from '../platform/native';
@@ -69,11 +70,22 @@ export function timerRunScreen(app: App, timer: PresetTimer): Screen {
   // --- Rendering ---
   let lastDigitsText = '';
   let lastStatus = '';
+  let startCalled = false;
+  let tenCalled = false;
 
   function render(): void {
     const status = countdown.getStatus();
     const elapsed = countdown.elapsedMs();
     app.beeper.sync(elapsed);
+    // Voice cues, as in a workout: "Start!" when the timer starts, "Ten!" 10 s before the end.
+    if (timerStartCallDue(countdown, startCalled)) {
+      startCalled = true;
+      if (app.settings.startCall && !app.settings.muted) sayCue('start', app.settings.volume);
+    }
+    if (timerTenCallDue(countdown, tenCalled)) {
+      tenCalled = true;
+      if (app.settings.tenCall && !app.settings.muted) sayCue('ten', app.settings.volume);
+    }
     const done = status === 'done';
     const text = done ? '0:00' : formatCountdown(countdown.remainingMs());
     if (text !== digits.textContent) digits.textContent = text;

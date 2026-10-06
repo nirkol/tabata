@@ -68,26 +68,77 @@ fn set_keep_awake(on: bool, state: State<'_, Awake>) -> Result<(), String> {
     Ok(())
 }
 
-/// Speaks a voice cue with macOS's built-in voice: "start" → "Start!", "ten" → "Ten!".
-/// Only these fixed words can be spoken, and `say` runs without a shell.
+/// The fixed words of the voice cues: "start" → "Start!", "ten" → "Ten!".
+fn cue_text(cue: &str) -> Result<&'static str, String> {
+    match cue {
+        "start" => Ok("Start!"),
+        "ten" => Ok("Ten!"),
+        _ => Err("unknown cue".into()),
+    }
+}
+
+/// Clear, energetic delivery for the cues (same feel as the web version: a bit higher and faster).
+#[cfg(target_os = "macos")]
+const CUE_VOICE: &str = "Samantha";
+#[cfg(target_os = "macos")]
+const CUE_RATE: &str = "200";
+#[cfg(target_os = "macos")]
+const CUE_STYLE: &str = "[[pbas 52]] [[emph +]]";
+
+/// Fallback cue playback: speaks the cue right away with macOS's `say` (no shell).
 #[tauri::command]
 fn say_cue(cue: String, volume: f32) -> Result<(), String> {
-    let text = match cue.as_str() {
-        "start" => "Start!",
-        "ten" => "Ten!",
-        _ => return Err("unknown cue".into()),
-    };
+    let text = cue_text(&cue)?;
     #[cfg(target_os = "macos")]
     {
         let v = if volume.is_finite() { volume.clamp(0.0, 1.0) } else { 1.0 };
-        std::process::Command::new("/usr/bin/say")
-            .args(["-r", "230", &format!("[[volm {v:.2}]] {text}")])
-            .spawn()
-            .map_err(|e| e.to_string())?;
+        let line = format!("[[volm {v:.2}]] {CUE_STYLE} {text}");
+        std::thread::spawn(move || {
+            let ok = std::process::Command::new("/usr/bin/say")
+                .args(["-v", CUE_VOICE, "-r", CUE_RATE, &line])
+                .status()
+                .map(|s| s.success())
+                .unwrap_or(false);
+            if !ok {
+                let _ = std::process::Command::new("/usr/bin/say").args(["-r", CUE_RATE, &line]).status();
+            }
+        });
     }
     #[cfg(not(target_os = "macos"))]
     let _ = (text, volume);
     Ok(())
+}
+
+/// Renders a voice cue once to WAV audio (16-bit, 22.05 kHz) with macOS's voice, so the app
+/// can play it instantly through Web Audio, like the beeps, instead of starting `say` each time.
+#[tauri::command]
+async fn render_cue(cue: String) -> Result<tauri::ipc::Response, String> {
+    let text = cue_text(&cue)?;
+    #[cfg(target_os = "macos")]
+    {
+        let path = std::env::temp_dir().join(format!("yfit-cue-{}-{}.wav", cue, std::process::id()));
+        let render = |voice: Option<&str>| -> bool {
+            let mut cmd = std::process::Command::new("/usr/bin/say");
+            if let Some(v) = voice {
+                cmd.args(["-v", v]);
+            }
+            cmd.args(["-r", CUE_RATE, "--file-format=WAVE", "--data-format=LEI16@22050", "-o"])
+                .arg(&path)
+                .arg(format!("{CUE_STYLE} {text}"));
+            cmd.status().map(|s| s.success()).unwrap_or(false)
+        };
+        if !render(Some(CUE_VOICE)) && !render(None) {
+            return Err("say failed".into());
+        }
+        let bytes = std::fs::read(&path).map_err(|e| e.to_string());
+        let _ = std::fs::remove_file(&path);
+        return Ok(tauri::ipc::Response::new(bytes?));
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = text;
+        Err("not supported".into())
+    }
 }
 
 /// Speaks a short free-text statement (the end-of-cycle encouragement) with macOS's voice.
@@ -132,7 +183,7 @@ fn say_text(text: String, volume: f32) -> Result<(), String> {
 pub fn run() {
     tauri::Builder::default()
         .manage(Awake::default())
-        .invoke_handler(tauri::generate_handler![load_store, save_store, set_keep_awake, say_cue, say_text])
+        .invoke_handler(tauri::generate_handler![load_store, save_store, set_keep_awake, say_cue, say_text, render_cue])
         .run(tauri::generate_context!())
         .expect("error while running yFit Workout Timer");
 }

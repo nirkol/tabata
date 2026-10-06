@@ -54,7 +54,7 @@ const SECTIONS: { title: string; items: Block[] }[] = [
     items: [
       'Simple countdowns (e.g. 1, 2 or 10 minutes) are on the Timers tab, sorted from shortest to longest.',
       ['New / edit', ' – click “+ New Timer” or the pencil icon; set minutes and seconds and, if you like, a name.'],
-      ['Start', ' – click ▶ Start: a large countdown with the progress ring. PAUSE (or Space) and STOP (or Esc) work as in a workout; beeps mark the last seconds.'],
+      ['Start', ' – click ▶ Start: a large countdown with the progress ring. PAUSE (or Space) and STOP (or Esc) work as in a workout; “Start!” and “Ten!” are said as in a workout, and beeps mark the last seconds.'],
     ],
   },
   {

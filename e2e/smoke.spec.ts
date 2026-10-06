@@ -618,3 +618,24 @@ test('timers: presets sorted short to long, create, edit, delete, run, pause and
   await page.getByTestId('stop').click();
   await expect(page.getByTestId('timer-list')).toBeVisible();
 });
+
+test('timers: "Start!" when the timer starts and "Ten!" 10 s before the end', async ({ page }) => {
+  await page.addInitScript(() => {
+    const w = window as unknown as { __spoken: string[] };
+    w.__spoken = [];
+    Object.defineProperty(window, 'speechSynthesis', {
+      configurable: true,
+      value: { speak: (u: SpeechSynthesisUtterance) => w.__spoken.push(u.text), cancel: () => undefined },
+    });
+  });
+  await fresh(page, '?speed=5');
+  await page.evaluate(() => {
+    const now = new Date().toISOString();
+    localStorage.setItem('tabata.v1.timers', JSON.stringify({ version: 1, timers: [{ id: 't', name: '', durationSec: 15, createdAt: now, updatedAt: now }] }));
+  });
+  await page.reload();
+  await page.getByTestId('nav-timers').click();
+  await page.getByTestId('start').click();
+  await expect(page.getByTestId('run-phase')).toHaveText("TIME'S UP", { timeout: 10000 });
+  expect(await page.evaluate(() => (window as unknown as { __spoken: string[] }).__spoken)).toEqual(['Start!', 'Ten!']);
+});

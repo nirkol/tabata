@@ -3,6 +3,7 @@ import type { Routine } from '../routines/model';
 import { sortTimers, type PresetTimer } from '../timers/model';
 import type { AppStorage, Settings } from '../storage/storage';
 import { h } from './dom';
+import { prepareNativeCues } from '../platform/voice';
 import { isDialogOpen } from './dialog';
 import { editorScreen } from './editorScreen';
 import { listScreen } from './listScreen';
@@ -72,6 +73,7 @@ export class App {
     const last = storage.loadLastUsedId();
     this.lastUsedId = this.routines.some((r) => r.id === last) ? last : null;
     this.applySettings();
+    void prepareNativeCues(this.beeper).catch(() => undefined);
 
     this.nav = h(
       'header',

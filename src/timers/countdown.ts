@@ -1,4 +1,4 @@
-import { COUNTDOWN_BEEPS, type Beep, type Clock } from '../timer/engine';
+import { COUNTDOWN_BEEPS, TEN_CALL_SEC, TEN_CALL_WINDOW_MS, type Beep, type Clock } from '../timer/engine';
 
 /**
  * A single countdown (preset timers, SPEC §5b). Timestamp-based like TimerEngine:
@@ -67,4 +67,16 @@ export function countdownBeeps(durationSec: number): Beep[] {
   const beeps: Beep[] = COUNTDOWN_BEEPS.filter((s) => s < durationSec).map((s) => ({ atMs: endMs - s * 1000, kind: 'short', sound: 'work' }));
   beeps.push({ atMs: endMs, kind: 'finish', sound: 'work' });
   return beeps;
+}
+
+/** "Start!" is said once, right when the timer starts (skipped if it's caught up late). */
+export function timerStartCallDue(c: Countdown, alreadyCalled: boolean): boolean {
+  return !alreadyCalled && c.getStatus() === 'running' && c.elapsedMs() < TEN_CALL_WINDOW_MS;
+}
+
+/** "Ten!" is said once, 10 s before the end of timers longer than 10 s. */
+export function timerTenCallDue(c: Countdown, alreadyCalled: boolean): boolean {
+  if (alreadyCalled || c.getStatus() !== 'running' || c.durationSec <= TEN_CALL_SEC) return false;
+  const past = TEN_CALL_SEC * 1000 - c.remainingMs();
+  return past >= 0 && past < TEN_CALL_WINDOW_MS;
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Countdown, countdownBeeps } from './countdown';
+import { Countdown, countdownBeeps, timerStartCallDue, timerTenCallDue } from './countdown';
 import { createTimer, defaultTimers, durationWords, sanitizeTimer, sortTimers, timerTitle } from './model';
 import { KEYS, LocalAppStorage, type KeyValueStore } from '../storage/storage';
 
@@ -85,5 +85,35 @@ describe('Countdown', () => {
       { atMs: 60_000, kind: 'finish', sound: 'work' },
     ]);
     expect(countdownBeeps(2).map((b) => b.atMs)).toEqual([1000, 2000]);
+  });
+});
+
+describe('timer voice cues', () => {
+  it('says "Start!" at the start and "Ten!" 10 s before the end', () => {
+    let now = 0;
+    const c = new Countdown(60, () => now);
+    c.start();
+    expect(timerStartCallDue(c, false)).toBe(true);
+    expect(timerStartCallDue(c, true)).toBe(false);
+    now = 49_000;
+    expect(timerTenCallDue(c, false)).toBe(false);
+    now = 50_200;
+    expect(timerStartCallDue(c, false)).toBe(false);
+    expect(timerTenCallDue(c, false)).toBe(true);
+    expect(timerTenCallDue(c, true)).toBe(false);
+    now = 52_000; // too late: skipped
+    expect(timerTenCallDue(c, false)).toBe(false);
+  });
+
+  it('has no "Ten!" for timers of 10 s or less, and none while paused', () => {
+    let now = 0;
+    const short = new Countdown(10, () => now);
+    short.start();
+    expect(timerTenCallDue(short, false)).toBe(false);
+    const c = new Countdown(20, () => now);
+    c.start();
+    now = 10_100;
+    c.pause();
+    expect(timerTenCallDue(c, false)).toBe(false);
   });
 });

@@ -8,6 +8,9 @@ export interface AudioContextLike {
   resume(): Promise<void>;
   createOscillator(): OscillatorNode;
   createGain(): GainNode;
+  /** Only needed for recorded clips (the Mac app's voice cues). */
+  createBufferSource?(): AudioBufferSourceNode;
+  decodeAudioData?(data: ArrayBuffer, ok: (b: AudioBuffer) => void, err?: (e: unknown) => void): unknown;
 }
 
 export type AudioContextFactory = () => AudioContextLike;
@@ -115,6 +118,9 @@ export class Beeper {
   private styles: Record<BeepSound, BeepStyle> = { ...DEFAULT_BEEP_STYLES };
   private muted = false;
   private readonly live = new Set<OscillatorNode>();
+  /** Recorded clips (e.g. voice cues): raw audio until the context exists, then decoded. */
+  private readonly clipData = new Map<string, ArrayBuffer>();
+  private readonly clips = new Map<string, Promise<{ buffer: AudioBuffer; offset: number } | null>>();
 
   // Run-schedule state.
   private beeps: readonly Beep[] = [];
@@ -138,8 +144,58 @@ export class Beeper {
         this.buses[sound] = bus;
       }
       this.applyGain();
+      for (const name of this.clipData.keys()) this.decodeClip(name);
     }
     if (this.ctx.state === 'suspended') void this.ctx.resume();
+  }
+
+  /** Adds a recorded clip (WAV/AIFF bytes). It's decoded once audio is unlocked. */
+  addClip(name: string, data: ArrayBuffer): void {
+    this.clipData.set(name, data);
+    if (this.ctx) this.decodeClip(name);
+  }
+
+  hasClip(name: string): boolean {
+    return this.clipData.has(name);
+  }
+
+  private decodeClip(name: string): void {
+    const ctx = this.ctx;
+    const data = this.clipData.get(name);
+    if (!ctx || !data || !ctx.decodeAudioData) return;
+    const decode = ctx.decodeAudioData.bind(ctx);
+    this.clips.set(
+      name,
+      new Promise<AudioBuffer>((ok, err) => {
+        // Callback form: older Mac WebKit doesn't return a promise.
+        const r = decode(data.slice(0), ok, err) as Promise<AudioBuffer> | undefined;
+        r?.then?.(ok, err);
+      })
+        .then((buffer) => ({ buffer, offset: leadingSilenceSec(buffer) }))
+        .catch(() => null),
+    );
+  }
+
+  /**
+   * Plays a recorded clip now on the work sound's volume (and mute). Returns false when
+   * there is no such clip; `onFail` runs if the clip can't be decoded.
+   */
+  playClip(name: string, onFail?: () => void): boolean {
+    this.unlock();
+    const clip = this.clips.get(name);
+    const ctx = this.ctx;
+    if (!clip || !ctx?.createBufferSource) return false;
+    const requested = ctx.currentTime;
+    void clip.then((c) => {
+      // Still decoding at the first use: play it if it's ready within half a second.
+      if (!c) return onFail?.(); // couldn't be decoded
+      if (ctx.currentTime - requested > 0.5) return;
+      const src = ctx.createBufferSource!();
+      src.buffer = c.buffer;
+      src.connect(this.buses.work!);
+      src.start(ctx.currentTime, c.offset);
+    });
+    return true;
   }
 
   /** Chooses the beep style of the work or the rest beeps; applies to beeps scheduled from now on. */
@@ -304,4 +360,13 @@ export class Beeper {
       osc.stop(end);
     }
   }
+}
+
+/** Seconds of near-silence at the start of a recorded clip (skipped so the voice is on time). */
+export function leadingSilenceSec(buffer: AudioBuffer, threshold = 0.02): number {
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < data.length; i++) {
+    if (Math.abs(data[i]) > threshold) return Math.max(0, i / buffer.sampleRate - 0.01);
+  }
+  return 0;
 }
