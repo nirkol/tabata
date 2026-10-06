@@ -17,13 +17,12 @@ describe('timer model', () => {
     expect(durationWords(5400)).toBe('1 hour 30 minutes');
   });
 
-  it('uses the name as the title, or the duration when the name is empty', () => {
-    expect(timerTitle({ name: 'Plank', durationSec: 60 })).toBe('Plank');
-    expect(timerTitle({ name: '  ', durationSec: 120 })).toBe('2 minutes');
+  it('refers to a timer by its duration', () => {
+    expect(timerTitle({ durationSec: 120 })).toBe('2 minutes');
   });
 
   it('sorts from short to long', () => {
-    const t = [600, 60, 300, 120].map((s) => createTimer({ name: '', durationSec: s }));
+    const t = [600, 60, 300, 120].map((s) => createTimer(s));
     expect(sortTimers(t).map((x) => x.durationSec)).toEqual([60, 120, 300, 600]);
   });
 
@@ -31,7 +30,10 @@ describe('timer model', () => {
     expect(sanitizeTimer({ durationSec: 0 })).toBeNull();
     expect(sanitizeTimer({ durationSec: 1.5 })).toBeNull();
     expect(sanitizeTimer({ durationSec: 3 * 3600 + 1 })).toBeNull();
-    expect(sanitizeTimer({ id: 'a', name: ' x ', durationSec: 90 })).toMatchObject({ id: 'a', name: 'x', durationSec: 90 });
+    // Older saved timers may still carry a name: it's dropped.
+    const t = sanitizeTimer({ id: 'a', name: 'x', durationSec: 90 });
+    expect(t).toMatchObject({ id: 'a', durationSec: 90 });
+    expect(t).not.toHaveProperty('name');
   });
 });
 

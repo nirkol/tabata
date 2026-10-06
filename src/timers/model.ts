@@ -3,15 +3,13 @@ import { newId, type Range } from '../routines/model';
 /** A preset countdown timer (SPEC §5b). */
 export interface PresetTimer {
   id: string;
-  /** Optional; when empty the card shows the duration as words (e.g. "2 minutes"). */
-  name: string;
+  /** Timers have no name: they are shown by their duration. */
   durationSec: number;
   createdAt: string;
   updatedAt: string;
 }
 
 export const TIMER_LIMITS = {
-  nameLength: { min: 0, max: 40 },
   durationSec: { min: 1, max: 180 * 60 }, // up to 3 hours
   minutes: { min: 0, max: 180 },
   seconds: { min: 0, max: 59 },
@@ -37,23 +35,23 @@ export function durationWords(totalSec: number): string {
   return parts.join(' ');
 }
 
-/** The title shown for a timer: its name, or its duration in words. */
-export function timerTitle(t: Pick<PresetTimer, 'name' | 'durationSec'>): string {
-  return t.name.trim() || durationWords(t.durationSec);
+/** How a timer is referred to (run screen, delete dialog): its duration in words. */
+export function timerTitle(t: Pick<PresetTimer, 'durationSec'>): string {
+  return durationWords(t.durationSec);
 }
 
-/** Timers sorted from short to long (same length: by title). */
-export function sortTimers<T extends Pick<PresetTimer, 'name' | 'durationSec'>>(timers: readonly T[]): T[] {
-  return [...timers].sort((a, b) => a.durationSec - b.durationSec || timerTitle(a).localeCompare(timerTitle(b)));
+/** Timers sorted from short to long. */
+export function sortTimers<T extends Pick<PresetTimer, 'durationSec'>>(timers: readonly T[]): T[] {
+  return [...timers].sort((a, b) => a.durationSec - b.durationSec);
 }
 
-export function createTimer(fields: { name: string; durationSec: number }, now = new Date()): PresetTimer {
+export function createTimer(durationSec: number, now = new Date()): PresetTimer {
   const iso = now.toISOString();
-  return { id: newId(), name: fields.name.trim().slice(0, TIMER_LIMITS.nameLength.max), durationSec: fields.durationSec, createdAt: iso, updatedAt: iso };
+  return { id: newId(), durationSec, createdAt: iso, updatedAt: iso };
 }
 
 export function defaultTimers(): PresetTimer[] {
-  return DEFAULT_TIMER_MINUTES.map((m) => createTimer({ name: '', durationSec: m * 60 }));
+  return DEFAULT_TIMER_MINUTES.map((m) => createTimer(m * 60));
 }
 
 /** Coerces unknown JSON into a valid timer, or null if it isn't one. */
@@ -64,7 +62,6 @@ export function sanitizeTimer(value: unknown): PresetTimer | null {
   const now = new Date().toISOString();
   return {
     id: typeof v.id === 'string' && v.id ? v.id : newId(),
-    name: typeof v.name === 'string' ? v.name.trim().slice(0, TIMER_LIMITS.nameLength.max) : '',
     durationSec: v.durationSec,
     createdAt: typeof v.createdAt === 'string' ? v.createdAt : now,
     updatedAt: typeof v.updatedAt === 'string' ? v.updatedAt : now,

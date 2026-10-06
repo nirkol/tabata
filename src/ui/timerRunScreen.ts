@@ -44,7 +44,7 @@ export function timerRunScreen(app: App, timer: PresetTimer): Screen {
     h(
       'div',
       { class: 'run-top' },
-      h('div', { class: 'run-name' }, 'Timer: “', h('bdi', { 'data-testid': 'timer-run-name' }, title), '”'),
+      h('div', { class: 'run-name' }, 'Timer: ', h('span', { 'data-testid': 'timer-run-name' }, title)),
       app.speed !== 1 ? h('div', { class: 'speed-badge' }, `×${app.speed} speed (dev)`) : null,
       h('div', { class: 'run-top-right' }, fullscreenBtn),
     ),

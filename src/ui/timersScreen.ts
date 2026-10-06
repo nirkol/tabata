@@ -33,7 +33,7 @@ export function timersScreen(app: App): Screen {
     for (const t of app.timers) list.append(card(t));
   }
 
-  /** A square tile: title at the top, the duration large in the middle, the buttons at the bottom. */
+  /** A square tile: the duration large in the middle, the buttons at the bottom. */
   function card(t: PresetTimer): HTMLElement {
     return h(
       'article',
@@ -41,7 +41,6 @@ export function timersScreen(app: App): Screen {
       h(
         'div',
         { class: 'timer-card-body' },
-        h('h2', { class: 'card-title timer-card-title', dir: 'auto', 'data-testid': 'timer-name' }, timerTitle(t)),
         h(
           'dl',
           { class: 'timer-card-duration', 'data-testid': 'timer-stats' },
