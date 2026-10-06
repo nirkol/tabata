@@ -559,14 +559,13 @@ test('timers: presets sorted short to long, create, edit, delete, run, pause and
   await expect(page.getByTestId('nav-timers')).toHaveClass(/active/);
   await expect(page.getByTestId('timer-name')).toHaveText(['1 minute', '2 minutes', '5 minutes', '10 minutes']);
   await expect(page.getByTestId('timer-count')).toHaveText('4 timers');
-  // Square tiles, 3 per row: the shortest at the top left, the 4th starts the second row.
+  // Square tiles, 4 per row: the shortest at the top left.
   const boxes = await Promise.all([0, 1, 2, 3].map((i) => page.getByTestId('timer-card').nth(i).boundingBox()));
   for (const b of boxes) expect(Math.abs(b!.width - b!.height)).toBeLessThan(1);
-  expect(boxes[0]!.y).toBe(boxes[2]!.y);
-  expect(boxes[0]!.x).toBeLessThan(boxes[1]!.x);
-  expect(boxes[1]!.x).toBeLessThan(boxes[2]!.x);
-  expect(boxes[3]!.x).toBe(boxes[0]!.x);
-  expect(boxes[3]!.y).toBeGreaterThan(boxes[0]!.y);
+  for (let i = 1; i < 4; i++) {
+    expect(boxes[i]!.y).toBe(boxes[0]!.y);
+    expect(boxes[i]!.x).toBeGreaterThan(boxes[i - 1]!.x);
+  }
 
   // New 3:30 timer named "Plank": it lands between 2 and 5 minutes.
   await page.getByTestId('new-timer').click();
@@ -577,6 +576,10 @@ test('timers: presets sorted short to long, create, edit, delete, run, pause and
   await expect(page.getByTestId('timer-total')).toHaveText('Duration: 3:30');
   await page.getByTestId('save').click();
   await expect(page.getByTestId('timer-name')).toHaveText(['1 minute', '2 minutes', 'Plank', '5 minutes', '10 minutes']);
+  // The 5th tile starts the second row, under the first.
+  const [first, fifth] = await Promise.all([0, 4].map((i) => page.getByTestId('timer-card').nth(i).boundingBox()));
+  expect(fifth!.x).toBe(first!.x);
+  expect(fifth!.y).toBeGreaterThan(first!.y);
 
   // 0:00 can't be saved.
   await page.getByTestId('timer-card').nth(1).getByTestId('edit').click();

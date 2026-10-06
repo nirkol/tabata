@@ -356,10 +356,12 @@ h2 {
     flex-wrap: nowrap;
   }
 }
-/* ---------- Timer tiles: square, 3 per row (shortest at the top left) ---------- */
+/* ---------- Timer tiles: square, 4 per row (shortest at the top left) ---------- */
 .cards.timer-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  /* 4 columns of at most 244 px: 25% smaller than the earlier 3-column tiles. */
+  grid-template-columns: repeat(4, minmax(0, 244px));
+  justify-content: start;
   gap: 16px;
   align-content: start;
 }
@@ -380,7 +382,7 @@ h2 {
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
-  padding: 22px 16px 20px;
+  padding: 16px 10px 14px;
   text-align: center;
 }
 .timer-card-title {
@@ -405,7 +407,7 @@ h2 {
 .timer-card-duration dd {
   margin: 6px 0 0;
   font-family: 'Barlow Condensed', 'Rubik', -apple-system, BlinkMacSystemFont, sans-serif;
-  font-size: clamp(40px, 6vw, 72px);
+  font-size: clamp(30px, 4.5vw, 54px);
   font-weight: 700;
   line-height: 1;
   font-variant-numeric: tabular-nums;
@@ -414,6 +416,29 @@ h2 {
 .timer-card-actions {
   justify-content: center;
   flex-wrap: nowrap;
+  gap: 2px;
+}
+.timer-card .card-title {
+  font-size: 22px;
+}
+.timer-card-actions .btn-start {
+  min-width: 0;
+  min-height: 38px;
+  padding: 4px 16px;
+  font-size: 15px;
+}
+.timer-card-actions .btn-icon-only {
+  width: 38px;
+  min-height: 38px;
+}
+/* Narrower windows: tighter buttons so they fit inside the smaller tiles. */
+@media (max-width: 960px) {
+  .timer-card-actions .btn-start {
+    padding: 4px 10px;
+  }
+  .timer-card-actions .btn-icon-only {
+    width: 34px;
+  }
 }
 @media (max-width: 600px) {
   .cards.timer-grid {
@@ -425,8 +450,18 @@ h2 {
   .timer-card-body {
     padding: 12px 6px;
   }
-  .timer-card-actions .btn-start {
-    padding: 6px 12px;
+  /* Phones: smaller title, no "Duration" label, and the Start button shows only ▶. */
+  .timer-card-body {
+    padding: 8px 4px;
+  }
+  .timer-card .card-title {
+    font-size: 15px;
+  }
+  .timer-card-duration dt {
+    display: none;
+  }
+  .timer-card-actions .btn-start-label {
+    display: none;
   }
 }
 

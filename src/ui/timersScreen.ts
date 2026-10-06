@@ -51,7 +51,7 @@ export function timersScreen(app: App): Screen {
         h(
           'div',
           { class: 'card-actions timer-card-actions' },
-          h('button', { class: 'btn btn-primary btn-pill btn-start', 'data-testid': 'start', onclick: () => app.startTimer(t.id) }, '▶ Start'),
+          h('button', { class: 'btn btn-primary btn-pill btn-start', 'data-testid': 'start', 'aria-label': 'Start', onclick: () => app.startTimer(t.id) }, '▶', h('span', { class: 'btn-start-label' }, ' Start')),
           iconButton('edit', 'Edit', ICON_PENCIL, 'btn-ghost', () => app.go({ name: 'timerEditor', timerId: t.id })),
           iconButton('delete', 'Delete', ICON_TRASH, 'btn-ghost btn-ghost-danger', () => void remove(t)),
         ),
