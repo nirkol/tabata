@@ -181,7 +181,7 @@ Implementation requirements:
 ### 5.2 Editor
 - Contains every field from §3, with validation that enforces the ranges. Invalid input shows an inline error and disables Save.
 - A live "Total duration" preview is shown.
-- Compact two-column layout: Name across the top, then Work | Rest, Rounds | Cycles, Rest between cycles | Total, then Save / Cancel.
+- Layout: Name across the top; then **Work | Rest | Rounds** on one line; a thin divider line; then **Cycles | Rest between cycles | Total**; then Save / Cancel. (Narrow windows fall back to two columns, then one.)
 - **Routine names are right-to-left by default** (they are mostly Hebrew): the name field is RTL, and names are shown with automatic direction everywhere (Hebrew RTL, English LTR). A bundled bold Hebrew font (Rubik) matches the display font.
 - Buttons: **Save**, **Cancel**. The editor can only be left with these: the top navigation tabs are disabled while a routine is being created or edited.
 - Names do not need to be unique.

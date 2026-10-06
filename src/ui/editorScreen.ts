@@ -101,10 +101,12 @@ export function editorScreen(app: App, routineId: string | null): Screen {
     h('div', { class: 'screen-header' }, h('h1', {}, existing ? 'Edit Routine' : 'New Routine')),
     h(
       'form',
-      // Compact two-column grid: Work | Rest, Rounds | Cycles, Rest between cycles | Total.
-      { class: 'editor-form', onsubmit: (e: Event) => e.preventDefault() },
+      // Three columns: Work | Rest | Rounds on one line, a divider, then Cycles | Rest between cycles | Total.
+      { class: 'editor-form routine-form', onsubmit: (e: Event) => e.preventDefault() },
       h('div', { class: 'field field-wide' }, h('label', { class: 'field-label', for: 'name-input' }, 'Name'), nameInput, nameError),
-      ...FIELDS.map(({ field }) => inputs[field].el),
+      ...FIELDS.slice(0, 3).map(({ field }) => inputs[field].el),
+      h('hr', { class: 'form-divider field-wide', 'data-testid': 'cycles-divider' }),
+      ...FIELDS.slice(3).map(({ field }) => inputs[field].el),
       h('div', { class: 'field total-field' }, total),
       h('div', { class: 'form-actions field-wide' }, h('button', { type: 'button', class: 'btn', 'data-testid': 'cancel', onclick: () => app.go({ name: 'list' }) }, 'Cancel'), save),
     ),
