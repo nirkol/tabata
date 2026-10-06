@@ -324,12 +324,11 @@ test('Hebrew routine names: right-to-left by default', async ({ page }) => {
   expect(await english.evaluate((el) => getComputedStyle(el).direction)).toBe('ltr');
 });
 
-test('Instructions and About pages (icon tabs)', async ({ page }) => {
+test('Instructions and About pages', async ({ page }) => {
   await fresh(page);
   // Icon-only tabs with accessible names and tooltips.
-  await expect(page.getByTestId('nav-help')).toHaveAttribute('aria-label', 'Instructions');
-  await expect(page.getByTestId('nav-help')).toHaveAttribute('title', 'Instructions');
-  await expect(page.getByTestId('nav-about')).toHaveAttribute('aria-label', 'About');
+  await expect(page.getByTestId('nav-help')).toHaveText('Instructions');
+  await expect(page.getByTestId('nav-about')).toHaveText('About');
   await page.getByTestId('nav-help').click();
   await expect(page.getByRole('heading', { name: 'Instructions' })).toBeVisible();
   await expect(page.locator('.help-section')).toHaveCount(7);

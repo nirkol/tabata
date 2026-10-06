@@ -15,18 +15,6 @@ import { timersScreen } from './timersScreen';
 import { timerEditorScreen } from './timerEditorScreen';
 import { timerRunScreen } from './timerRunScreen';
 
-const ICON_HELP =
-  '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><path d="M9.3 9.2a2.8 2.8 0 0 1 5.4 1c0 1.9-2.7 2.4-2.7 4"/><circle cx="12" cy="17.4" r="0.6" fill="currentColor"/></svg>';
-const ICON_ABOUT =
-  '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><path d="M12 11v6"/><circle cx="12" cy="7.6" r="0.6" fill="currentColor"/></svg>';
-
-/** An icon-only navigation tab with a tooltip and an accessible name. */
-function iconTab(route: string, label: string, svg: string, onclick: () => void): HTMLButtonElement {
-  const b = h('button', { class: 'tab tab-icon', 'data-route': route, 'data-testid': `nav-${route}`, 'aria-label': label, 'data-tip': label, onclick });
-  b.innerHTML = svg;
-  return b;
-}
-
 export interface Screen {
   el: HTMLElement;
   /** Called when the screen is left. */
@@ -79,14 +67,19 @@ export class App {
       'header',
       { class: 'topbar' },
       h('div', { class: 'brand', 'data-testid': 'brand' }, h('span', { class: 'brand-accent' }, 'yFit'), ' Workout Timer'),
+      // Main sections as large buttons in the center; the rest as text links on the right.
       h(
         'nav',
-        { class: 'tabs' },
-        h('button', { class: 'tab', 'data-route': 'list', 'data-testid': 'nav-routines', onclick: () => this.go({ name: 'list' }) }, 'Routines'),
-        h('button', { class: 'tab', 'data-route': 'timers', 'data-testid': 'nav-timers', onclick: () => this.go({ name: 'timers' }) }, 'Timers'),
+        { class: 'tabs tabs-main' },
+        h('button', { class: 'tab tab-main', 'data-route': 'list', 'data-testid': 'nav-routines', onclick: () => this.go({ name: 'list' }) }, 'Routines'),
+        h('button', { class: 'tab tab-main', 'data-route': 'timers', 'data-testid': 'nav-timers', onclick: () => this.go({ name: 'timers' }) }, 'Timers'),
+      ),
+      h(
+        'nav',
+        { class: 'tabs tabs-side' },
         h('button', { class: 'tab', 'data-route': 'settings', 'data-testid': 'nav-settings', onclick: () => this.go({ name: 'settings' }) }, 'Settings'),
-        iconTab('help', 'Instructions', ICON_HELP, () => this.go({ name: 'help' })),
-        iconTab('about', 'About', ICON_ABOUT, () => this.go({ name: 'about' })),
+        h('button', { class: 'tab', 'data-route': 'help', 'data-testid': 'nav-help', onclick: () => this.go({ name: 'help' }) }, 'Instructions'),
+        h('button', { class: 'tab', 'data-route': 'about', 'data-testid': 'nav-about', onclick: () => this.go({ name: 'about' }) }, 'About'),
       ),
     );
     this.root.append(this.nav, this.main);
@@ -140,9 +133,8 @@ export class App {
       const section = route.name === 'editor' ? 'list' : route.name === 'timerEditor' ? 'timers' : route.name;
       tab.classList.toggle('active', tab.dataset.route === section);
       tab.disabled = !!screen.lockNav;
-      // Tooltip: why it's locked, else the icon tab's name ("Instructions" / "About").
+      // Tooltip: why it's locked.
       if (screen.lockNav) tab.title = screen.lockNav;
-      else if (tab.dataset.tip) tab.title = tab.dataset.tip;
       else tab.removeAttribute('title');
     }
     this.main.replaceChildren(screen.el);

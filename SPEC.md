@@ -217,9 +217,9 @@ A **Timers** tab in the top bar (between Routines and Settings) holds simple sin
 - Saved under `tabata.v1.timers` (same storage as routines; in the Mac app, the app data file).
 
 ## 5a. Instructions and About
-The top bar has two icon buttons next to **Routines**, **Timers** and **Settings** (tooltips “Instructions” and “About”):
-- **Instructions** (?): how to use the timer — creating routines, running a workout, sounds and voice, managing routines, settings, tips.
-- **About** (i): app icon and name, **version number** (from the app version in `src-tauri/tauri.conf.json`) and **“Created by yFit · © 2026”**.
+Top bar layout: the app name on the left; **Routines** and **Timers** as large buttons in the center (the current one highlighted in blue); **Settings**, **Instructions** and **About** as text links on the right:
+- **Instructions**: how to use the timer — creating routines, running a workout, sounds and voice, managing routines, settings, tips.
+- **About**: app icon and name, **version number** (from the app version in `src-tauri/tauri.conf.json`) and **“Created by yFit · © 2026”**.
 
 ## 6. Settings (Admin)
 
@@ -369,3 +369,4 @@ Both beep volumes and Mute can also be changed from the Run screen (§4.2).
 | Mac build | Built by a GitHub Actions workflow on a GitHub-hosted Mac, **only when explicitly requested** (manual run, not on every push); the .dmg is published as a GitHub Release. Ad-hoc signed (not notarized). |
 | Exercise names, voice, history | Not needed |
 | Timers | Top-bar **Timers** tab with preset countdown timers (default 1/2/5/10 min) as square tiles, 4 per row, sorted short to long from the top left; each has Start, Edit, Delete; the Timer screen has a large countdown with the progress ring, Pause and Stop |
+| Top bar | Routines and Timers as large centered buttons; Settings, Instructions and About as text on the right (no icon tabs) |
