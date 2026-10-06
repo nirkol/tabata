@@ -1,5 +1,6 @@
 import { Beeper } from '../audio/beeper';
 import type { Routine } from '../routines/model';
+import { sortTimers, type PresetTimer } from '../timers/model';
 import type { AppStorage, Settings } from '../storage/storage';
 import { h } from './dom';
 import { isDialogOpen } from './dialog';
@@ -9,6 +10,9 @@ import { runScreen } from './runScreen';
 import { settingsScreen } from './settingsScreen';
 import { helpScreen } from './helpScreen';
 import { aboutScreen } from './aboutScreen';
+import { timersScreen } from './timersScreen';
+import { timerEditorScreen } from './timerEditorScreen';
+import { timerRunScreen } from './timerRunScreen';
 
 const ICON_HELP =
   '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><path d="M9.3 9.2a2.8 2.8 0 0 1 5.4 1c0 1.9-2.7 2.4-2.7 4"/><circle cx="12" cy="17.4" r="0.6" fill="currentColor"/></svg>';
@@ -40,10 +44,15 @@ type Route =
   | { name: 'settings' }
   | { name: 'help' }
   | { name: 'about' }
-  | { name: 'run'; routineId: string };
+  | { name: 'run'; routineId: string }
+  | { name: 'timers' }
+  | { name: 'timerEditor'; timerId: string | null }
+  | { name: 'timerRun'; timerId: string };
 
 export class App {
   routines: Routine[];
+  /** Preset timers, always sorted from short to long. */
+  timers: PresetTimer[];
   settings: Settings;
   lastUsedId: string | null;
   readonly beeper = new Beeper();
@@ -58,6 +67,7 @@ export class App {
     readonly speed: number,
   ) {
     this.routines = storage.loadRoutines();
+    this.timers = sortTimers(storage.loadTimers());
     this.settings = storage.loadSettings();
     const last = storage.loadLastUsedId();
     this.lastUsedId = this.routines.some((r) => r.id === last) ? last : null;
@@ -71,6 +81,7 @@ export class App {
         'nav',
         { class: 'tabs' },
         h('button', { class: 'tab', 'data-route': 'list', 'data-testid': 'nav-routines', onclick: () => this.go({ name: 'list' }) }, 'Routines'),
+        h('button', { class: 'tab', 'data-route': 'timers', 'data-testid': 'nav-timers', onclick: () => this.go({ name: 'timers' }) }, 'Timers'),
         h('button', { class: 'tab', 'data-route': 'settings', 'data-testid': 'nav-settings', onclick: () => this.go({ name: 'settings' }) }, 'Settings'),
         iconTab('help', 'Instructions', ICON_HELP, () => this.go({ name: 'help' })),
         iconTab('about', 'About', ICON_ABOUT, () => this.go({ name: 'about' })),
@@ -102,6 +113,18 @@ export class App {
       case 'settings':
         screen = settingsScreen(this);
         break;
+      case 'timers':
+        screen = timersScreen(this);
+        break;
+      case 'timerEditor':
+        screen = timerEditorScreen(this, route.timerId);
+        break;
+      case 'timerRun': {
+        const timer = this.timers.find((t) => t.id === route.timerId);
+        if (!timer) return this.go({ name: 'timers' });
+        screen = timerRunScreen(this, timer);
+        break;
+      }
       case 'run': {
         const routine = this.routines.find((r) => r.id === route.routineId);
         if (!routine) return this.go({ name: 'list' });
@@ -112,7 +135,8 @@ export class App {
     this.screen = screen;
     this.nav.hidden = !!screen.fullWindow;
     for (const tab of this.nav.querySelectorAll<HTMLButtonElement>('.tab')) {
-      tab.classList.toggle('active', tab.dataset.route === route.name || (route.name === 'editor' && tab.dataset.route === 'list'));
+      const section = route.name === 'editor' ? 'list' : route.name === 'timerEditor' ? 'timers' : route.name;
+      tab.classList.toggle('active', tab.dataset.route === section);
       tab.disabled = !!screen.lockNav;
       // Tooltip: why it's locked, else the icon tab's name ("Instructions" / "About").
       if (screen.lockNav) tab.title = screen.lockNav;
@@ -128,6 +152,17 @@ export class App {
     this.beeper.unlock();
     this.setLastUsed(id);
     this.go({ name: 'run', routineId: id });
+  }
+
+  /** Starts a preset timer. Must be called from a user gesture so audio can start. */
+  startTimer(id: string): void {
+    this.beeper.unlock();
+    this.go({ name: 'timerRun', timerId: id });
+  }
+
+  saveTimers(timers: PresetTimer[]): void {
+    this.timers = sortTimers(timers);
+    this.storage.saveTimers(this.timers);
   }
 
   setLastUsed(id: string | null): void {

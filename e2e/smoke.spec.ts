@@ -332,7 +332,7 @@ test('Instructions and About pages (icon tabs)', async ({ page }) => {
   await expect(page.getByTestId('nav-about')).toHaveAttribute('aria-label', 'About');
   await page.getByTestId('nav-help').click();
   await expect(page.getByRole('heading', { name: 'Instructions' })).toBeVisible();
-  await expect(page.locator('.help-section')).toHaveCount(6);
+  await expect(page.locator('.help-section')).toHaveCount(7);
   await expect(page.locator('.help-screen')).toContainText('Rest between cycles');
   await page.getByTestId('nav-about').click();
   await expect(page.getByTestId('about-version')).toHaveText(/^Version \d+\.\d+\.\d+$/);
@@ -550,4 +550,63 @@ test('settings: color, size and volume apply immediately and persist', async ({ 
   await expect(page.getByTestId('run-digits')).toHaveCSS('color', 'rgb(255, 214, 10)');
   const fontPx = await page.getByTestId('run-digits').evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
   expect(fontPx).toBeGreaterThan(200); // 45 % of an 800 px window is 360 px, capped to fit
+});
+
+test('timers: presets sorted short to long, create, edit, delete, run, pause and stop', async ({ page }) => {
+  await instrumentAudio(page);
+  await fresh(page, '?speed=10');
+  await page.getByTestId('nav-timers').click();
+  await expect(page.getByTestId('nav-timers')).toHaveClass(/active/);
+  await expect(page.getByTestId('timer-name')).toHaveText(['1 minute', '2 minutes', '5 minutes', '10 minutes']);
+  await expect(page.getByTestId('timer-count')).toHaveText('4 timers');
+
+  // New 3:30 timer named "Plank": it lands between 2 and 5 minutes.
+  await page.getByTestId('new-timer').click();
+  await expect(page.getByTestId('nav-routines')).toBeDisabled();
+  await page.getByTestId('minutes-input').fill('3');
+  await page.getByTestId('seconds-input').fill('30');
+  await page.getByTestId('timer-name-input').fill('Plank');
+  await expect(page.getByTestId('timer-total')).toHaveText('Duration: 3:30');
+  await page.getByTestId('save').click();
+  await expect(page.getByTestId('timer-name')).toHaveText(['1 minute', '2 minutes', 'Plank', '5 minutes', '10 minutes']);
+
+  // 0:00 can't be saved.
+  await page.getByTestId('timer-card').nth(1).getByTestId('edit').click();
+  await page.getByTestId('minutes-input').fill('0');
+  await expect(page.getByTestId('save')).toBeDisabled();
+  // Edit "2 minutes" to 0:20: it moves to the top.
+  await page.getByTestId('seconds-input').fill('20');
+  await page.getByTestId('save').click();
+  await expect(page.getByTestId('timer-name')).toHaveText(['20 seconds', '1 minute', 'Plank', '5 minutes', '10 minutes']);
+  await expect(page.getByTestId('timer-duration').first()).toHaveText('0:20');
+
+  // Delete asks first.
+  await page.getByTestId('timer-card').last().getByTestId('delete').click();
+  await page.getByTestId('confirm-yes').click();
+  await expect(page.getByTestId('timer-card')).toHaveCount(4);
+
+  // Kept after a reload.
+  await page.reload();
+  await page.getByTestId('nav-timers').click();
+  await expect(page.getByTestId('timer-name')).toHaveText(['20 seconds', '1 minute', 'Plank', '5 minutes']);
+
+  // Run the 0:20 timer (2 s at ×10): pause, stop-cancel, then it finishes with beeps.
+  await page.getByTestId('timer-card').first().getByTestId('start').click();
+  await expect(page.getByTestId('timer-run-screen')).toBeVisible();
+  await expect(page.getByTestId('timer-run-name')).toHaveText('20 seconds');
+  await expect(page.getByTestId('run-ring')).toBeAttached();
+  await page.getByTestId('pause').click();
+  await expect(page.getByTestId('pause')).toHaveText('▶ RESUME');
+  const frozen = await page.getByTestId('run-digits').textContent();
+  await page.waitForTimeout(600);
+  await expect(page.getByTestId('run-digits')).toHaveText(frozen!);
+  await page.getByTestId('stop').click();
+  await page.getByTestId('confirm-no').click();
+  await expect(page.getByTestId('pause')).toHaveText('▶ RESUME');
+  await page.getByTestId('pause').click();
+  await expect(page.getByTestId('run-phase')).toHaveText("TIME'S UP", { timeout: 5000 });
+  await expect(page.getByTestId('run-digits')).toHaveText('0:00');
+  expect(await page.evaluate(() => (window as unknown as { __beeps: unknown[] }).__beeps.length)).toBeGreaterThan(4);
+  await page.getByTestId('stop').click();
+  await expect(page.getByTestId('timer-list')).toBeVisible();
 });

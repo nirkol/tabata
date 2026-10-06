@@ -1,5 +1,6 @@
 import { BEEP_STYLES, type BeepStyle } from '../audio/beeper';
 import { isValidRoutine, newId, sampleRoutine, type Routine } from '../routines/model';
+import { defaultTimers, sanitizeTimer, type PresetTimer } from '../timers/model';
 
 export interface Settings {
   /** Work beep volume, 0–1. */
@@ -79,6 +80,8 @@ export interface AppStorage {
   saveSettings(settings: Settings): void;
   loadLastUsedId(): string | null;
   saveLastUsedId(id: string | null): void;
+  loadTimers(): PresetTimer[];
+  saveTimers(timers: PresetTimer[]): void;
 }
 
 /** Minimal key/value interface satisfied by `window.localStorage`. */
@@ -92,6 +95,7 @@ export const KEYS = {
   routines: 'tabata.v1.routines',
   settings: 'tabata.v1.settings',
   lastUsed: 'tabata.v1.lastUsed',
+  timers: 'tabata.v1.timers',
 } as const;
 
 export const DATA_VERSION = 1;
@@ -224,5 +228,21 @@ export class LocalAppStorage implements AppStorage {
   saveLastUsedId(id: string | null): void {
     if (id === null) this.store.removeItem(KEYS.lastUsed);
     else this.store.setItem(KEYS.lastUsed, id);
+  }
+
+  loadTimers(): PresetTimer[] {
+    const data = readJson(this.store, KEYS.timers) as { version?: number; timers?: unknown } | undefined;
+    if (data === undefined) {
+      // First use: 1, 2, 5 and 10 minute presets (SPEC §5b).
+      const timers = defaultTimers();
+      this.saveTimers(timers);
+      return timers;
+    }
+    const list = Array.isArray(data?.timers) ? data.timers : [];
+    return list.map(sanitizeTimer).filter((t): t is PresetTimer => t !== null);
+  }
+
+  saveTimers(timers: PresetTimer[]): void {
+    this.store.setItem(KEYS.timers, JSON.stringify({ version: DATA_VERSION, timers }));
   }
 }

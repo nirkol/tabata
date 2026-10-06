@@ -50,7 +50,15 @@ const SECTIONS: { title: string; items: Block[] }[] = [
     ],
   },
   {
-    title: '5. Settings',
+    title: '5. Timers',
+    items: [
+      'Simple countdowns (e.g. 1, 2 or 10 minutes) are on the Timers tab, sorted from shortest to longest.',
+      ['New / edit', ' – click “+ New Timer” or the pencil icon; set minutes and seconds and, if you like, a name.'],
+      ['Start', ' – click ▶ Start: a large countdown with the progress ring. PAUSE (or Space) and STOP (or Esc) work as in a workout; beeps mark the last seconds.'],
+    ],
+  },
+  {
+    title: '6. Settings',
     items: [
       ['Sound', ' – volume and sound style for work and rest beeps (with Test buttons), mute, and the “Start!” / “Ten!” voice calls.'],
       ['Counter display', ' – work color, counter size, and whether to show the remaining times.'],

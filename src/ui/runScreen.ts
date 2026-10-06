@@ -6,11 +6,11 @@ import { formatClock, formatCountdown } from '../timer/format';
 import type { App, Screen } from './app';
 import { confirmDialog } from './dialog';
 import { h } from './dom';
+import { RING_STROKE, createRing } from './ring';
 import { isNative, setNativeKeepAwake, toggleFullscreen as platformToggleFullscreen } from '../platform/native';
 
 /** How often the screen refreshes when the tab is hidden (rAF doesn't run then). */
 const BACKGROUND_TICK_MS = 250;
-const RING_STROKE = 8;
 /** The encouragement is spoken this long after the last beep of the cycle's work. */
 const PRAISE_SPEAK_DELAY_MS = 2000;
 /** At the end of the run, the last of the three finish bell strikes starts this late. */
@@ -25,21 +25,11 @@ export function runScreen(app: App, routine: Routine): Screen {
   // --- Elements ---
   const phaseLabel = h('div', { class: 'run-phase', 'data-testid': 'run-phase' });
   const digits = h('div', { class: 'run-digits', 'data-testid': 'run-digits' });
-  const svgNs = 'http://www.w3.org/2000/svg';
-  const svg = document.createElementNS(svgNs, 'svg');
-  svg.setAttribute('class', 'ring');
-  svg.setAttribute('aria-hidden', 'true');
-  const track = document.createElementNS(svgNs, 'path');
-  track.setAttribute('class', 'ring-track');
-  const ring = document.createElementNS(svgNs, 'path');
-  ring.setAttribute('class', 'ring-progress');
-  ring.setAttribute('pathLength', '100');
-  ring.setAttribute('data-testid', 'run-ring');
-  svg.append(track, ring);
+  const ring = createRing();
   // Encouraging statement shown under the digits during the Rest between cycles (and at the end).
   const praiseLine = h('div', { class: 'run-praise', dir: 'auto', hidden: true, 'data-testid': 'run-praise' });
   const ringBox = h('div', { class: 'ring-box' }, h('div', { class: 'ring-content' }, digits, praiseLine));
-  ringBox.prepend(svg);
+  ringBox.prepend(ring.svg);
   // The phase label sits right above the counter, so the two read as one unit.
   const stage = h('div', { class: 'run-stage' }, phaseLabel, ringBox);
 
@@ -208,7 +198,7 @@ export function runScreen(app: App, routine: Routine): Screen {
     el.classList.toggle('phase-rest', !done && phase !== null && phase.kind !== 'work');
     el.classList.toggle('paused', s.status === 'paused');
     el.classList.toggle('done', done);
-    ring.style.strokeDashoffset = String(100 * (1 - (done ? 0 : s.phaseFractionRemaining)));
+    ring.setFraction(done ? 0 : s.phaseFractionRemaining);
     const pct = Math.min(100, (s.elapsedMs / s.totalMs) * 100);
     const clip = `inset(0 ${100 - pct}% 0 0)`;
     tlDone.style.clipPath = clip;
@@ -255,28 +245,7 @@ export function runScreen(app: App, routine: Routine): Screen {
       const scale = Math.min(1, maxW / digits.scrollWidth, maxH / digits.offsetHeight);
       if (scale < 1) digits.style.fontSize = `${Math.floor(target * scale)}px`;
     }
-    drawRing();
-  }
-
-  /** Rounded-rectangle progress path starting at the top center, clockwise. */
-  function drawRing(): void {
-    const w = ringBox.clientWidth;
-    const hgt = ringBox.clientHeight;
-    const i = RING_STROKE / 2;
-    const r = Math.min(40, hgt / 4);
-    const x0 = i, y0 = i, x1 = w - i, y1 = hgt - i;
-    const cx = w / 2;
-    const d = [
-      `M ${cx} ${y0}`,
-      `H ${x1 - r}`, `A ${r} ${r} 0 0 1 ${x1} ${y0 + r}`,
-      `V ${y1 - r}`, `A ${r} ${r} 0 0 1 ${x1 - r} ${y1}`,
-      `H ${x0 + r}`, `A ${r} ${r} 0 0 1 ${x0} ${y1 - r}`,
-      `V ${y0 + r}`, `A ${r} ${r} 0 0 1 ${x0 + r} ${y0}`,
-      `Z`,
-    ].join(' ');
-    svg.setAttribute('viewBox', `0 0 ${w} ${hgt}`);
-    track.setAttribute('d', d);
-    ring.setAttribute('d', d);
+    ring.draw(ringBox);
   }
 
   // --- Loop: rAF for smooth animation while visible, an interval for the background ---

@@ -5,13 +5,13 @@ import type { App, Screen } from './app';
 import { confirmDialog } from './dialog';
 import { h, isTyping } from './dom';
 
-const ICON_PENCIL =
+export const ICON_PENCIL =
   '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9a2.83 2.83 0 0 0-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/></svg>';
-const ICON_TRASH =
+export const ICON_TRASH =
   '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M10 11v6M14 11v6"/><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12"/><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>';
 
 /** An icon-only button with a tooltip and an accessible name. */
-function iconButton(testId: string, label: string, svg: string, classes: string, onclick: (e: Event) => void): HTMLButtonElement {
+export function iconButton(testId: string, label: string, svg: string, classes: string, onclick: (e: Event) => void): HTMLButtonElement {
   const b = h('button', { type: 'button', class: `btn btn-icon-only ${classes}`, title: label, 'aria-label': label, 'data-testid': testId, onclick });
   b.innerHTML = svg;
   return b;
