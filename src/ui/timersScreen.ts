@@ -7,7 +7,7 @@ import { ICON_PENCIL, ICON_TRASH, iconButton } from './listScreen';
 
 /** The preset timers list (SPEC §5b), sorted from short to long. */
 export function timersScreen(app: App): Screen {
-  const list = h('div', { class: 'cards', 'data-testid': 'timer-list' });
+  const list = h('div', { class: 'cards timer-grid', 'data-testid': 'timer-list' });
   const count = h('p', { class: 'list-count', 'data-testid': 'timer-count' });
   const el = h(
     'section',
@@ -33,26 +33,28 @@ export function timersScreen(app: App): Screen {
     for (const t of app.timers) list.append(card(t));
   }
 
+  /** A square tile: title at the top, the duration large in the middle, the buttons at the bottom. */
   function card(t: PresetTimer): HTMLElement {
     return h(
       'article',
       { class: 'card timer-card', 'data-testid': 'timer-card', 'data-id': t.id },
       h(
         'div',
-        { class: 'card-main' },
-        h('div', { class: 'card-title-row' }, h('h2', { class: 'card-title', dir: 'auto', 'data-testid': 'timer-name' }, timerTitle(t))),
+        { class: 'timer-card-body' },
+        h('h2', { class: 'card-title timer-card-title', dir: 'auto', 'data-testid': 'timer-name' }, timerTitle(t)),
         h(
           'dl',
-          { class: 'card-stats', 'data-testid': 'timer-stats' },
-          h('div', { class: 'stat stat-total' }, h('dt', {}, 'Duration'), h('dd', { 'data-testid': 'timer-duration' }, formatClock(t.durationSec))),
+          { class: 'timer-card-duration', 'data-testid': 'timer-stats' },
+          h('dt', {}, 'Duration'),
+          h('dd', { 'data-testid': 'timer-duration' }, formatClock(t.durationSec)),
         ),
-      ),
-      h(
-        'div',
-        { class: 'card-actions' },
-        h('button', { class: 'btn btn-primary btn-pill btn-start', 'data-testid': 'start', onclick: () => app.startTimer(t.id) }, '▶ Start'),
-        iconButton('edit', 'Edit', ICON_PENCIL, 'btn-ghost', () => app.go({ name: 'timerEditor', timerId: t.id })),
-        iconButton('delete', 'Delete', ICON_TRASH, 'btn-ghost btn-ghost-danger', () => void remove(t)),
+        h(
+          'div',
+          { class: 'card-actions timer-card-actions' },
+          h('button', { class: 'btn btn-primary btn-pill btn-start', 'data-testid': 'start', onclick: () => app.startTimer(t.id) }, '▶ Start'),
+          iconButton('edit', 'Edit', ICON_PENCIL, 'btn-ghost', () => app.go({ name: 'timerEditor', timerId: t.id })),
+          iconButton('delete', 'Delete', ICON_TRASH, 'btn-ghost btn-ghost-danger', () => void remove(t)),
+        ),
       ),
     );
   }

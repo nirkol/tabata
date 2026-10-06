@@ -356,6 +356,80 @@ h2 {
     flex-wrap: nowrap;
   }
 }
+/* ---------- Timer tiles: square, 3 per row (shortest at the top left) ---------- */
+.cards.timer-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  align-content: start;
+}
+.card.timer-card {
+  display: block;
+  /* Square without aspect-ratio (older Mac WebKit): height = width via padding. */
+  height: 0;
+  padding: calc(100% - 2px) 0 0; /* minus the 1px top and bottom border */
+  cursor: default;
+}
+.timer-card-body {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22px 16px 20px;
+  text-align: center;
+}
+.timer-card-title {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.timer-card-duration {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.timer-card-duration dt {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+.timer-card-duration dd {
+  margin: 6px 0 0;
+  font-family: 'Barlow Condensed', 'Rubik', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: clamp(40px, 6vw, 72px);
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: #5eb0ff;
+}
+.timer-card-actions {
+  justify-content: center;
+  flex-wrap: nowrap;
+}
+@media (max-width: 600px) {
+  .cards.timer-grid {
+    gap: 10px;
+  }
+  .card.timer-card {
+    flex-direction: initial;
+  }
+  .timer-card-body {
+    padding: 12px 6px;
+  }
+  .timer-card-actions .btn-start {
+    padding: 6px 12px;
+  }
+}
+
 .btn-pill {
   border-radius: 999px;
   padding-left: 22px;
