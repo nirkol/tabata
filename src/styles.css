@@ -973,14 +973,14 @@ kbd {
 /* Workout timeline (top of the Run screen). */
 .timeline {
   position: relative;
-  height: 18px; /* 10% thicker than the original 16px */
+  height: 22.5px; /* 25% thicker than the previous 18px */
   margin: 8px 0 2px;
 }
 .tl-layer {
   position: absolute;
   inset: 0;
   display: flex;
-  border-radius: 9px;
+  border-radius: 11px;
   overflow: hidden;
 }
 .tl-plan {
