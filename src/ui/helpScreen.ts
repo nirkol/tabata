@@ -58,7 +58,16 @@ const SECTIONS: { title: string; items: Block[] }[] = [
     ],
   },
   {
-    title: '6. Settings',
+    title: '6. Stopwatch',
+    items: [
+      'The Stopwatch tab counts up from 00:00:00 (hours:minutes:seconds).',
+      ['▶ Start / Pause', ' – starts, pauses and resumes (or press Space).'],
+      ['Reset', ' – back to 00:00:00 (or press R).'],
+      ['Stop', ' – stops and keeps the time on screen (or press Esc). While the stopwatch runs or is paused, the other pages are locked until you click Stop.'],
+    ],
+  },
+  {
+    title: '7. Settings',
     items: [
       ['Sound', ' – volume and sound style for work and rest beeps (with Test buttons), mute, and the “Start!” / “Ten!” voice calls.'],
       ['Counter display', ' – work color, counter size, and whether to show the remaining times.'],

@@ -331,7 +331,7 @@ test('Instructions and About pages', async ({ page }) => {
   await expect(page.getByTestId('nav-about')).toHaveText('About');
   await page.getByTestId('nav-help').click();
   await expect(page.getByRole('heading', { name: 'Instructions' })).toBeVisible();
-  await expect(page.locator('.help-section')).toHaveCount(7);
+  await expect(page.locator('.help-section')).toHaveCount(8);
   await expect(page.locator('.help-screen')).toContainText('Rest between cycles');
   await page.getByTestId('nav-about').click();
   await expect(page.getByTestId('about-version')).toHaveText(/^Version \d+\.\d+\.\d+$/);
@@ -640,4 +640,45 @@ test('timers: "Start!" when the timer starts and "Ten!" 10 s before the end', as
   await page.getByTestId('start').click();
   await expect(page.getByTestId('run-phase')).toHaveText("TIME'S UP", { timeout: 10000 });
   expect(await page.evaluate(() => (window as unknown as { __spoken: string[] }).__spoken)).toEqual(['Start!', 'Ten!']);
+});
+
+test('stopwatch: counts up, pause, reset and stop; navigation is locked until stopped', async ({ page }) => {
+  await fresh(page, '?speed=60');
+  await page.getByTestId('nav-stopwatch').click();
+  await expect(page.getByTestId('nav-stopwatch')).toHaveClass(/active/);
+  await expect(page.getByTestId('sw-digits')).toHaveText('00:00:00');
+  await expect(page.getByTestId('sw-stop')).toBeDisabled();
+  await expect(page.getByTestId('nav-routines')).toBeEnabled();
+
+  // Running: counts up and the other pages can't be opened.
+  await page.getByTestId('sw-start').click();
+  await expect(page.getByTestId('sw-start')).toHaveText('PAUSE');
+  await expect(page.getByTestId('sw-digits')).not.toHaveText('00:00:00');
+  await expect(page.getByTestId('nav-routines')).toBeDisabled();
+  await expect(page.getByTestId('nav-settings')).toBeDisabled();
+
+  // Paused: the time freezes; still locked.
+  await page.getByTestId('sw-start').click();
+  await expect(page.getByTestId('sw-start')).toHaveText('▶ RESUME');
+  const frozen = await page.getByTestId('sw-digits').textContent();
+  await page.waitForTimeout(500);
+  await expect(page.getByTestId('sw-digits')).toHaveText(frozen!);
+  await expect(page.getByTestId('nav-timers')).toBeDisabled();
+
+  // Reset: back to 00:00:00.
+  await page.getByTestId('sw-reset').click();
+  await expect(page.getByTestId('sw-digits')).toHaveText('00:00:00');
+
+  // Stop: the time stays and navigation works again.
+  await page.getByTestId('sw-start').click();
+  await page.waitForTimeout(1200); // over a minute at ×60
+  await page.getByTestId('sw-stop').click();
+  await expect(page.getByTestId('sw-label')).toHaveText('STOPPED');
+  const stopped = await page.getByTestId('sw-digits').textContent();
+  expect(stopped).toMatch(/^00:0[1-9]:\d\d$/);
+  await page.waitForTimeout(300);
+  await expect(page.getByTestId('sw-digits')).toHaveText(stopped!);
+  await expect(page.getByTestId('nav-routines')).toBeEnabled();
+  await page.getByTestId('nav-routines').click();
+  await expect(page.getByTestId('routine-list')).toBeVisible();
 });

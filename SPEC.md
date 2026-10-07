@@ -216,8 +216,15 @@ A **Timers** tab in the top bar (between Routines and Settings) holds simple sin
   - Timestamp-based like the routine engine (accurate in the background); the screen is kept awake while it runs.
 - Saved under `tabata.v1.timers` (same storage as routines; in the Mac app, the app data file).
 
+## 5c. Stopwatch
+A **Stopwatch** button in the top bar, next to Routines and Timers, opens a stopwatch page (the top bar stays visible).
+- A large display counts up from **00:00:00** (hours:minutes:seconds) in the work color, with a status label above it (READY / RUNNING / PAUSED / STOPPED).
+- Buttons: **▶ START / PAUSE / ▶ RESUME**, **↺ RESET** (back to 00:00:00, not running) and **■ STOP** (freezes the time on screen; the next Start begins from 00:00:00). Keyboard: Space = start/pause, R = reset, Esc = stop.
+- While the stopwatch is running or paused, the top navigation is **locked**; **Stop** (or Reset) unlocks it so the user can go to the other pages.
+- Timestamp-based (exact in the background); the screen is kept awake while it runs. No sounds.
+
 ## 5a. Instructions and About
-Top bar layout: the app name on the left; **Routines** and **Timers** as large buttons in the center (the current one highlighted in blue); **Settings**, **Instructions** and **About** as text links on the right:
+Top bar layout: the app name on the left; **Routines**, **Timers** and **Stopwatch** as large buttons in the center (the current one highlighted in blue); **Settings**, **Instructions** and **About** as text links on the right:
 - **Instructions**: how to use the timer — creating routines, running a workout, sounds and voice, managing routines, settings, tips.
 - **About**: app icon and name, **version number** (from the app version in `src-tauri/tauri.conf.json`) and **“Created by yFit · © 2026”**.
 
@@ -370,3 +377,4 @@ Both beep volumes and Mute can also be changed from the Run screen (§4.2).
 | Exercise names, voice, history | Not needed |
 | Timers | Top-bar **Timers** tab with preset countdown timers (default 2/3/5/10 min on a new installation) as square tiles, 4 per row, sorted short to long from the top left; each has Start, Edit, Delete; the Timer screen has a large countdown with the progress ring, Pause and Stop |
 | Top bar | Routines and Timers as large centered buttons; Settings, Instructions and About as text on the right (no icon tabs) |
+| Stopwatch | Third main tab: counts up hh:mm:ss with Start/Pause, Reset and Stop; navigation locked until Stop |

@@ -1369,3 +1369,69 @@ kbd {
 .dot-rest {
   background: var(--rest-color);
 }
+
+/* ---------- Stopwatch ---------- */
+.stopwatch-screen {
+  flex: 1;
+  width: 100%;
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 24px 16px 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+.stopwatch-screen .speed-badge {
+  align-self: center;
+}
+.sw-stage {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.2vh;
+  min-height: 0;
+}
+.sw-label {
+  font-size: clamp(22px, 5vh, 56px);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+.stopwatch-screen[data-status='running'] .sw-label {
+  color: var(--text);
+}
+.sw-box {
+  padding: 1.5vh 4vw;
+  border: 8px solid var(--work-color);
+  border-radius: 40px;
+  background: #000;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
+}
+.stopwatch-screen[data-status='idle'] .sw-box,
+.stopwatch-screen[data-status='stopped'] .sw-box {
+  border-color: rgba(255, 255, 255, 0.12);
+}
+.stopwatch-screen[data-status='paused'] .sw-box {
+  opacity: 0.55;
+}
+.sw-digits {
+  color: var(--work-color);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  white-space: nowrap;
+  font-size: min(calc(var(--digit-size) * 0.75vh), 14vw);
+}
+.stopwatch-screen[data-status='stopped'] .sw-digits {
+  color: var(--text);
+}
+.sw-controls {
+  justify-content: center;
+  margin-top: 3vh;
+}
+.sw-hint {
+  text-align: center;
+  margin: 14px 0 0;
+}

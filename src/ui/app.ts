@@ -14,6 +14,7 @@ import { aboutScreen } from './aboutScreen';
 import { timersScreen } from './timersScreen';
 import { timerEditorScreen } from './timerEditorScreen';
 import { timerRunScreen } from './timerRunScreen';
+import { stopwatchScreen } from './stopwatchScreen';
 
 export interface Screen {
   el: HTMLElement;
@@ -36,7 +37,8 @@ type Route =
   | { name: 'run'; routineId: string }
   | { name: 'timers' }
   | { name: 'timerEditor'; timerId: string | null }
-  | { name: 'timerRun'; timerId: string };
+  | { name: 'timerRun'; timerId: string }
+  | { name: 'stopwatch' };
 
 export class App {
   routines: Routine[];
@@ -73,6 +75,7 @@ export class App {
         { class: 'tabs tabs-main' },
         h('button', { class: 'tab tab-main', 'data-route': 'list', 'data-testid': 'nav-routines', onclick: () => this.go({ name: 'list' }) }, 'Routines'),
         h('button', { class: 'tab tab-main', 'data-route': 'timers', 'data-testid': 'nav-timers', onclick: () => this.go({ name: 'timers' }) }, 'Timers'),
+        h('button', { class: 'tab tab-main', 'data-route': 'stopwatch', 'data-testid': 'nav-stopwatch', onclick: () => this.go({ name: 'stopwatch' }) }, 'Stopwatch'),
       ),
       h(
         'nav',
@@ -114,6 +117,9 @@ export class App {
       case 'timerEditor':
         screen = timerEditorScreen(this, route.timerId);
         break;
+      case 'stopwatch':
+        screen = stopwatchScreen(this);
+        break;
       case 'timerRun': {
         const timer = this.timers.find((t) => t.id === route.timerId);
         if (!timer) return this.go({ name: 'timers' });
@@ -129,16 +135,23 @@ export class App {
     }
     this.screen = screen;
     this.nav.hidden = !!screen.fullWindow;
-    for (const tab of this.nav.querySelectorAll<HTMLButtonElement>('.tab')) {
-      const section = route.name === 'editor' ? 'list' : route.name === 'timerEditor' ? 'timers' : route.name;
-      tab.classList.toggle('active', tab.dataset.route === section);
-      tab.disabled = !!screen.lockNav;
-      // Tooltip: why it's locked.
-      if (screen.lockNav) tab.title = screen.lockNav;
-      else tab.removeAttribute('title');
-    }
+    const section = route.name === 'editor' ? 'list' : route.name === 'timerEditor' ? 'timers' : route.name;
+    for (const tab of this.nav.querySelectorAll<HTMLButtonElement>('.tab')) tab.classList.toggle('active', tab.dataset.route === section);
+    this.setNavLock(screen.lockNav ?? null);
     this.main.replaceChildren(screen.el);
     document.title = 'yFit Workout Timer';
+  }
+
+  /**
+   * Disables the top navigation (with the reason as a tooltip), or enables it with null.
+   * Screens whose lock changes while open (the Stopwatch) call this directly.
+   */
+  setNavLock(reason: string | null): void {
+    for (const tab of this.nav.querySelectorAll<HTMLButtonElement>('.tab')) {
+      tab.disabled = reason !== null;
+      if (reason !== null) tab.title = reason;
+      else tab.removeAttribute('title');
+    }
   }
 
   /** Starts a routine. Must be called from a user gesture so audio can start. */
