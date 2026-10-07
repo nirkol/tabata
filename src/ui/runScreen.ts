@@ -37,7 +37,7 @@ export function runScreen(app: App, routine: Routine): Screen {
   const intervalsLeft = h('span', { 'data-testid': 'run-intervals' });
   const setRemaining = h('span', { 'data-testid': 'run-set-remaining' });
   const next = h('span', { class: 'run-next', 'data-testid': 'run-next' });
-  // "Next: …" sits just outside the counter box, at its bottom-right corner.
+  // "Next: …" sits just outside the counter box, at its top-right corner.
   ringBox.append(next);
   const totalRemaining = h('span', { 'data-testid': 'run-total' });
   // Routine progress right under the counter: four boxes of equal size, text centered.
