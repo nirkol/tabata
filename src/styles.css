@@ -105,6 +105,20 @@ button {
 .tabs-side {
   justify-self: end;
 }
+/* A section with a paused session waiting (routine, timer or stopwatch). */
+.tab.tab-paused::after {
+  content: 'PAUSED';
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: #ffd60a;
+  color: #000;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  vertical-align: 2px;
+}
 /* Routines / Timers: large buttons in the center of the top bar. */
 .tabs-main {
   gap: 10px;
@@ -931,7 +945,8 @@ kbd {
 /* ---------- Run screen ---------- */
 .run-screen {
   flex: 1;
-  height: 100vh;
+  /* Fills the window, or the space under the top bar when it's shown (paused). */
+  min-height: 0;
   display: flex;
   flex-direction: column;
   align-items: stretch;

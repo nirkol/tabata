@@ -230,11 +230,15 @@ export function runScreen(app: App, routine: Routine): Screen {
       pauseBtn.hidden = true;
       startOverBtn.hidden = false;
       stopBtn.textContent = '← Back to routines';
+      app.setFullWindow(true);
       void releaseWakeLock();
       // End of the last cycle: encouragement (spoken 2 s after the last finish bell).
       praise(true);
     } else {
       pauseBtn.textContent = s.status === 'paused' ? '▶ RESUME' : 'PAUSE';
+      // Paused: the top bar comes back, so the user can switch to other pages and return later.
+      app.setFullWindow(s.status !== 'paused');
+      requestAnimationFrame(() => fit());
     }
   }
 
@@ -252,15 +256,39 @@ export function runScreen(app: App, routine: Routine): Screen {
     ring.draw(ringBox);
   }
 
-  // --- Loop: rAF for smooth animation while visible, an interval for the background ---
+  // --- Loop: rAF for smooth animation while visible, an interval for the background.
+  // It only runs while the screen is shown (a paused run can be left and come back to).
   let raf = 0;
+  let bgTimer: ReturnType<typeof setInterval> | undefined;
+  let attached = false;
   const frame = () => {
+    if (!attached) return;
     render();
     raf = requestAnimationFrame(frame);
   };
-  const bgTimer = setInterval(() => {
-    if (document.hidden) render();
-  }, BACKGROUND_TICK_MS);
+  function attach(): void {
+    if (attached) return;
+    attached = true;
+    bgTimer = setInterval(() => {
+      if (document.hidden) render();
+    }, BACKGROUND_TICK_MS);
+    document.addEventListener('visibilitychange', onVisibility);
+    window.addEventListener('resize', onResize);
+    raf = requestAnimationFrame(() => {
+      fit();
+      frame();
+    });
+  }
+  function detach(): void {
+    if (!attached) return;
+    attached = false;
+    cancelAnimationFrame(raf);
+    clearInterval(bgTimer);
+    document.removeEventListener('visibilitychange', onVisibility);
+    window.removeEventListener('resize', onResize);
+  }
+  /** Set by Stop / Back: the run is over and must not be kept when the screen is left. */
+  let ended = false;
 
   // --- Controls ---
   function togglePause(): void {
@@ -272,6 +300,7 @@ export function runScreen(app: App, routine: Routine): Screen {
       app.beeper.unlock();
       engine.resume();
       app.beeper.startRun(beeps, engine.elapsedMs(), engine.speed);
+      void requestWakeLock();
     }
     render();
   }
@@ -287,6 +316,7 @@ export function runScreen(app: App, routine: Routine): Screen {
   }
 
   function leave(): void {
+    ended = true;
     app.go({ name: 'list' });
   }
 
@@ -330,23 +360,29 @@ export function runScreen(app: App, routine: Routine): Screen {
     render(); // catch up immediately when the tab comes back
     if (!document.hidden) void requestWakeLock();
   };
-  document.addEventListener('visibilitychange', onVisibility);
   const onResize = () => fit();
-  window.addEventListener('resize', onResize);
 
   // --- Start (we're inside the Start click, so audio is unlocked) ---
   engine.start();
   app.beeper.startRun(beeps, 0, engine.speed);
   void requestWakeLock();
-  requestAnimationFrame(() => {
-    fit();
-    frame();
-  });
+  attach();
   render();
 
   return {
     el,
     fullWindow: true,
+    session: 'routine',
+    keepAlive: () => !ended && engine.getStatus() === 'paused',
+    hide() {
+      detach();
+      void releaseWakeLock();
+    },
+    show() {
+      lastStatus = ''; // re-applies the paused layout (top bar shown)
+      render();
+      attach();
+    },
     onKey(e) {
       if (e.key === ' ' || e.code === 'Space') {
         e.preventDefault();
@@ -364,10 +400,7 @@ export function runScreen(app: App, routine: Routine): Screen {
     },
     destroy() {
       clearTimeout(praiseTimer);
-      cancelAnimationFrame(raf);
-      clearInterval(bgTimer);
-      document.removeEventListener('visibilitychange', onVisibility);
-      window.removeEventListener('resize', onResize);
+      detach();
       engine.stop();
       app.beeper.cancel();
       void releaseWakeLock();

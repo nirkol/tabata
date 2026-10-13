@@ -642,7 +642,7 @@ test('timers: "Start!" when the timer starts and "Ten!" 10 s before the end', as
   expect(await page.evaluate(() => (window as unknown as { __spoken: string[] }).__spoken)).toEqual(['Start!', 'Ten!']);
 });
 
-test('stopwatch: counts up, pause, reset and stop; navigation is locked until stopped', async ({ page }) => {
+test('stopwatch: counts up, pause, reset and stop; navigation is locked only while running', async ({ page }) => {
   await fresh(page, '?speed=60');
   await page.getByTestId('nav-stopwatch').click();
   await expect(page.getByTestId('nav-stopwatch')).toHaveClass(/active/);
@@ -657,19 +657,24 @@ test('stopwatch: counts up, pause, reset and stop; navigation is locked until st
   await expect(page.getByTestId('nav-routines')).toBeDisabled();
   await expect(page.getByTestId('nav-settings')).toBeDisabled();
 
-  // Paused: the time freezes; still locked.
+  // Paused: the time freezes and the other pages can be opened; coming back shows it paused.
   await page.getByTestId('sw-start').click();
   await expect(page.getByTestId('sw-start')).toHaveText('▶ RESUME');
   const frozen = await page.getByTestId('sw-digits').textContent();
+  await expect(page.getByTestId('nav-timers')).toBeEnabled();
+  await page.getByTestId('nav-settings').click();
+  await expect(page.getByTestId('nav-stopwatch')).toHaveClass(/tab-paused/);
   await page.waitForTimeout(500);
+  await page.getByTestId('nav-stopwatch').click();
   await expect(page.getByTestId('sw-digits')).toHaveText(frozen!);
-  await expect(page.getByTestId('nav-timers')).toBeDisabled();
+  await expect(page.getByTestId('sw-start')).toHaveText('▶ RESUME');
+  await expect(page.getByTestId('nav-stopwatch')).not.toHaveClass(/tab-paused/);
 
   // Reset: back to 00:00:00.
   await page.getByTestId('sw-reset').click();
   await expect(page.getByTestId('sw-digits')).toHaveText('00:00:00');
 
-  // Stop: the time stays and navigation works again.
+  // Stop: the time stays and navigation works.
   await page.getByTestId('sw-start').click();
   await page.waitForTimeout(1200); // over a minute at ×60
   await page.getByTestId('sw-stop').click();
@@ -681,4 +686,46 @@ test('stopwatch: counts up, pause, reset and stop; navigation is locked until st
   await expect(page.getByTestId('nav-routines')).toBeEnabled();
   await page.getByTestId('nav-routines').click();
   await expect(page.getByTestId('routine-list')).toBeVisible();
+});
+
+test('paused routine and timer can be left and resumed later', async ({ page }) => {
+  await fresh(page);
+  // Routine: running hides the top bar; paused shows it.
+  await page.getByTestId('start').click();
+  await expect(page.getByTestId('nav-timers')).toBeHidden();
+  await page.getByTestId('pause').click();
+  await expect(page.getByTestId('nav-timers')).toBeVisible();
+  await expect(page.getByTestId('nav-routines')).toHaveClass(/active/);
+  const routineTime = await page.getByTestId('run-digits').textContent();
+
+  // Switch to Timers, start a timer, pause it, go to the Stopwatch.
+  await page.getByTestId('nav-timers').click();
+  await expect(page.getByTestId('nav-routines')).toHaveClass(/tab-paused/);
+  await page.getByTestId('timer-card').first().getByTestId('start').click();
+  await page.waitForTimeout(1100);
+  await page.getByTestId('pause').click();
+  const timerTime = await page.getByTestId('run-digits').textContent();
+  await page.getByTestId('nav-stopwatch').click();
+  await expect(page.getByTestId('nav-timers')).toHaveClass(/tab-paused/);
+  await page.waitForTimeout(1200);
+
+  // Back to the routine: same paused second; resume carries on.
+  await page.getByTestId('nav-routines').click();
+  await expect(page.getByTestId('run-screen')).toBeVisible();
+  await expect(page.getByTestId('run-digits')).toHaveText(routineTime!);
+  await expect(page.getByTestId('pause')).toHaveText('▶ RESUME');
+  await page.getByTestId('pause').click();
+  await expect(page.getByTestId('nav-timers')).toBeHidden();
+  await expect(page.getByTestId('run-digits')).not.toHaveText(routineTime!, { timeout: 3000 });
+
+  // Stop it: the Routines tab shows the list again.
+  await page.getByTestId('stop').click();
+  await page.getByTestId('confirm-yes').click();
+  await expect(page.getByTestId('routine-list')).toBeVisible();
+  await expect(page.getByTestId('nav-routines')).not.toHaveClass(/tab-paused/);
+
+  // The timer is still waiting, paused at the same second.
+  await page.getByTestId('nav-timers').click();
+  await expect(page.getByTestId('timer-run-screen')).toBeVisible();
+  await expect(page.getByTestId('run-digits')).toHaveText(timerTime!);
 });

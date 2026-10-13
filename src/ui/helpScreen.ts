@@ -24,7 +24,7 @@ const SECTIONS: { title: string; items: Block[] }[] = [
       ['Progress bar', ' – the bar at the top shows the whole workout; the white marker is where you are.'],
       ['Next', ' – shown next to the counter: what comes after the current phase.'],
       ['Below the counter', ' – current cycle, work/rest times, rounds left, and time left in the cycle and in total.'],
-      ['Pause', ' – click PAUSE or press Space. Resume continues exactly where you stopped.'],
+      ['Pause', ' – click PAUSE or press Space. Resume continues exactly where you stopped. While paused, the top bar comes back: you can open other pages (e.g. start a timer) and return later — the Routines tab shows PAUSED and opens the paused workout.'],
       ['Stop', ' – click STOP or press Esc; the workout pauses while you confirm.'],
       ['Fullscreen', ' – press F or click the button at the top right.'],
       ['Volume', ' – the Work / Rest sliders and mute button are at the lower right.'],
@@ -63,7 +63,7 @@ const SECTIONS: { title: string; items: Block[] }[] = [
       'The Stopwatch tab counts up from 00:00:00 (hours:minutes:seconds).',
       ['▶ Start / Pause', ' – starts, pauses and resumes (or press Space).'],
       ['Reset', ' – back to 00:00:00 (or press R).'],
-      ['Stop', ' – stops and keeps the time on screen (or press Esc). While the stopwatch runs or is paused, the other pages are locked until you click Stop.'],
+      ['Stop', ' – stops and keeps the time on screen (or press Esc). While it runs, the other pages are locked; pause it to switch pages — it waits, paused, until you come back.'],
     ],
   },
   {

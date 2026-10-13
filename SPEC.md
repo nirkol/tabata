@@ -163,6 +163,14 @@ Implementation requirements:
 
 ---
 
+### 4.7 Paused sessions: switch pages and come back
+A routine, a timer and the stopwatch can each be **paused, left, and resumed later**:
+- While running, the Run and Timer screens fill the window (no top bar) and the stopwatch locks the top bar, so a running clock can't be left by accident.
+- When **paused**, the top bar is shown and every page can be opened. The paused session is kept exactly as it was, and its tab (Routines, Timers or Stopwatch) shows a yellow **PAUSED** tag.
+- Opening that tab again shows the paused screen at the same second; **Resume** continues from there. (While a routine or timer is paused, its tab opens the paused run; Stop it to get back to the list.)
+- The three can be paused at the same time, independently. Stop (with confirmation), Back at the end, or Reset (stopwatch) ends a session.
+- Kept sessions live only in memory: they are not restored after the app is closed.
+
 ## 5. Routines screen (list and editor)
 
 ### 5.1 List
@@ -220,7 +228,7 @@ A **Timers** tab in the top bar (between Routines and Settings) holds simple sin
 A **Stopwatch** button in the top bar, next to Routines and Timers, opens a stopwatch page (the top bar stays visible).
 - A large display counts up from **00:00:00** (hours:minutes:seconds) in the work color, with a status label above it (READY / RUNNING / PAUSED / STOPPED).
 - Buttons: **▶ START / PAUSE / ▶ RESUME**, **↺ RESET** (back to 00:00:00, not running) and **■ STOP** (freezes the time on screen; the next Start begins from 00:00:00). Keyboard: Space = start/pause, R = reset, Esc = stop.
-- While the stopwatch is running or paused, the top navigation is **locked**; **Stop** (or Reset) unlocks it so the user can go to the other pages.
+- While the stopwatch is **running**, the top navigation is **locked**. Paused or stopped, the user can go to other pages; the stopwatch is kept and shown again as it was (§4.7).
 - Timestamp-based (exact in the background); the screen is kept awake while it runs. No sounds.
 
 ## 5a. Instructions and About
@@ -366,7 +374,7 @@ Both beep volumes and Mute can also be changed from the Run screen (§4.2).
 | Export / Import | Removed from Settings; routines are not moved between the web version and the Mac app |
 | Routine list | No Duplicate button (Start, Edit, Delete only); ☰ handle to reorder by drag (or ↑ / ↓) |
 | Run-screen info | Cycle, Work, Rest and Rounds left in four equal boxes right under the counter; "Cycle remaining" and "Total remaining" together in the center; volume slider + mute in the top-right corner |
-| Leaving screens | Stop on the Run screen pauses the routine and asks for confirmation (Cancel resumes); the routine editor can only be left with Save or Cancel |
+| Leaving screens | A running routine/timer can't be left; paused, the top bar returns and the session is kept (§4.7). Stop pauses and asks for confirmation (Cancel resumes); the routine editor can only be left with Save or Cancel |
 | Run-screen controls | Only Pause and Stop (no Skip or Restart); at the end: Start over and Back to routines |
 | Mac packaging | Tauri, unsigned build accepted |
 | Beep sounds | 5 selectable styles, all variations of a workout-timer beep (Classic, Soft, High, Low beep, Gym bell), chosen separately for work and rest |
@@ -378,3 +386,4 @@ Both beep volumes and Mute can also be changed from the Run screen (§4.2).
 | Timers | Top-bar **Timers** tab with preset countdown timers (default 2/3/5/10 min on a new installation) as square tiles, 4 per row, sorted short to long from the top left; each has Start, Edit, Delete; the Timer screen has a large countdown with the progress ring, Pause and Stop |
 | Top bar | Routines and Timers as large centered buttons; Settings, Instructions and About as text on the right (no icon tabs) |
 | Stopwatch | Third main tab: counts up hh:mm:ss with Start/Pause, Reset and Stop; navigation locked until Stop |
+| Paused sessions | Routine, timer and stopwatch can each be paused, left for other pages (tab shows PAUSED), and resumed later from the same second |

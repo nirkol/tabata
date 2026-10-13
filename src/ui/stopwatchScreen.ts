@@ -5,11 +5,12 @@ import { h } from './dom';
 
 /** How often the display refreshes when the window is hidden (rAF doesn't run then). */
 const BACKGROUND_TICK_MS = 250;
-const NAV_LOCK = 'Stop the stopwatch first';
+const NAV_LOCK = 'Pause or stop the stopwatch first';
 
 /**
  * The Stopwatch page (SPEC §5c): counts up from 00:00:00. Start/Pause/Resume, Reset and Stop.
- * While it runs or is paused the top navigation is locked; Stop (or Reset) unlocks it.
+ * While it runs the top navigation is locked. Paused (or stopped), the user can switch to other
+ * pages; the stopwatch is kept and shown again, as it was, when they come back.
  */
 export function stopwatchScreen(app: App): Screen {
   const watch = new Stopwatch(() => performance.now(), app.speed);
@@ -42,8 +43,8 @@ export function stopwatchScreen(app: App): Screen {
     mainBtn.textContent = status === 'running' ? 'PAUSE' : status === 'paused' ? '▶ RESUME' : '▶ START';
     resetBtn.disabled = status === 'idle';
     stopBtn.disabled = status === 'idle' || status === 'stopped';
-    // Only Stop (or Reset) lets the user leave this page while the stopwatch is in use.
-    app.setNavLock(status === 'running' || status === 'paused' ? NAV_LOCK : null);
+    // Running: pause or stop it before leaving the page.
+    app.setNavLock(status === 'running' ? NAV_LOCK : null);
     if (status === 'running') void keepAwake(true);
     else void keepAwake(false);
   }
@@ -87,21 +88,48 @@ export function stopwatchScreen(app: App): Screen {
     }
   }
 
-  // --- Loop ---
+  // --- Loop (only while the page is shown) ---
   let raf = 0;
+  let bgTimer: ReturnType<typeof setInterval> | undefined;
+  let attached = false;
   const frame = () => {
+    if (!attached) return;
     render();
     if (watch.getStatus() === 'running') document.title = `${digits.textContent} – Stopwatch`;
     raf = requestAnimationFrame(frame);
   };
-  const bgTimer = setInterval(() => {
-    if (document.hidden) render();
-  }, BACKGROUND_TICK_MS);
-  raf = requestAnimationFrame(frame);
+  function attach(): void {
+    if (attached) return;
+    attached = true;
+    bgTimer = setInterval(() => {
+      if (document.hidden) render();
+    }, BACKGROUND_TICK_MS);
+    raf = requestAnimationFrame(frame);
+  }
+  function detach(): void {
+    if (!attached) return;
+    attached = false;
+    cancelAnimationFrame(raf);
+    clearInterval(bgTimer);
+  }
+  attach();
   render();
 
   return {
     el,
+    session: 'stopwatch',
+    // A paused or stopped time is kept when the user goes to another page.
+    keepAlive: () => watch.getStatus() === 'paused' || watch.getStatus() === 'stopped',
+    hide() {
+      detach();
+      void keepAwake(false);
+      document.title = 'yFit Workout Timer';
+    },
+    show() {
+      lastStatus = ''; // re-applies the navigation lock and labels
+      render();
+      attach();
+    },
     onKey(e) {
       if (e.key === ' ' || e.code === 'Space') {
         e.preventDefault();
@@ -115,8 +143,7 @@ export function stopwatchScreen(app: App): Screen {
       }
     },
     destroy() {
-      cancelAnimationFrame(raf);
-      clearInterval(bgTimer);
+      detach();
       void keepAwake(false);
       document.title = 'yFit Workout Timer';
     },

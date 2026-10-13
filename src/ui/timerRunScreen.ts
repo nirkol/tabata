@@ -109,8 +109,12 @@ export function timerRunScreen(app: App, timer: PresetTimer): Screen {
         startOverBtn.hidden = false;
         stopBtn.textContent = '← Back to timers';
         void releaseWakeLock();
+        app.setFullWindow(true);
       } else {
         pauseBtn.textContent = status === 'paused' ? '▶ RESUME' : 'PAUSE';
+        // Paused: the top bar comes back, so the user can switch to other pages and return later.
+        app.setFullWindow(status !== 'paused');
+        requestAnimationFrame(() => fit());
       }
     }
     document.title = done ? "TIME'S UP – yFit Workout Timer" : `${text} ${title}${status === 'paused' ? ' (paused)' : ''} – yFit Workout Timer`;
@@ -130,15 +134,38 @@ export function timerRunScreen(app: App, timer: PresetTimer): Screen {
     ring.draw(ringBox);
   }
 
-  // --- Loop: rAF while visible, an interval in the background ---
+  // --- Loop: rAF while visible, an interval in the background; only while the screen is shown ---
   let raf = 0;
+  let bgTimer: ReturnType<typeof setInterval> | undefined;
+  let attached = false;
   const frame = () => {
+    if (!attached) return;
     render();
     raf = requestAnimationFrame(frame);
   };
-  const bgTimer = setInterval(() => {
-    if (document.hidden) render();
-  }, BACKGROUND_TICK_MS);
+  function attach(): void {
+    if (attached) return;
+    attached = true;
+    bgTimer = setInterval(() => {
+      if (document.hidden) render();
+    }, BACKGROUND_TICK_MS);
+    document.addEventListener('visibilitychange', onVisibility);
+    window.addEventListener('resize', onResize);
+    raf = requestAnimationFrame(() => {
+      fit();
+      frame();
+    });
+  }
+  function detach(): void {
+    if (!attached) return;
+    attached = false;
+    cancelAnimationFrame(raf);
+    clearInterval(bgTimer);
+    document.removeEventListener('visibilitychange', onVisibility);
+    window.removeEventListener('resize', onResize);
+  }
+  /** Set by Stop / Back: the timer is over and must not be kept when the screen is left. */
+  let ended = false;
 
   // --- Controls ---
   function togglePause(): void {
@@ -150,6 +177,7 @@ export function timerRunScreen(app: App, timer: PresetTimer): Screen {
       app.beeper.unlock();
       countdown.resume();
       app.beeper.startRun(beeps, countdown.elapsedMs(), countdown.speed);
+      void requestWakeLock();
     }
     render();
   }
@@ -165,6 +193,7 @@ export function timerRunScreen(app: App, timer: PresetTimer): Screen {
   }
 
   function leave(): void {
+    ended = true;
     app.go({ name: 'timers' });
   }
 
@@ -208,23 +237,29 @@ export function timerRunScreen(app: App, timer: PresetTimer): Screen {
     render();
     if (!document.hidden) void requestWakeLock();
   };
-  document.addEventListener('visibilitychange', onVisibility);
   const onResize = () => fit();
-  window.addEventListener('resize', onResize);
 
   // --- Start (inside the Start click, so audio is unlocked) ---
   countdown.start();
   app.beeper.startRun(beeps, 0, countdown.speed);
   void requestWakeLock();
-  requestAnimationFrame(() => {
-    fit();
-    frame();
-  });
+  attach();
   render();
 
   return {
     el,
     fullWindow: true,
+    session: 'timer',
+    keepAlive: () => !ended && countdown.getStatus() === 'paused',
+    hide() {
+      detach();
+      void releaseWakeLock();
+    },
+    show() {
+      lastStatus = '';
+      render();
+      attach();
+    },
     onKey(e) {
       if (e.key === ' ' || e.code === 'Space') {
         e.preventDefault();
@@ -241,10 +276,7 @@ export function timerRunScreen(app: App, timer: PresetTimer): Screen {
       }
     },
     destroy() {
-      cancelAnimationFrame(raf);
-      clearInterval(bgTimer);
-      document.removeEventListener('visibilitychange', onVisibility);
-      window.removeEventListener('resize', onResize);
+      detach();
       countdown.stop();
       app.beeper.cancel();
       void releaseWakeLock();

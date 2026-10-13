@@ -26,7 +26,23 @@ export interface Screen {
   fullWindow?: boolean;
   /** Disables the top navigation: the screen can only be left with its own buttons (e.g. Save / Cancel). */
   lockNav?: string;
+  /**
+   * Paused sessions (SPEC §4.7): a routine run, timer run or stopwatch that is left while
+   * `keepAlive()` is true is hidden instead of destroyed, and shown again (as it was) the next
+   * time its section (Routines / Timers / Stopwatch) is opened.
+   */
+  session?: SessionKind;
+  keepAlive?(): boolean;
+  /** Called when a kept screen is taken off the page (stop loops, release the wake lock). */
+  hide?(): void;
+  /** Called when a kept screen is put back on the page. */
+  show?(): void;
 }
+
+export type SessionKind = 'routine' | 'timer' | 'stopwatch';
+
+/** The top-bar section of each kind of paused session. */
+const SESSION_TABS: Record<SessionKind, string> = { routine: 'list', timer: 'timers', stopwatch: 'stopwatch' };
 
 type Route =
   | { name: 'list' }
@@ -48,6 +64,8 @@ export class App {
   lastUsedId: string | null;
   readonly beeper = new Beeper();
   private screen: Screen | null = null;
+  /** Paused sessions kept while the user is on other pages. */
+  private readonly sessions: Partial<Record<SessionKind, Screen>> = {};
   private readonly main = h('main', { class: 'screen' });
   private readonly nav: HTMLElement;
 
@@ -93,11 +111,36 @@ export class App {
   }
 
   go(route: Route): void {
-    this.screen?.destroy?.();
+    // Leaving a paused session keeps it (hidden); anything else is closed.
+    const prev = this.screen;
+    if (prev) {
+      if (prev.session && prev.keepAlive?.()) {
+        prev.hide?.();
+        this.sessions[prev.session] = prev;
+      } else {
+        prev.destroy?.();
+        if (prev.session && this.sessions[prev.session] === prev) delete this.sessions[prev.session];
+      }
+      this.screen = null;
+    }
     let screen: Screen;
+    let resumed = false;
+    /** Takes a kept session of this kind back, if there is one. */
+    const resume = (kind: SessionKind): Screen | null => {
+      const s = this.sessions[kind];
+      if (!s) return null;
+      delete this.sessions[kind];
+      resumed = true;
+      return s;
+    };
+    /** Starting a new run of this kind replaces the kept one. */
+    const drop = (kind: SessionKind): void => {
+      this.sessions[kind]?.destroy?.();
+      delete this.sessions[kind];
+    };
     switch (route.name) {
       case 'list':
-        screen = listScreen(this);
+        screen = resume('routine') ?? listScreen(this);
         break;
       case 'editor':
         screen = editorScreen(this, route.routineId);
@@ -112,21 +155,23 @@ export class App {
         screen = settingsScreen(this);
         break;
       case 'timers':
-        screen = timersScreen(this);
+        screen = resume('timer') ?? timersScreen(this);
         break;
       case 'timerEditor':
         screen = timerEditorScreen(this, route.timerId);
         break;
       case 'stopwatch':
-        screen = stopwatchScreen(this);
+        screen = resume('stopwatch') ?? stopwatchScreen(this);
         break;
       case 'timerRun': {
+        drop('timer');
         const timer = this.timers.find((t) => t.id === route.timerId);
         if (!timer) return this.go({ name: 'timers' });
         screen = timerRunScreen(this, timer);
         break;
       }
       case 'run': {
+        drop('routine');
         const routine = this.routines.find((r) => r.id === route.routineId);
         if (!routine) return this.go({ name: 'list' });
         screen = runScreen(this, routine);
@@ -135,11 +180,24 @@ export class App {
     }
     this.screen = screen;
     this.nav.hidden = !!screen.fullWindow;
-    const section = route.name === 'editor' ? 'list' : route.name === 'timerEditor' ? 'timers' : route.name;
+    const section = screen.session
+      ? SESSION_TABS[screen.session]
+      : route.name === 'editor' ? 'list' : route.name === 'timerEditor' ? 'timers' : route.name;
     for (const tab of this.nav.querySelectorAll<HTMLButtonElement>('.tab')) tab.classList.toggle('active', tab.dataset.route === section);
     this.setNavLock(screen.lockNav ?? null);
+    // A "paused" mark on the tabs whose section has a paused session waiting.
+    for (const kind of Object.keys(SESSION_TABS) as SessionKind[]) {
+      const tab = this.nav.querySelector<HTMLElement>(`.tab[data-route="${SESSION_TABS[kind]}"]`);
+      tab?.classList.toggle('tab-paused', !!this.sessions[kind]);
+    }
     this.main.replaceChildren(screen.el);
     document.title = 'yFit Workout Timer';
+    if (resumed) screen.show?.();
+  }
+
+  /** Hides the top bar (a running workout fills the window) or shows it again (paused). */
+  setFullWindow(full: boolean): void {
+    this.nav.hidden = full;
   }
 
   /**
