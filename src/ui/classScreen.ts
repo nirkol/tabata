@@ -106,14 +106,27 @@ export function classScreen(app: App, classId: string): Screen {
     const uses = (kind: ClassItem['kind'], id: string) => c.items.filter((x) => x.kind === kind && x.refId === id).length;
     addPanel.replaceChildren(
       h('h2', { class: 'class-add-title' }, 'Add to the class', h('span', { class: 'class-add-sub' }, 'Click a routine or timer to add it to the end of the list')),
-      h('h3', { class: 'class-add-heading' }, `Routines (${app.routines.length})`),
-      app.routines.length
-        ? h('div', { class: 'pick-grid' }, ...app.routines.map((r) => routineOption(r, uses('routine', r.id))))
-        : h('p', { class: 'hint' }, 'No routines yet. Create them on the Routines tab.'),
-      h('h3', { class: 'class-add-heading' }, `Timers (${app.timers.length})`),
-      app.timers.length
-        ? h('div', { class: 'pick-grid pick-grid-timers' }, ...app.timers.map((t) => timerOption(t, uses('timer', t.id))))
-        : h('p', { class: 'hint' }, 'No timers yet. Create them on the Timers tab.'),
+      // Two lists side by side: routines on the left, timers on the right.
+      h(
+        'div',
+        { class: 'class-add-cols' },
+        h(
+          'div',
+          { class: 'class-add-col', 'data-testid': 'pick-routines' },
+          h('h3', { class: 'class-add-heading' }, `Routines (${app.routines.length})`),
+          app.routines.length
+            ? h('div', { class: 'pick-list' }, ...app.routines.map((r) => routineOption(r, uses('routine', r.id))))
+            : h('p', { class: 'hint' }, 'No routines yet. Create them on the Routines tab.'),
+        ),
+        h(
+          'div',
+          { class: 'class-add-col', 'data-testid': 'pick-timers' },
+          h('h3', { class: 'class-add-heading' }, `Timers (${app.timers.length})`),
+          app.timers.length
+            ? h('div', { class: 'pick-list' }, ...app.timers.map((t) => timerOption(t, uses('timer', t.id))))
+            : h('p', { class: 'hint' }, 'No timers yet. Create them on the Timers tab.'),
+        ),
+      ),
     );
 
     // --- Status line and buttons ---
@@ -162,9 +175,9 @@ export function classScreen(app: App, classId: string): Screen {
     return h(
       'button',
       { type: 'button', class: 'pick pick-timer' + (used ? ' pick-in' : ''), 'data-testid': 'add-timer', 'data-id': t.id, 'aria-label': `Add the ${timerTitle(t)} timer to the class`, onclick: () => add('timer', t.id) },
-      h('span', { class: 'pick-head' }, h('span', { class: 'item-kind kind-timer' }, 'Timer'), usedBadge(used)),
       h('span', { class: 'pick-duration' }, formatClock(t.durationSec)),
-      h('span', { class: 'pick-foot' }, h('span', { class: 'pick-total' }, timerTitle(t)), h('span', { class: 'pick-add' }, '+ Add')),
+      h('span', { class: 'pick-timer-info' }, h('span', { class: 'pick-total' }, timerTitle(t)), usedBadge(used)),
+      h('span', { class: 'pick-add' }, '+ Add'),
     );
   }
 

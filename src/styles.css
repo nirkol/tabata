@@ -1701,13 +1701,23 @@ kbd {
 .class-add .hint {
   margin: 0;
 }
-.pick-grid {
+.class-add-cols {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
-  gap: 10px;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 20px;
+  align-items: start;
 }
-.pick-grid-timers {
-  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+.class-add-col {
+  min-width: 0;
+}
+/* Long lists scroll inside their column. */
+.pick-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 460px;
+  overflow-y: auto;
+  padding: 2px 6px 2px 2px;
 }
 .pick {
   display: flex;
@@ -1818,10 +1828,24 @@ kbd {
   background: var(--accent);
   color: #fff;
 }
+.pick.pick-timer {
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+}
+.pick-timer-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+}
 .pick-duration {
+  min-width: 2.6em;
   font-family: 'Barlow Condensed', 'Rubik', -apple-system, BlinkMacSystemFont, sans-serif;
   font-weight: 700;
-  font-size: 38px;
+  font-size: 32px;
   line-height: 1;
   font-variant-numeric: tabular-nums;
 }
@@ -1892,11 +1916,8 @@ kbd {
   .item-actions {
     grid-column: 2 / -1;
   }
-  .pick-grid {
+  .class-add-cols {
     grid-template-columns: 1fr;
-  }
-  .pick-grid-timers {
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   }
   .class-footer {
     background: var(--bg);
@@ -1962,4 +1983,29 @@ kbd {
 }
 .run-class-next.run-class-done {
   color: #30d158;
+}
+/* Compact routine options: name on top; values on the left, total and + Add on the right. */
+.pick-list .pick:not(.pick-timer) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'head head'
+    'stats foot';
+  align-items: end;
+  gap: 8px 16px;
+}
+.pick-list .pick:not(.pick-timer) .pick-head {
+  grid-area: head;
+}
+.pick-list .pick:not(.pick-timer) .pick-stats {
+  grid-area: stats;
+}
+.pick-list .pick:not(.pick-timer) .pick-foot {
+  grid-area: foot;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  border: 0;
 }
