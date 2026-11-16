@@ -2474,3 +2474,25 @@ kbd {
 .run-v4 .run-bottom {
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
 }
+/* Option 4: an empty column on the left as wide as the panel, so the counter is centered on the page. */
+.run-v4 .rv-main {
+  grid-template-columns: clamp(260px, 24vw, 380px) minmax(0, 1fr) clamp(260px, 24vw, 380px);
+}
+.run-v4 .rv-main > .run-stage {
+  grid-column: 2;
+  grid-row: 1;
+}
+.run-v4 .rv-main > .rv-panel {
+  grid-column: 3;
+  grid-row: 1;
+}
+@media (max-width: 900px) {
+  .run-v4 .rv-main {
+    grid-template-columns: 1fr;
+  }
+  .run-v4 .rv-main > .run-stage,
+  .run-v4 .rv-main > .rv-panel {
+    grid-column: 1;
+    grid-row: auto;
+  }
+}
