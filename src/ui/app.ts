@@ -18,6 +18,7 @@ import { timerRunScreen } from './timerRunScreen';
 import { stopwatchScreen } from './stopwatchScreen';
 import { classesScreen } from './classesScreen';
 import { classEditorScreen, classScreen } from './classScreen';
+import { RUN_VARIANT_NAMES, type RunVariant } from './runVariants';
 
 export interface Screen {
   el: HTMLElement;
@@ -78,7 +79,7 @@ type Route =
   | { name: 'settings' }
   | { name: 'help' }
   | { name: 'about' }
-  | { name: 'run'; routineId: string; inClass?: boolean }
+  | { name: 'run'; routineId: string; inClass?: boolean; variant?: RunVariant }
   | { name: 'timers' }
   | { name: 'timerEditor'; timerId: string | null }
   | { name: 'timerRun'; timerId: string; inClass?: boolean }
@@ -131,6 +132,14 @@ export class App {
         h('button', { class: 'tab tab-main', 'data-route': 'list', 'data-testid': 'nav-routines', onclick: () => this.go({ name: 'list' }) }, 'Routines'),
         h('button', { class: 'tab tab-main', 'data-route': 'timers', 'data-testid': 'nav-timers', onclick: () => this.go({ name: 'timers' }) }, 'Timers'),
         h('button', { class: 'tab tab-main', 'data-route': 'stopwatch', 'data-testid': 'nav-stopwatch', onclick: () => this.go({ name: 'stopwatch' }) }, 'Stopwatch'),
+        // TEMPORARY: preview three Run screen designs with the highlighted routine.
+        h(
+          'div',
+          { class: 'design-tabs', title: 'Preview Run screen designs (temporary)' },
+          ...([1, 2, 3] as const).map((n) =>
+            h('button', { class: 'tab tab-design', 'data-testid': `nav-design-${n}`, title: `Run design ${n}: ${RUN_VARIANT_NAMES[n]}`, onclick: () => this.previewRunDesign(n) }, String(n)),
+          ),
+        ),
       ),
       h(
         'nav',
@@ -211,7 +220,7 @@ export class App {
         drop(route.inClass ? 'class' : 'routine');
         const routine = this.routines.find((r) => r.id === route.routineId);
         if (!routine) return this.go({ name: 'list' });
-        screen = runScreen(this, routine, route.inClass ? this.classContext() ?? undefined : undefined);
+        screen = runScreen(this, routine, route.inClass ? this.classContext() ?? undefined : undefined, route.variant);
         break;
       }
       case 'classes':
@@ -375,6 +384,14 @@ export class App {
       this.saveRoutines([started, ...this.routines.filter((r) => r !== started)]);
     }
     this.go({ name: 'run', routineId: id });
+  }
+
+  /** TEMPORARY: runs the highlighted routine with Run screen design 1, 2 or 3 (for comparing designs). */
+  previewRunDesign(variant: RunVariant): void {
+    const id = this.lastUsedId ?? this.routines[0]?.id;
+    if (!id) return this.go({ name: 'list' });
+    this.beeper.unlock();
+    this.go({ name: 'run', routineId: id, variant });
   }
 
   /** Starts a preset timer. Must be called from a user gesture so audio can start. */

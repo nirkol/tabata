@@ -5,6 +5,7 @@ import { sayCue, sayText } from '../platform/voice';
 import { formatClock, formatCountdown } from '../timer/format';
 import type { App, ClassContext, Screen } from './app';
 import { classAdvance } from './classAdvance';
+import { buildRunVariant, type RunVariant } from './runVariants';
 import { confirmDialog } from './dialog';
 import { h } from './dom';
 import { RING_STROKE, createRing } from './ring';
@@ -20,7 +21,7 @@ const FINISH_LAST_STRIKE_MS = 1700;
 const CLASS_NEXT_DELAY_SEC = 8;
 
 /** The Run view (SPEC §4). */
-export function runScreen(app: App, routine: Routine, ctx?: ClassContext): Screen {
+export function runScreen(app: App, routine: Routine, ctx?: ClassContext, variant?: RunVariant): Screen {
   const cls = ctx ? classAdvance(ctx, CLASS_NEXT_DELAY_SEC, app.speed) : null;
   const engine = new TimerEngine(routine, () => performance.now(), app.speed);
   // With "Start!" on (and not muted), the voice replaces the long beep at the end of rest.
@@ -62,7 +63,7 @@ export function runScreen(app: App, routine: Routine, ctx?: ClassContext): Scree
   stage.append(details);
   if (cls) stage.append(cls.line);
   const pauseBtn = h('button', { type: 'button', class: 'btn btn-run btn-primary', 'data-testid': 'pause', onclick: () => togglePause() }, 'PAUSE');
-  const startOverBtn = h('button', { type: 'button', class: 'btn btn-run btn-primary', 'data-testid': 'start-over', hidden: true, onclick: () => app.startRoutine(routine.id) }, '↻ Start over');
+  const startOverBtn = h('button', { type: 'button', class: 'btn btn-run btn-primary', 'data-testid': 'start-over', hidden: true, onclick: () => (variant ? app.previewRunDesign(variant) : app.startRoutine(routine.id)) }, '↻ Start over');
   const stopBtn = h('button', { type: 'button', class: 'btn btn-run', 'data-testid': 'stop', onclick: () => void requestStop() }, '■ STOP');
   const muteBtn = h('button', { type: 'button', class: 'btn btn-icon', 'data-testid': 'run-mute', onclick: () => toggleMute() });
   /** A compact volume slider for the work or rest beeps. */
@@ -105,27 +106,43 @@ export function runScreen(app: App, routine: Routine, ctx?: ClassContext): Scree
     tlMarker,
   );
 
-  const el = h(
-    'section',
-    { class: 'run-screen', 'data-testid': 'run-screen' },
+  const topLeft = h('div', { class: 'run-top-left' }, cls?.banner, h('div', { class: 'run-name' }, 'Routine: “', h('bdi', {}, routine.name), '”'));
+  const speedBadge = app.speed !== 1 ? h('div', { class: 'speed-badge' }, `×${app.speed} speed (dev)`) : null;
+  const controls = h('div', { class: 'run-controls' }, pauseBtn, startOverBtn, cls?.nextBtn, stopBtn);
+  const volumeGroup = h('div', { class: 'run-volume-group', 'data-testid': 'run-volume-group' }, muteBtn, h('div', { class: 'run-volume-stack' }, workVolume.el, restVolume.el));
+
+  // TEMPORARY: design options 1 / 2 / 3 arrange the same parts differently (runVariants.ts).
+  const vui = variant
+    ? buildRunVariant(variant, {
+        routine,
+        phases: engine.phases,
+        showRemaining: app.settings.showRemaining,
+        topLeft,
+        speedBadge,
+        fullscreenBtn,
+        timeline,
+        phaseLabel,
+        ringBox,
+        next,
+        controls,
+        volumeGroup,
+        extras: [cls?.line],
+      })
+    : null;
+  /** The area that holds the counter (the digits are sized to fit it). */
+  const counterArea = vui?.stage ?? stage;
+
+  const el =
+    vui?.el ??
     h(
-      'div',
-      { class: 'run-top' },
-      h('div', { class: 'run-top-left' }, cls?.banner, h('div', { class: 'run-name' }, 'Routine: “', h('bdi', {}, routine.name), '”')),
-      app.speed !== 1 ? h('div', { class: 'speed-badge' }, `×${app.speed} speed (dev)`) : null,
-      h('div', { class: 'run-top-right' }, fullscreenBtn),
-    ),
-    timeline,
-    stage,
-    // Bottom row: Pause / Stop in the center, volume controls on the right.
-    h(
-      'div',
-      { class: 'run-bottom' },
-      h('div', { class: 'run-bottom-side' }),
-      h('div', { class: 'run-controls' }, pauseBtn, startOverBtn, cls?.nextBtn, stopBtn),
-      h('div', { class: 'run-bottom-side run-bottom-right' }, h('div', { class: 'run-volume-group', 'data-testid': 'run-volume-group' }, muteBtn, h('div', { class: 'run-volume-stack' }, workVolume.el, restVolume.el))),
-    ),
-  );
+      'section',
+      { class: 'run-screen', 'data-testid': 'run-screen' },
+      h('div', { class: 'run-top' }, topLeft, speedBadge, h('div', { class: 'run-top-right' }, fullscreenBtn)),
+      timeline,
+      stage,
+      // Bottom row: Pause / Stop in the center, volume controls on the right.
+      h('div', { class: 'run-bottom' }, h('div', { class: 'run-bottom-side' }), controls, h('div', { class: 'run-bottom-side run-bottom-right' }, volumeGroup)),
+    );
 
   // --- Rendering ---
   let lastDigitsText = '';
@@ -215,6 +232,7 @@ export function runScreen(app: App, routine: Routine, ctx?: ClassContext): Scree
     tlMarker.style.left = `${pct}%`;
 
     intervalsLeft.textContent = `Rounds left: ${s.intervalsLeft} / ${routine.intervals}`;
+    vui?.update(s);
     next.textContent = done ? '' : `Next: ${s.nextPhase ? `${PHASE_LABELS[s.nextPhase.kind]} ${formatClock(s.nextPhase.durationSec)}` : PHASE_LABELS.done}`;
     setRemaining.textContent = `Cycle remaining: ${formatCountdown(s.setRemainingMs)}`;
     totalRemaining.textContent = `Total remaining: ${formatCountdown(s.totalRemainingMs)}`;
@@ -254,8 +272,11 @@ export function runScreen(app: App, routine: Routine, ctx?: ClassContext): Scree
     const target = (app.settings.digitSizePct / 100) * window.innerHeight * (smallDigits ? 0.8 : 1);
     digits.style.fontSize = `${target}px`;
     const pad = RING_STROKE * 2 + 24;
-    const maxW = stage.clientWidth - pad;
-    const maxH = stage.clientHeight - pad - phaseLabel.offsetHeight - details.offsetHeight - (praiseLine.hidden ? 0 : praiseLine.offsetHeight) - (cls && !cls.line.hidden ? cls.line.offsetHeight : 0);
+    const maxW = counterArea.clientWidth - pad;
+    // Everything else in the counter area (phase label, details, …) and the encouragement take room too.
+    let others = praiseLine.hidden ? 0 : praiseLine.offsetHeight;
+    for (const child of counterArea.children) if (child !== ringBox) others += (child as HTMLElement).offsetHeight;
+    const maxH = counterArea.clientHeight - pad - others;
     if (maxW > 0 && maxH > 0) {
       const scale = Math.min(1, maxW / digits.scrollWidth, maxH / digits.offsetHeight);
       if (scale < 1) digits.style.fontSize = `${Math.floor(target * scale)}px`;

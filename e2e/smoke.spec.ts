@@ -768,7 +768,7 @@ test('class: create and save a class, then start it from the list, stop, see pro
   await page.reload();
 
   // The Classes tab is the first of the main tabs.
-  await expect(page.locator('.tabs-main .tab')).toHaveText(['Classes', 'Routines', 'Timers', 'Stopwatch']);
+  await expect(page.locator('.tabs-main .tab-main')).toHaveText(['Classes', 'Routines', 'Timers', 'Stopwatch']);
   await page.getByTestId('nav-classes').click();
   await expect(page.getByTestId('class-count')).toHaveText('0 classes');
 
@@ -912,4 +912,21 @@ test('class: Cancel discards a new class; editing; stopping between items; End c
   await page.getByTestId('nav-classes').click();
   await page.getByTestId('class-card').click();
   await expect(page.getByTestId('item-name')).toHaveText(['Two']);
+});
+
+// TEMPORARY: remove with the design preview buttons.
+test('design preview buttons 1 / 2 / 3 run the highlighted routine with each Run screen design', async ({ page }) => {
+  await fresh(page, '?speed=10');
+  for (const n of [1, 2, 3]) {
+    await page.getByTestId(`nav-design-${n}`).click();
+    await expect(page.locator(`.run-screen.run-v${n}`)).toBeVisible();
+    await expect(page.getByTestId('run-phase')).toHaveText(/GET READY|WORK/);
+    await expect(page.getByTestId('run-next')).not.toHaveText('');
+    await page.getByTestId('stop').click();
+    await page.getByTestId('confirm-yes').click();
+    await expect(page.getByTestId('routine-list')).toBeVisible();
+  }
+  // The normal Start still uses the current design.
+  await page.getByTestId('start').click();
+  await expect(page.locator('.run-screen')).not.toHaveClass(/run-v/);
 });
