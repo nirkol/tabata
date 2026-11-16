@@ -3,7 +3,8 @@ import { PHASE_LABELS, TimerEngine, beepSchedule, cycleEndDue, startCallDue, ten
 import { pickPraise } from '../storage/storage';
 import { sayCue, sayText } from '../platform/voice';
 import { formatClock, formatCountdown } from '../timer/format';
-import type { App, Screen } from './app';
+import type { App, ClassContext, Screen } from './app';
+import { classAdvance } from './classAdvance';
 import { confirmDialog } from './dialog';
 import { h } from './dom';
 import { RING_STROKE, createRing } from './ring';
@@ -15,9 +16,12 @@ const BACKGROUND_TICK_MS = 250;
 const PRAISE_SPEAK_DELAY_MS = 2000;
 /** At the end of the run, the last of the three finish bell strikes starts this late. */
 const FINISH_LAST_STRIKE_MS = 1700;
+/** In a class, the next item starts this long after a routine ends (after the finish bells and encouragement). */
+const CLASS_NEXT_DELAY_SEC = 8;
 
 /** The Run view (SPEC §4). */
-export function runScreen(app: App, routine: Routine): Screen {
+export function runScreen(app: App, routine: Routine, ctx?: ClassContext): Screen {
+  const cls = ctx ? classAdvance(ctx, CLASS_NEXT_DELAY_SEC, app.speed) : null;
   const engine = new TimerEngine(routine, () => performance.now(), app.speed);
   // With "Start!" on (and not muted), the voice replaces the long beep at the end of rest.
   const beeps = beepSchedule(engine.phases, { voiceStart: app.settings.startCall && !app.settings.muted });
@@ -56,6 +60,7 @@ export function runScreen(app: App, routine: Routine): Screen {
     h('div', { class: 'run-remaining', 'data-testid': 'run-remaining', hidden: !app.settings.showRemaining }, setRemaining, h('span', { class: 'sep' }, '│'), totalRemaining),
   );
   stage.append(details);
+  if (cls) stage.append(cls.line);
   const pauseBtn = h('button', { type: 'button', class: 'btn btn-run btn-primary', 'data-testid': 'pause', onclick: () => togglePause() }, 'PAUSE');
   const startOverBtn = h('button', { type: 'button', class: 'btn btn-run btn-primary', 'data-testid': 'start-over', hidden: true, onclick: () => app.startRoutine(routine.id) }, '↻ Start over');
   const stopBtn = h('button', { type: 'button', class: 'btn btn-run', 'data-testid': 'stop', onclick: () => void requestStop() }, '■ STOP');
@@ -106,7 +111,7 @@ export function runScreen(app: App, routine: Routine): Screen {
     h(
       'div',
       { class: 'run-top' },
-      h('div', { class: 'run-name' }, 'Routine: “', h('bdi', {}, routine.name), '”'),
+      h('div', { class: 'run-top-left' }, cls?.banner, h('div', { class: 'run-name' }, 'Routine: “', h('bdi', {}, routine.name), '”')),
       app.speed !== 1 ? h('div', { class: 'speed-badge' }, `×${app.speed} speed (dev)`) : null,
       h('div', { class: 'run-top-right' }, fullscreenBtn),
     ),
@@ -117,7 +122,7 @@ export function runScreen(app: App, routine: Routine): Screen {
       'div',
       { class: 'run-bottom' },
       h('div', { class: 'run-bottom-side' }),
-      h('div', { class: 'run-controls' }, pauseBtn, startOverBtn, stopBtn),
+      h('div', { class: 'run-controls' }, pauseBtn, startOverBtn, cls?.nextBtn, stopBtn),
       h('div', { class: 'run-bottom-side run-bottom-right' }, h('div', { class: 'run-volume-group', 'data-testid': 'run-volume-group' }, muteBtn, h('div', { class: 'run-volume-stack' }, workVolume.el, restVolume.el))),
     ),
   );
@@ -228,8 +233,10 @@ export function runScreen(app: App, routine: Routine): Screen {
   function onStatusChange(s: Snapshot): void {
     if (s.status === 'done') {
       pauseBtn.hidden = true;
-      startOverBtn.hidden = false;
-      stopBtn.textContent = '← Back to routines';
+      startOverBtn.hidden = !!cls;
+      stopBtn.textContent = cls ? '← Back to class' : '← Back to routines';
+      cls?.finished();
+      if (cls) requestAnimationFrame(() => fit());
       app.setFullWindow(true);
       void releaseWakeLock();
       // End of the last cycle: encouragement (spoken 2 s after the last finish bell).
@@ -248,7 +255,7 @@ export function runScreen(app: App, routine: Routine): Screen {
     digits.style.fontSize = `${target}px`;
     const pad = RING_STROKE * 2 + 24;
     const maxW = stage.clientWidth - pad;
-    const maxH = stage.clientHeight - pad - phaseLabel.offsetHeight - details.offsetHeight - (praiseLine.hidden ? 0 : praiseLine.offsetHeight);
+    const maxH = stage.clientHeight - pad - phaseLabel.offsetHeight - details.offsetHeight - (praiseLine.hidden ? 0 : praiseLine.offsetHeight) - (cls && !cls.line.hidden ? cls.line.offsetHeight : 0);
     if (maxW > 0 && maxH > 0) {
       const scale = Math.min(1, maxW / digits.scrollWidth, maxH / digits.offsetHeight);
       if (scale < 1) digits.style.fontSize = `${Math.floor(target * scale)}px`;
@@ -311,13 +318,21 @@ export function runScreen(app: App, routine: Routine): Screen {
     // Stopping a running routine pauses it while asking, so it can't be stopped by accident.
     const wasRunning = status === 'running';
     if (wasRunning) togglePause();
+    if (ctx) {
+      // In a class, Stop keeps the routine paused and opens the class page; Continue class resumes it.
+      if (await confirmDialog('Stop and go back to the class? “Continue class” carries on from this second.', 'Stop')) ctx.back();
+      else if (wasRunning) togglePause();
+      return;
+    }
     if (await confirmDialog('Stop this routine and go back to the list?', 'Stop')) leave();
     else if (wasRunning) togglePause(); // cancelled: carry on from the same second
   }
 
   function leave(): void {
     ended = true;
-    app.go({ name: 'list' });
+    cls?.cancel();
+    if (ctx) ctx.back();
+    else app.go({ name: 'list' });
   }
 
   function toggleMute(): void {
@@ -372,7 +387,10 @@ export function runScreen(app: App, routine: Routine): Screen {
   return {
     el,
     fullWindow: true,
-    session: 'routine',
+    session: ctx ? 'class' : 'routine',
+    play() {
+      if (engine.getStatus() === 'paused') togglePause();
+    },
     keepAlive: () => !ended && engine.getStatus() === 'paused',
     hide() {
       detach();
@@ -395,10 +413,12 @@ export function runScreen(app: App, routine: Routine): Screen {
         toggleFullscreen();
       } else if (e.key === 'Enter' && engine.getStatus() === 'done') {
         e.preventDefault();
-        leave();
+        if (cls && ctx?.next) cls.nextBtn.click();
+        else leave();
       }
     },
     destroy() {
+      cls?.cancel();
       clearTimeout(praiseTimer);
       detach();
       engine.stop();

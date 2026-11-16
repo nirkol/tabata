@@ -1,6 +1,7 @@
 import { Beeper } from '../audio/beeper';
 import type { Routine } from '../routines/model';
 import { sortTimers, type PresetTimer } from '../timers/model';
+import { createClass, nextClassName, pruneClass, resolveItem, type WorkoutClass } from '../classes/model';
 import type { AppStorage, Settings } from '../storage/storage';
 import { h } from './dom';
 import { prepareNativeCues } from '../platform/voice';
@@ -15,6 +16,8 @@ import { timersScreen } from './timersScreen';
 import { timerEditorScreen } from './timerEditorScreen';
 import { timerRunScreen } from './timerRunScreen';
 import { stopwatchScreen } from './stopwatchScreen';
+import { classesScreen } from './classesScreen';
+import { classScreen } from './classScreen';
 
 export interface Screen {
   el: HTMLElement;
@@ -37,12 +40,37 @@ export interface Screen {
   hide?(): void;
   /** Called when a kept screen is put back on the page. */
   show?(): void;
+  /** Resumes a paused run (Continue class). */
+  play?(): void;
 }
 
-export type SessionKind = 'routine' | 'timer' | 'stopwatch';
+/** 'class' is a routine or timer playing as part of a class. */
+export type SessionKind = 'routine' | 'timer' | 'stopwatch' | 'class';
 
 /** The top-bar section of each kind of paused session. */
-const SESSION_TABS: Record<SessionKind, string> = { routine: 'list', timer: 'timers', stopwatch: 'stopwatch' };
+const SESSION_TABS: Record<SessionKind, string> = { routine: 'list', timer: 'timers', stopwatch: 'stopwatch', class: 'classes' };
+
+/** A class being played: items before `done` have finished; item `done` is the current one. */
+export interface ClassRun {
+  classId: string;
+  done: number;
+}
+
+/** What the Run and Timer screens need to know when they play an item of a class. */
+export interface ClassContext {
+  /** The class name. */
+  name: string;
+  /** "2 / 5" */
+  position: string;
+  /** The item that plays after this one, or null if this is the last. */
+  next: string | null;
+  /** Marks this item as played (called once, when it finishes). */
+  finished(): void;
+  /** Plays the next item (or opens the class page after the last one). */
+  advance(): void;
+  /** Opens the class page. */
+  back(): void;
+}
 
 type Route =
   | { name: 'list' }
@@ -50,11 +78,14 @@ type Route =
   | { name: 'settings' }
   | { name: 'help' }
   | { name: 'about' }
-  | { name: 'run'; routineId: string }
+  | { name: 'run'; routineId: string; inClass?: boolean }
   | { name: 'timers' }
   | { name: 'timerEditor'; timerId: string | null }
-  | { name: 'timerRun'; timerId: string }
-  | { name: 'stopwatch' };
+  | { name: 'timerRun'; timerId: string; inClass?: boolean }
+  | { name: 'stopwatch' }
+  | { name: 'classes' }
+  | { name: 'class'; classId: string }
+  | { name: 'classResume' };
 
 export class App {
   routines: Routine[];
@@ -62,6 +93,9 @@ export class App {
   timers: PresetTimer[];
   settings: Settings;
   lastUsedId: string | null;
+  classes: WorkoutClass[];
+  /** The class being played (only one at a time); kept in memory only. */
+  classRun: ClassRun | null = null;
   readonly beeper = new Beeper();
   private screen: Screen | null = null;
   /** Paused sessions kept while the user is on other pages. */
@@ -78,6 +112,7 @@ export class App {
     this.routines = storage.loadRoutines();
     this.timers = sortTimers(storage.loadTimers());
     this.settings = storage.loadSettings();
+    this.classes = storage.loadClasses().map((c) => pruneClass(c, this.routines, this.timers));
     const last = storage.loadLastUsedId();
     this.lastUsedId = this.routines.some((r) => r.id === last) ? last : null;
     this.applySettings();
@@ -91,6 +126,7 @@ export class App {
       h(
         'nav',
         { class: 'tabs tabs-main' },
+        h('button', { class: 'tab tab-main', 'data-route': 'classes', 'data-testid': 'nav-classes', onclick: () => this.openClasses() }, 'Class'),
         h('button', { class: 'tab tab-main', 'data-route': 'list', 'data-testid': 'nav-routines', onclick: () => this.go({ name: 'list' }) }, 'Routines'),
         h('button', { class: 'tab tab-main', 'data-route': 'timers', 'data-testid': 'nav-timers', onclick: () => this.go({ name: 'timers' }) }, 'Timers'),
         h('button', { class: 'tab tab-main', 'data-route': 'stopwatch', 'data-testid': 'nav-stopwatch', onclick: () => this.go({ name: 'stopwatch' }) }, 'Stopwatch'),
@@ -164,17 +200,31 @@ export class App {
         screen = resume('stopwatch') ?? stopwatchScreen(this);
         break;
       case 'timerRun': {
-        drop('timer');
+        drop(route.inClass ? 'class' : 'timer');
         const timer = this.timers.find((t) => t.id === route.timerId);
         if (!timer) return this.go({ name: 'timers' });
-        screen = timerRunScreen(this, timer);
+        screen = timerRunScreen(this, timer, route.inClass ? this.classContext() ?? undefined : undefined);
         break;
       }
       case 'run': {
-        drop('routine');
+        drop(route.inClass ? 'class' : 'routine');
         const routine = this.routines.find((r) => r.id === route.routineId);
         if (!routine) return this.go({ name: 'list' });
-        screen = runScreen(this, routine);
+        screen = runScreen(this, routine, route.inClass ? this.classContext() ?? undefined : undefined);
+        break;
+      }
+      case 'classes':
+        screen = classesScreen(this);
+        break;
+      case 'class': {
+        if (!this.classes.some((c) => c.id === route.classId)) return this.go({ name: 'classes' });
+        screen = classScreen(this, route.classId);
+        break;
+      }
+      case 'classResume': {
+        const kept = resume('class');
+        if (!kept) return this.continueClass();
+        screen = kept;
         break;
       }
     }
@@ -182,7 +232,7 @@ export class App {
     this.nav.hidden = !!screen.fullWindow;
     const section = screen.session
       ? SESSION_TABS[screen.session]
-      : route.name === 'editor' ? 'list' : route.name === 'timerEditor' ? 'timers' : route.name;
+      : route.name === 'editor' ? 'list' : route.name === 'timerEditor' ? 'timers' : route.name === 'class' ? 'classes' : route.name;
     for (const tab of this.nav.querySelectorAll<HTMLButtonElement>('.tab')) tab.classList.toggle('active', tab.dataset.route === section);
     this.setNavLock(screen.lockNav ?? null);
     // A "paused" mark on the tabs whose section has a paused session waiting.
@@ -193,6 +243,107 @@ export class App {
     this.main.replaceChildren(screen.el);
     document.title = 'yFit Workout Timer';
     if (resumed) screen.show?.();
+    if (route.name === 'classResume') screen.play?.();
+  }
+
+  // --- Classes (SPEC §5d) ---
+
+  /** The Class tab: the class being played (if any), otherwise the list of classes. */
+  openClasses(): void {
+    const run = this.classRun;
+    const active = run && this.classes.find((c) => c.id === run.classId);
+    if (active && run.done < active.items.length) this.go({ name: 'class', classId: active.id });
+    else this.go({ name: 'classes' });
+  }
+
+  /** True while a routine or timer of a class is kept paused (Continue resumes it). */
+  hasClassSession(): boolean {
+    return !!this.sessions.class;
+  }
+
+  saveClasses(classes: WorkoutClass[]): void {
+    this.classes = classes;
+    this.storage.saveClasses(classes);
+  }
+
+  /** Creates a class with the next free "Class N" name and opens its page. */
+  newClass(): void {
+    const c = createClass(nextClassName(this.classes));
+    this.saveClasses([...this.classes, c]);
+    this.go({ name: 'class', classId: c.id });
+  }
+
+  /** Starts a class from its first item. Must be called from a user gesture so audio can start. */
+  startClass(classId: string): void {
+    this.endClass();
+    this.classRun = { classId, done: 0 };
+    this.beeper.unlock();
+    this.playClassItem();
+  }
+
+  /** Continue: resumes the paused item, or starts the current one. */
+  continueClass(): void {
+    this.beeper.unlock();
+    if (this.sessions.class) this.go({ name: 'classResume' });
+    else this.playClassItem();
+  }
+
+  /** Ends the class being played (and drops its paused item). */
+  endClass(): void {
+    this.sessions.class?.destroy?.();
+    delete this.sessions.class;
+    this.classRun = null;
+    this.nav.querySelector('.tab[data-route="classes"]')?.classList.remove('tab-paused');
+  }
+
+  /** Plays the current item of the class run, or opens the class page when it's over. */
+  private playClassItem(): void {
+    const run = this.classRun;
+    const c = run && this.classes.find((x) => x.id === run.classId);
+    if (!run || !c) return this.go({ name: 'classes' });
+    const item = c.items[run.done];
+    const resolved = item && resolveItem(item, this.routines, this.timers);
+    if (!resolved) return this.go({ name: 'class', classId: c.id });
+    if (resolved.kind === 'routine') this.go({ name: 'run', routineId: resolved.routine.id, inClass: true });
+    else this.go({ name: 'timerRun', timerId: resolved.timer.id, inClass: true });
+  }
+
+  /** Built when a class item starts playing. */
+  private classContext(): ClassContext | null {
+    const run = this.classRun;
+    const c = run && this.classes.find((x) => x.id === run.classId);
+    if (!run || !c) return null;
+    const index = run.done;
+    const nextItem = c.items[index + 1];
+    const next = nextItem ? resolveItem(nextItem, this.routines, this.timers)?.label ?? null : null;
+    const same = () => this.classRun === run;
+    return {
+      name: c.name,
+      position: `${index + 1} / ${c.items.length}`,
+      next,
+      finished: () => {
+        if (same() && run.done === index) run.done = index + 1;
+      },
+      advance: () => {
+        if (same()) this.playClassItem();
+        else this.go({ name: 'classes' });
+      },
+      back: () => (this.classes.some((x) => x.id === c.id) ? this.go({ name: 'class', classId: c.id }) : this.go({ name: 'classes' })),
+    };
+  }
+
+  /** Removes class items whose routine or timer was deleted; a class being played that changes is ended. */
+  private pruneClasses(): void {
+    let changed = false;
+    const next = this.classes.map((c) => {
+      const p = pruneClass(c, this.routines, this.timers);
+      if (p !== c) {
+        changed = true;
+        if (this.classRun?.classId === c.id) this.endClass();
+      }
+      return p;
+    });
+    if (changed) this.saveClasses(next);
   }
 
   /** Hides the top bar (a running workout fills the window) or shows it again (paused). */
@@ -233,6 +384,7 @@ export class App {
   saveTimers(timers: PresetTimer[]): void {
     this.timers = sortTimers(timers);
     this.storage.saveTimers(this.timers);
+    this.pruneClasses();
   }
 
   setLastUsed(id: string | null): void {
@@ -244,6 +396,7 @@ export class App {
     this.routines = routines;
     this.storage.saveRoutines(routines);
     if (this.lastUsedId && !routines.some((r) => r.id === this.lastUsedId)) this.setLastUsed(null);
+    this.pruneClasses();
   }
 
   updateSettings(patch: Partial<Settings>): void {

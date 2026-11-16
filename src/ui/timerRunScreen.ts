@@ -3,16 +3,20 @@ import { sayCue } from '../platform/voice';
 import { timerTitle, type PresetTimer } from '../timers/model';
 import { formatCountdown } from '../timer/format';
 import { isNative, setNativeKeepAwake, toggleFullscreen as platformToggleFullscreen } from '../platform/native';
-import type { App, Screen } from './app';
+import type { App, ClassContext, Screen } from './app';
+import { classAdvance } from './classAdvance';
 import { confirmDialog } from './dialog';
 import { h } from './dom';
 import { RING_STROKE, createRing } from './ring';
 
 /** How often the screen refreshes when the tab is hidden (rAF doesn't run then). */
 const BACKGROUND_TICK_MS = 250;
+/** In a class, the next item starts this long after a timer ends. */
+const CLASS_NEXT_DELAY_SEC = 5;
 
 /** The Timer view (SPEC §5b): a large countdown with the same ring as the Run screen. */
-export function timerRunScreen(app: App, timer: PresetTimer): Screen {
+export function timerRunScreen(app: App, timer: PresetTimer, ctx?: ClassContext): Screen {
+  const cls = ctx ? classAdvance(ctx, CLASS_NEXT_DELAY_SEC, app.speed) : null;
   const countdown = new Countdown(timer.durationSec, () => performance.now(), app.speed);
   const beeps = countdownBeeps(timer.durationSec);
   const title = timerTitle(timer);
@@ -22,7 +26,7 @@ export function timerRunScreen(app: App, timer: PresetTimer): Screen {
   const digits = h('div', { class: 'run-digits', 'data-testid': 'run-digits' });
   const ring = createRing();
   const ringBox = h('div', { class: 'ring-box' }, ring.svg, h('div', { class: 'ring-content' }, digits));
-  const stage = h('div', { class: 'run-stage' }, phaseLabel, ringBox);
+  const stage = h('div', { class: 'run-stage' }, phaseLabel, ringBox, cls?.line);
 
   const pauseBtn = h('button', { type: 'button', class: 'btn btn-run btn-primary', 'data-testid': 'pause', onclick: () => togglePause() }, 'PAUSE');
   const startOverBtn = h('button', { type: 'button', class: 'btn btn-run btn-primary', 'data-testid': 'start-over', hidden: true, onclick: () => app.startTimer(timer.id) }, '↻ Start over');
@@ -44,7 +48,7 @@ export function timerRunScreen(app: App, timer: PresetTimer): Screen {
     h(
       'div',
       { class: 'run-top' },
-      h('div', { class: 'run-name' }, 'Timer: ', h('span', { 'data-testid': 'timer-run-name' }, title)),
+      h('div', { class: 'run-top-left' }, cls?.banner, h('div', { class: 'run-name' }, 'Timer: ', h('span', { 'data-testid': 'timer-run-name' }, title))),
       app.speed !== 1 ? h('div', { class: 'speed-badge' }, `×${app.speed} speed (dev)`) : null,
       h('div', { class: 'run-top-right' }, fullscreenBtn),
     ),
@@ -53,7 +57,7 @@ export function timerRunScreen(app: App, timer: PresetTimer): Screen {
       'div',
       { class: 'run-bottom' },
       h('div', { class: 'run-bottom-side' }),
-      h('div', { class: 'run-controls' }, pauseBtn, startOverBtn, stopBtn),
+      h('div', { class: 'run-controls' }, pauseBtn, startOverBtn, cls?.nextBtn, stopBtn),
       h(
         'div',
         { class: 'run-bottom-side run-bottom-right' },
@@ -106,8 +110,10 @@ export function timerRunScreen(app: App, timer: PresetTimer): Screen {
       lastStatus = status;
       if (done) {
         pauseBtn.hidden = true;
-        startOverBtn.hidden = false;
-        stopBtn.textContent = '← Back to timers';
+        startOverBtn.hidden = !!cls;
+        stopBtn.textContent = cls ? '← Back to class' : '← Back to timers';
+        cls?.finished();
+        if (cls) requestAnimationFrame(() => fit());
         void releaseWakeLock();
         app.setFullWindow(true);
       } else {
@@ -126,7 +132,7 @@ export function timerRunScreen(app: App, timer: PresetTimer): Screen {
     digits.style.fontSize = `${target}px`;
     const pad = RING_STROKE * 2 + 24;
     const maxW = stage.clientWidth - pad;
-    const maxH = stage.clientHeight - pad - phaseLabel.offsetHeight;
+    const maxH = stage.clientHeight - pad - phaseLabel.offsetHeight - (cls && !cls.line.hidden ? cls.line.offsetHeight : 0);
     if (maxW > 0 && maxH > 0) {
       const scale = Math.min(1, maxW / digits.scrollWidth, maxH / digits.offsetHeight);
       if (scale < 1) digits.style.fontSize = `${Math.floor(target * scale)}px`;
@@ -188,13 +194,21 @@ export function timerRunScreen(app: App, timer: PresetTimer): Screen {
     // Pauses while asking, so the timer can't be stopped by accident.
     const wasRunning = status === 'running';
     if (wasRunning) togglePause();
+    if (ctx) {
+      // In a class, Stop keeps the timer paused and opens the class page; Continue class resumes it.
+      if (await confirmDialog('Stop and go back to the class? “Continue class” carries on from this second.', 'Stop')) ctx.back();
+      else if (wasRunning) togglePause();
+      return;
+    }
     if (await confirmDialog('Stop this timer and go back to the timers?', 'Stop')) leave();
     else if (wasRunning) togglePause();
   }
 
   function leave(): void {
     ended = true;
-    app.go({ name: 'timers' });
+    cls?.cancel();
+    if (ctx) ctx.back();
+    else app.go({ name: 'timers' });
   }
 
   function toggleMute(): void {
@@ -249,7 +263,10 @@ export function timerRunScreen(app: App, timer: PresetTimer): Screen {
   return {
     el,
     fullWindow: true,
-    session: 'timer',
+    session: ctx ? 'class' : 'timer',
+    play() {
+      if (countdown.getStatus() === 'paused') togglePause();
+    },
     keepAlive: () => !ended && countdown.getStatus() === 'paused',
     hide() {
       detach();
@@ -272,10 +289,12 @@ export function timerRunScreen(app: App, timer: PresetTimer): Screen {
         toggleFullscreen();
       } else if (e.key === 'Enter' && countdown.getStatus() === 'done') {
         e.preventDefault();
-        leave();
+        if (cls && ctx?.next) cls.nextBtn.click();
+        else leave();
       }
     },
     destroy() {
+      cls?.cancel();
       detach();
       countdown.stop();
       app.beeper.cancel();

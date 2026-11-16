@@ -1460,3 +1460,378 @@ kbd {
   text-align: center;
   margin: 14px 0 0;
 }
+
+/* ---------- Classes (SPEC §5d) ---------- */
+@media (max-width: 1200px) {
+  .tab.tab-main {
+    min-width: 112px;
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+}
+.class-screen {
+  flex: 1 0 auto;
+  width: 100%;
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 16px 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.class-back {
+  align-self: flex-start;
+  padding-left: 8px;
+  padding-right: 12px;
+}
+.class-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+}
+.class-head-name {
+  flex: 1 1 320px;
+  min-width: 0;
+}
+.class-name-input {
+  width: 100%;
+  max-width: 560px;
+  font-family: 'Barlow Condensed', 'Rubik', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 700;
+  font-size: 34px;
+  letter-spacing: 0.02em;
+  padding: 4px 12px;
+}
+.class-name-input:disabled {
+  border-color: transparent;
+  background: transparent;
+  padding-left: 0;
+}
+.class-head .list-count {
+  margin: 0 0 22px;
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+}
+.class-lock-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* The ordered list of routines and timers, with each item's state. */
+.class-items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.class-empty {
+  border: 2px dashed var(--border);
+  border-radius: 14px;
+  padding: 28px 16px;
+}
+.class-item {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 16px;
+  background: linear-gradient(180deg, #1c1c22 0%, #16161b 100%);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 14px;
+}
+.item-marker {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--border);
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 18px;
+  font-variant-numeric: tabular-nums;
+}
+.item-body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.item-title-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+}
+.item-kind {
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--muted);
+}
+.item-kind.kind-timer {
+  background: rgba(255, 214, 10, 0.12);
+  color: #ffd60a;
+}
+.item-name {
+  font-family: 'Barlow Condensed', 'Rubik', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 700;
+  font-size: 24px;
+  line-height: 1.1;
+  letter-spacing: 0.03em;
+  overflow-wrap: anywhere;
+}
+.item-details {
+  color: var(--muted);
+  font-size: 14px;
+}
+.item-duration {
+  font-family: 'Barlow Condensed', 'Rubik', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 700;
+  font-size: 24px;
+  color: #5eb0ff;
+  font-variant-numeric: tabular-nums;
+}
+.item-actions {
+  display: flex;
+  gap: 2px;
+}
+.item-btn {
+  width: 40px;
+  min-height: 40px;
+  padding: 0;
+  font-size: 18px;
+}
+.item-state {
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+/* Done: green check, dimmed. */
+.class-item.state-done {
+  opacity: 0.62;
+}
+.state-done .item-marker {
+  background: var(--work-color);
+  border-color: var(--work-color);
+  color: #000;
+}
+.state-done .item-state {
+  background: rgba(48, 209, 88, 0.16);
+  color: #30d158;
+}
+/* Playing now (paused) and Up next: the same strong blue frame as the selected routine. */
+.class-item.state-now,
+.class-item.state-next {
+  background: linear-gradient(180deg, #16253d 0%, #121c2e 100%);
+  border-color: var(--accent);
+  box-shadow:
+    0 0 0 2px var(--accent),
+    0 0 24px rgba(10, 132, 255, 0.4);
+}
+.state-now .item-marker,
+.state-next .item-marker {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.state-now .item-marker {
+  animation: item-pulse 1.4s ease-in-out infinite;
+}
+.state-now .item-state,
+.state-next .item-state {
+  background: var(--accent);
+  color: #fff;
+}
+@keyframes item-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(10, 132, 255, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(10, 132, 255, 0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .state-now .item-marker {
+    animation: none;
+  }
+}
+
+/* Add routines and timers. */
+.class-add {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px 18px;
+}
+.class-add-title {
+  font-size: 16px;
+  margin: 0 0 12px;
+}
+.class-add-groups {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px 28px;
+}
+.class-add-group h3 {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.class-add-group .hint {
+  margin: 0;
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.chip {
+  min-height: 40px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+}
+.chip:hover {
+  border-color: var(--accent);
+  color: #fff;
+}
+.chip:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Start class: always at the bottom of the page. */
+.class-footer {
+  position: sticky;
+  bottom: 0;
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  padding: 14px 0 18px;
+  background: linear-gradient(180deg, rgba(11, 11, 13, 0) 0%, var(--bg) 28%);
+}
+.class-status {
+  color: var(--muted);
+  font-size: 15px;
+}
+.class-status.complete {
+  color: #30d158;
+  font-weight: 700;
+  font-size: 18px;
+}
+.class-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-left: auto;
+}
+.btn-class-start {
+  min-height: 56px;
+  min-width: 220px;
+  padding: 10px 28px;
+  border-radius: 999px;
+  font-size: 20px;
+  background: linear-gradient(180deg, #2b95ff 0%, #0a7cf0 100%);
+  box-shadow: 0 8px 20px rgba(10, 132, 255, 0.35);
+}
+@media (max-width: 720px) {
+  .class-item {
+    grid-template-columns: 44px minmax(0, 1fr) auto;
+  }
+  .item-actions {
+    grid-column: 2 / -1;
+  }
+  .class-add-groups {
+    grid-template-columns: 1fr;
+  }
+  .class-footer {
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+    padding-top: 10px;
+  }
+  .class-status {
+    flex-basis: 100%;
+  }
+  .class-actions {
+    width: 100%;
+    margin-left: 0;
+  }
+  .btn-class-start {
+    min-width: 0;
+    min-height: 48px;
+    font-size: 18px;
+    padding: 8px 16px;
+    flex: 1;
+  }
+}
+
+/* Class mode on the Run and Timer screens. */
+.run-top-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+.run-class {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px 4px 4px;
+  border-radius: 999px;
+  background: rgba(10, 132, 255, 0.16);
+  color: var(--text);
+  white-space: nowrap;
+}
+.run-class-tag {
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.6em;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.run-class-name {
+  font-weight: 700;
+}
+.run-class-pos {
+  color: #5eb0ff;
+  font-variant-numeric: tabular-nums;
+}
+.run-class-next {
+  text-align: center;
+  font-size: clamp(18px, 3vh, 30px);
+  font-weight: 700;
+  color: #5eb0ff;
+  font-variant-numeric: tabular-nums;
+}
+.run-class-next.run-class-done {
+  color: #30d158;
+}

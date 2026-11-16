@@ -67,7 +67,17 @@ const SECTIONS: { title: string; items: Block[] }[] = [
     ],
   },
   {
-    title: '7. Settings',
+    title: '7. Classes',
+    items: [
+      'A class is a list of routines and timers that play one after the other. Open the Class tab and click “+ New Class”.',
+      ['Build it', ' – name the class, then click a routine or timer under “Add to the class”. Use ↑ / ↓ to change the order and ✕ to remove one. The same routine can be added more than once.'],
+      ['▶ Start class', ' – plays the first item. When an item ends, the next one starts by itself a few seconds later (or click ▶ Next now).'],
+      ['Stop', ' – pauses the item and takes you back to the class page: ✓ marks the items that are done and the blue item is the one playing now. ▶ Continue class carries on from the same second.'],
+      ['End class / Restart', ' – End class clears the ✓ marks; Restart starts again from the first item. The list can only be changed when the class is not in progress.'],
+    ],
+  },
+  {
+    title: '8. Settings',
     items: [
       ['Sound', ' – volume and sound style for work and rest beeps (with Test buttons), mute, and the “Start!” / “Ten!” voice calls.'],
       ['Counter display', ' – work color, counter size, and whether to show the remaining times.'],

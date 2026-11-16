@@ -331,7 +331,8 @@ test('Instructions and About pages', async ({ page }) => {
   await expect(page.getByTestId('nav-about')).toHaveText('About');
   await page.getByTestId('nav-help').click();
   await expect(page.getByRole('heading', { name: 'Instructions' })).toBeVisible();
-  await expect(page.locator('.help-section')).toHaveCount(8);
+  await expect(page.locator('.help-section')).toHaveCount(9);
+  await expect(page.locator('.help-screen')).toContainText('Continue class');
   await expect(page.locator('.help-screen')).toContainText('Rest between cycles');
   await page.getByTestId('nav-about').click();
   await expect(page.getByTestId('about-version')).toHaveText(/^Version \d+\.\d+\.\d+$/);
@@ -754,4 +755,122 @@ test('paused routine and timer can be left and resumed later', async ({ page }) 
   await page.getByTestId('nav-timers').click();
   await expect(page.getByTestId('timer-run-screen')).toBeVisible();
   await expect(page.getByTestId('run-digits')).toHaveText(timerTime!);
+});
+
+test('class: build a list of routines and timers, play it through, stop, see progress and continue', async ({ page }) => {
+  await fresh(page, '?speed=10');
+  await page.evaluate(() => {
+    const now = new Date().toISOString();
+    const r = (id: string, name: string) => ({ id, name, workSec: 2, restSec: 1, intervals: 1, sets: 1, setRestSec: 60, createdAt: now, updatedAt: now });
+    localStorage.setItem('tabata.v1.routines', JSON.stringify({ version: 1, routines: [r('A', 'Warm up'), r('B', 'Finisher')] }));
+    localStorage.setItem('tabata.v1.timers', JSON.stringify({ version: 1, timers: [{ id: 'T', durationSec: 60, createdAt: now, updatedAt: now }] }));
+  });
+  await page.reload();
+
+  // The Class tab is the first of the main tabs.
+  const mainTabs = page.locator('.tabs-main .tab');
+  await expect(mainTabs).toHaveText(['Class', 'Routines', 'Timers', 'Stopwatch']);
+  await page.getByTestId('nav-classes').click();
+  await expect(page.getByTestId('class-count')).toHaveText('0 classes');
+  await page.getByTestId('new-class').click();
+  await expect(page.getByTestId('class-name-input')).toHaveValue('Class 1');
+  await expect(page.getByTestId('start-class')).toBeDisabled();
+
+  // Add Finisher, the timer and Warm up, then move Warm up to the top.
+  await page.locator('[data-testid="add-routine"][data-id="B"]').click();
+  await page.locator('[data-testid="add-timer"][data-id="T"]').click();
+  await page.locator('[data-testid="add-routine"][data-id="A"]').click();
+  const itemNames = () => page.getByTestId('item-name').allTextContents();
+  expect(await itemNames()).toEqual(['Finisher', '1:00', 'Warm up']);
+  await page.getByTestId('item-up').nth(2).click();
+  await page.getByTestId('item-up').nth(1).click();
+  expect(await itemNames()).toEqual(['Warm up', 'Finisher', '1:00']);
+  await page.getByTestId('item-down').nth(1).click();
+  expect(await itemNames()).toEqual(['Warm up', '1:00', 'Finisher']);
+  await page.getByTestId('class-name-input').fill('Monday class');
+
+  // The class is saved.
+  await page.reload();
+  await page.getByTestId('nav-classes').click();
+  await expect(page.getByTestId('class-name')).toHaveText('Monday class');
+  await page.getByTestId('class-card').click();
+  expect(await itemNames()).toEqual(['Warm up', '1:00', 'Finisher']);
+
+  // Start: the first routine plays, then the timer starts by itself.
+  await page.getByTestId('start-class').click();
+  await expect(page.getByTestId('run-screen')).toBeVisible();
+  await expect(page.getByTestId('run-class-pos')).toHaveText('1 / 3');
+  await expect(page.getByTestId('class-next-line')).toContainText('Up next: Timer 1 minute', { timeout: 10000 });
+  await expect(page.getByTestId('timer-run-screen')).toBeVisible({ timeout: 10000 });
+  await expect(page.getByTestId('run-class-pos')).toHaveText('2 / 3');
+
+  // Stop goes back to the class page: Warm up is done, the timer is playing now.
+  await page.getByTestId('stop').click();
+  await page.getByTestId('confirm-yes').click();
+  await expect(page.getByTestId('class-screen')).toBeVisible();
+  const states = () => page.getByTestId('class-item').evaluateAll((els) => els.map((e) => (e as HTMLElement).dataset.state));
+  expect(await states()).toEqual(['done', 'now', 'todo']);
+  await expect(page.getByTestId('item-state')).toHaveText(['Done', 'Playing now']);
+  await expect(page.getByTestId('class-status')).toHaveText('Paused at item 2 of 3');
+  await expect(page.getByTestId('class-add')).toBeHidden();
+  await expect(page.getByTestId('item-up')).toHaveCount(0);
+  await expect(page.getByTestId('nav-classes')).toHaveClass(/tab-paused/);
+
+  // Other pages can be opened; the Class tab comes back to this class.
+  await page.getByTestId('nav-routines').click();
+  await expect(page.getByTestId('routine-list')).toBeVisible();
+  await page.getByTestId('nav-classes').click();
+  await expect(page.getByTestId('class-screen')).toBeVisible();
+
+  // Continue resumes the timer from the same second; then Finisher plays and the class is complete.
+  await page.getByTestId('continue-class').click();
+  await expect(page.getByTestId('timer-run-screen')).toBeVisible();
+  await expect(page.getByTestId('pause')).toHaveText('PAUSE');
+  await expect(page.getByTestId('run-screen')).toBeVisible({ timeout: 15000 });
+  await expect(page.getByTestId('run-class-pos')).toHaveText('3 / 3');
+  await expect(page.getByTestId('class-next-line')).toHaveText('Class complete!', { timeout: 10000 });
+  await expect(page.getByTestId('class-next')).toBeHidden();
+  await page.getByTestId('stop').click(); // ← Back to class
+  await expect(page.getByTestId('class-screen')).toBeVisible();
+  expect(await states()).toEqual(['done', 'done', 'done']);
+  await expect(page.getByTestId('class-status')).toHaveText('✓ Class complete');
+  await expect(page.getByTestId('start-class')).toHaveText('▶ Start class again');
+  await expect(page.getByTestId('nav-classes')).not.toHaveClass(/tab-paused/);
+});
+
+test('class: stopping between items, End class, and deleting a routine removes it from classes', async ({ page }) => {
+  await fresh(page, '?speed=10');
+  await page.evaluate(() => {
+    const now = new Date().toISOString();
+    const r = (id: string, name: string) => ({ id, name, workSec: 2, restSec: 1, intervals: 1, sets: 1, setRestSec: 60, createdAt: now, updatedAt: now });
+    localStorage.setItem('tabata.v1.routines', JSON.stringify({ version: 1, routines: [r('A', 'One'), r('B', 'Two')] }));
+    const items = [{ id: 'i1', kind: 'routine', refId: 'A' }, { id: 'i2', kind: 'routine', refId: 'B' }, { id: 'i3', kind: 'routine', refId: 'A' }];
+    localStorage.setItem('tabata.v1.classes', JSON.stringify({ version: 1, classes: [{ id: 'C', name: 'Short', items, createdAt: now, updatedAt: now }] }));
+  });
+  await page.reload();
+  await page.getByTestId('nav-classes').click();
+  await expect(page.getByTestId('class-stats')).toContainText('Routines3');
+  await page.getByTestId('class-card').click();
+  await page.getByTestId('start-class').click();
+  // Back to the class while "Up next" counts down: the first item is done, the second is up next.
+  await expect(page.getByTestId('class-next')).toBeVisible({ timeout: 10000 });
+  await page.getByTestId('stop').click();
+  const states = () => page.getByTestId('class-item').evaluateAll((els) => els.map((e) => (e as HTMLElement).dataset.state));
+  expect(await states()).toEqual(['done', 'next', 'todo']);
+  await expect(page.getByTestId('item-state')).toHaveText(['Done', 'Up next']);
+  await expect(page.getByTestId('class-status')).toHaveText('1 of 3 done');
+
+  // End class clears the marks.
+  await page.getByTestId('end-class').click();
+  await page.getByTestId('confirm-yes').click();
+  expect(await states()).toEqual(['todo', 'todo', 'todo']);
+  await expect(page.getByTestId('start-class')).toHaveText('▶ Start class');
+
+  // Deleting routine "One" removes both of its entries from the class.
+  await page.getByTestId('nav-routines').click();
+  await page.locator('[data-id="A"]').getByTestId('delete').click();
+  await page.getByTestId('confirm-yes').click();
+  await page.getByTestId('nav-classes').click();
+  await page.getByTestId('class-card').click();
+  await expect(page.getByTestId('item-name')).toHaveText(['Two']);
 });

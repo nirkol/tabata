@@ -1,6 +1,7 @@
 import { BEEP_STYLES, type BeepStyle } from '../audio/beeper';
 import { isValidRoutine, newId, sampleRoutine, type Routine } from '../routines/model';
 import { defaultTimers, sanitizeTimer, type PresetTimer } from '../timers/model';
+import { sanitizeClass, type WorkoutClass } from '../classes/model';
 
 export interface Settings {
   /** Work beep volume, 0–1. */
@@ -82,6 +83,8 @@ export interface AppStorage {
   saveLastUsedId(id: string | null): void;
   loadTimers(): PresetTimer[];
   saveTimers(timers: PresetTimer[]): void;
+  loadClasses(): WorkoutClass[];
+  saveClasses(classes: WorkoutClass[]): void;
 }
 
 /** Minimal key/value interface satisfied by `window.localStorage`. */
@@ -96,6 +99,7 @@ export const KEYS = {
   settings: 'tabata.v1.settings',
   lastUsed: 'tabata.v1.lastUsed',
   timers: 'tabata.v1.timers',
+  classes: 'tabata.v1.classes',
 } as const;
 
 export const DATA_VERSION = 1;
@@ -244,5 +248,15 @@ export class LocalAppStorage implements AppStorage {
 
   saveTimers(timers: PresetTimer[]): void {
     this.store.setItem(KEYS.timers, JSON.stringify({ version: DATA_VERSION, timers }));
+  }
+
+  loadClasses(): WorkoutClass[] {
+    const data = readJson(this.store, KEYS.classes) as { version?: number; classes?: unknown } | undefined;
+    const list = Array.isArray(data?.classes) ? data.classes : [];
+    return list.map(sanitizeClass).filter((c): c is WorkoutClass => c !== null);
+  }
+
+  saveClasses(classes: WorkoutClass[]): void {
+    this.store.setItem(KEYS.classes, JSON.stringify({ version: DATA_VERSION, classes }));
   }
 }
