@@ -8,12 +8,13 @@ import { PHASE_LABELS, type Phase, type Snapshot } from '../timer/engine';
 import { formatClock, formatCountdown } from '../timer/format';
 import { h } from './dom';
 
-export type RunVariant = 1 | 2 | 3;
+export type RunVariant = 1 | 2 | 3 | 4;
 
 export const RUN_VARIANT_NAMES: Record<RunVariant, string> = {
   1: 'Clear stack',
   2: 'Side panel',
   3: 'Big screen',
+  4: 'Big counter + panel',
 };
 
 /** The parts of the Run screen a variant arranges (built by runScreen as usual). */
@@ -143,8 +144,8 @@ export function buildRunVariant(variant: RunVariant, p: RunParts): VariantUi {
     };
   }
 
-  if (variant === 2) {
-    // --- 2. Side panel: the counter on the left, everything else in a panel of cards on the right. ---
+  /** Option 2's panel of cards: Next, rounds, cycle, each round, remaining. */
+  function sidePanel(): { el: HTMLElement; update(s: Snapshot): void } {
     const card = (label: string, ...children: (HTMLElement | null)[]) => h('div', { class: 'rv-card' }, h('div', { class: 'rv-card-label' }, label), ...children);
     const nextValue = h('div', { class: 'rv-card-big', 'data-testid': 'run-next' });
     const roundsValue = h('div', { class: 'rv-card-big' });
@@ -155,7 +156,7 @@ export function buildRunVariant(variant: RunVariant, p: RunParts): VariantUi {
     const restPart = h('div', { class: 'rv-split-part rv-split-rest' }, h('span', {}, 'Rest'), h('b', {}, formatClock(r.restSec)));
     const cycleRem = h('b', { 'data-testid': 'run-set-remaining' });
     const totalRem = h('b', { 'data-testid': 'run-total' });
-    const panel = h(
+    const el = h(
       'aside',
       { class: 'rv-panel' },
       card('Next', nextValue),
@@ -164,11 +165,8 @@ export function buildRunVariant(variant: RunVariant, p: RunParts): VariantUi {
       card('Each round', h('div', { class: 'rv-split' }, workPart, restPart)),
       p.showRemaining ? card('Remaining', h('div', { class: 'rv-rem' }, h('div', {}, h('span', {}, 'Cycle'), cycleRem), h('div', {}, h('span', {}, 'Total'), totalRem))) : null,
     );
-    const stage = h('div', { class: 'run-stage' }, p.phaseLabel, p.ringBox, ...p.extras);
-    const el = h('section', { class: 'run-screen run-v2', 'data-testid': 'run-screen' }, top, p.timeline, h('div', { class: 'rv-main' }, stage, panel), bottom(null));
     return {
       el,
-      stage,
       update(s) {
         nextValue.textContent = nextText(s);
         const rp = roundProgress(s, r.intervals);
@@ -182,6 +180,41 @@ export function buildRunVariant(variant: RunVariant, p: RunParts): VariantUi {
         restPart.classList.toggle('active', kind === 'rest');
         cycleRem.textContent = formatCountdown(cycleRemaining(s).remaining);
         totalRem.textContent = formatCountdown(s.status === 'done' ? 0 : s.totalRemainingMs);
+      },
+    };
+  }
+
+  /** Option 3's counter: no frame, a bar under it that empties as the period runs down. */
+  function counterBar(): { el: HTMLElement; update(s: Snapshot): void } {
+    const fill = h('div', { class: 'rv-phasebar-fill' });
+    return {
+      el: h('div', { class: 'rv-phasebar', 'aria-hidden': 'true' }, fill),
+      update(s) {
+        fill.style.width = `${s.status === 'done' ? 0 : s.phaseFractionRemaining * 100}%`;
+      },
+    };
+  }
+
+  if (variant === 2) {
+    // --- 2. Side panel: the counter on the left, everything else in a panel of cards on the right. ---
+    const panel = sidePanel();
+    const stage = h('div', { class: 'run-stage' }, p.phaseLabel, p.ringBox, ...p.extras);
+    const el = h('section', { class: 'run-screen run-v2', 'data-testid': 'run-screen' }, top, p.timeline, h('div', { class: 'rv-main' }, stage, panel.el), bottom(null));
+    return { el, stage, update: panel.update };
+  }
+
+  if (variant === 4) {
+    // --- 4. Option 3's big counter and its bar, with option 2's panel centered on the right. ---
+    const panel = sidePanel();
+    const bar4 = counterBar();
+    const stage = h('div', { class: 'run-stage' }, p.phaseLabel, p.ringBox, bar4.el, ...p.extras);
+    const el = h('section', { class: 'run-screen run-v4', 'data-testid': 'run-screen' }, top, p.timeline, h('div', { class: 'rv-main' }, stage, panel.el), bottom(null));
+    return {
+      el,
+      stage,
+      update(s) {
+        panel.update(s);
+        bar4.update(s);
       },
     };
   }

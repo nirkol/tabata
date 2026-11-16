@@ -25,7 +25,7 @@ const SECTIONS: { title: string; items: Block[] }[] = [
       ['Next', ' – shown next to the counter: what comes after the current phase.'],
       ['Below the counter', ' – current cycle, work/rest times, rounds left, and time left in the cycle and in total.'],
       ['Pause', ' – click PAUSE or press Space. Resume continues exactly where you stopped. While paused, the top bar comes back: you can open other pages (e.g. start a timer) and return later — the Routines tab shows PAUSED and opens the paused workout.'],
-      ['Stop', ' – click STOP or press Esc; the workout pauses while you confirm.'],
+      ['Stop', ' – click STOP or press Esc to end the workout right away.'],
       ['Fullscreen', ' – press F or click the button at the top right.'],
       ['Volume', ' – the Work / Rest sliders and mute button are at the lower right.'],
       'At the end, choose “↻ Start over” or “← Back to routines”.',

@@ -130,7 +130,6 @@ test('run screen: no set counter at the top, volume control works', async ({ pag
   // The change is saved to Settings (pause first: a running routine can't be left).
   await page.getByTestId('pause').click();
   await page.keyboard.press('Escape');
-  await page.getByTestId('confirm-yes').click();
   await page.getByTestId('nav-settings').click();
   await expect(page.getByTestId('volume-input')).toHaveValue('60');
   await expect(page.getByTestId('restVolume-input')).toHaveValue('25');
@@ -161,7 +160,6 @@ test('settings: beep styles and hiding the remaining times', async ({ page }) =>
   // Turning it back on shows them again.
   await page.keyboard.press('Space');
   await page.keyboard.press('Escape');
-  await page.getByTestId('confirm-yes').click();
   await page.getByTestId('nav-settings').click();
   await page.getByTestId('show-remaining').check();
   await page.getByTestId('nav-routines').click();
@@ -288,25 +286,19 @@ test('encouragement is spoken at the end of each cycle, from the editable list',
   await expect.poll(spoken, { timeout: 5000 }).toEqual(['Crushed it!', 'Crushed it!']);
 });
 
-test('stop pauses the routine while asking for confirmation', async ({ page }) => {
+test('stop ends the routine right away, without a confirmation', async ({ page }) => {
   await fresh(page);
   await page.getByTestId('start').click();
   await expect(page.getByTestId('run-phase')).toHaveText('WORK', { timeout: 7000 });
-  // Running: Stop is available; it pauses while the confirmation is shown.
-  await expect(page.getByTestId('stop')).toBeEnabled();
   await page.getByTestId('stop').click();
-  await expect(page.getByTestId('confirm-yes')).toBeVisible();
-  await expect(page.getByTestId('run-screen')).toHaveClass(/paused/);
-  const frozen = await page.getByTestId('run-digits').textContent();
-  await page.waitForTimeout(1500);
-  await expect(page.getByTestId('run-digits')).toHaveText(frozen!);
-  // Cancel resumes.
-  await page.getByTestId('confirm-no').click();
-  await expect(page.getByTestId('run-screen')).not.toHaveClass(/paused/);
-  await expect(page.getByTestId('pause')).toHaveText('PAUSE');
-  // Esc works the same way; confirming goes back to the list.
+  await expect(page.getByTestId('confirm-yes')).toHaveCount(0);
+  await expect(page.getByTestId('routine-list')).toBeVisible();
+  await expect(page.getByTestId('nav-routines')).not.toHaveClass(/tab-paused/);
+  // Esc does the same.
+  await page.getByTestId('start').click();
+  await expect(page.getByTestId('run-screen')).toBeVisible();
   await page.keyboard.press('Escape');
-  await page.getByTestId('confirm-yes').click();
+  await expect(page.getByTestId('confirm-yes')).toHaveCount(0);
   await expect(page.getByTestId('routine-list')).toBeVisible();
 });
 
@@ -627,7 +619,7 @@ test('timers: presets sorted short to long, create, edit, delete, run, pause and
   await page.getByTestId('nav-timers').click();
   await expect(page.getByTestId('timer-duration')).toHaveText(['0:20', '2:00', '3:30', '5:00']);
 
-  // Run the 0:20 timer (2 s at ×10): pause, stop-cancel, then it finishes with beeps.
+  // Run the 0:20 timer (2 s at ×10): pause and resume, then it finishes with beeps.
   await page.getByTestId('timer-card').first().getByTestId('start').click();
   await expect(page.getByTestId('timer-run-screen')).toBeVisible();
   await expect(page.getByTestId('timer-run-name')).toHaveText('20 seconds');
@@ -637,9 +629,6 @@ test('timers: presets sorted short to long, create, edit, delete, run, pause and
   const frozen = await page.getByTestId('run-digits').textContent();
   await page.waitForTimeout(600);
   await expect(page.getByTestId('run-digits')).toHaveText(frozen!);
-  await page.getByTestId('stop').click();
-  await page.getByTestId('confirm-no').click();
-  await expect(page.getByTestId('pause')).toHaveText('▶ RESUME');
   await page.getByTestId('pause').click();
   await expect(page.getByTestId('run-phase')).toHaveText("TIME'S UP", { timeout: 5000 });
   await expect(page.getByTestId('run-digits')).toHaveText('0:00');
@@ -747,7 +736,6 @@ test('paused routine and timer can be left and resumed later', async ({ page }) 
 
   // Stop it: the Routines tab shows the list again.
   await page.getByTestId('stop').click();
-  await page.getByTestId('confirm-yes').click();
   await expect(page.getByTestId('routine-list')).toBeVisible();
   await expect(page.getByTestId('nav-routines')).not.toHaveClass(/tab-paused/);
 
@@ -826,7 +814,6 @@ test('class: create and save a class, then start it from the list, stop, see pro
 
   // Stop goes back to the class page: Warm up is done, the timer is playing now.
   await page.getByTestId('stop').click();
-  await page.getByTestId('confirm-yes').click();
   await expect(page.getByTestId('class-screen')).toBeVisible();
   const states = () => page.getByTestId('class-item').evaluateAll((els) => els.map((e) => (e as HTMLElement).dataset.state));
   expect(await states()).toEqual(['done', 'now', 'todo']);
@@ -901,7 +888,6 @@ test('class: Cancel discards a new class; editing; stopping between items; End c
 
   // End class clears the marks.
   await page.getByTestId('end-class').click();
-  await page.getByTestId('confirm-yes').click();
   expect(await states()).toEqual(['todo', 'todo', 'todo']);
   await expect(page.getByTestId('start-class')).toHaveText('▶ Start class');
 
@@ -915,15 +901,14 @@ test('class: Cancel discards a new class; editing; stopping between items; End c
 });
 
 // TEMPORARY: remove with the design preview buttons.
-test('design preview buttons 1 / 2 / 3 run the highlighted routine with each Run screen design', async ({ page }) => {
+test('design preview buttons 1–4 run the highlighted routine with each Run screen design', async ({ page }) => {
   await fresh(page, '?speed=10');
-  for (const n of [1, 2, 3]) {
+  for (const n of [1, 2, 3, 4]) {
     await page.getByTestId(`nav-design-${n}`).click();
     await expect(page.locator(`.run-screen.run-v${n}`)).toBeVisible();
     await expect(page.getByTestId('run-phase')).toHaveText(/GET READY|WORK/);
     await expect(page.getByTestId('run-next')).not.toHaveText('');
     await page.getByTestId('stop').click();
-    await page.getByTestId('confirm-yes').click();
     await expect(page.getByTestId('routine-list')).toBeVisible();
   }
   // The normal Start still uses the current design.

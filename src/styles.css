@@ -2219,7 +2219,8 @@ kbd {
   grid-template-columns: minmax(0, 1fr) clamp(260px, 26vw, 400px);
   gap: 20px;
 }
-.run-v2 .run-stage {
+.run-v2 .run-stage,
+.run-v4 .run-stage {
   min-width: 0;
 }
 .rv-panel {
@@ -2352,13 +2353,16 @@ kbd {
 .run-v3.done {
   background: #000;
 }
-.run-v3 .ring {
+.run-v3 .ring,
+.run-v4 .ring {
   display: none;
 }
-.run-v3 .ring-box {
+.run-v3 .ring-box,
+.run-v4 .ring-box {
   padding: 0 24px;
 }
-.run-v3 .run-phase {
+.run-v3 .run-phase,
+.run-v4 .run-phase {
   color: var(--phase-color, var(--text));
   font-size: clamp(32px, 9vh, 110px);
   letter-spacing: 0.1em;
@@ -2455,4 +2459,18 @@ kbd {
   .rv-corner-rem {
     display: none;
   }
+}
+
+/* ---------- Option 4: option 3's counter and bar + option 2's panel ---------- */
+/* The panel sits in the vertical middle of the screen, next to the counter. */
+.run-v4 .rv-panel {
+  align-self: center;
+  max-height: 100%;
+}
+.run-v4 .rv-phasebar {
+  width: min(90%, 1000px);
+}
+/* Pause / Stop centered on the page (the two sides take equal room). */
+.run-v4 .run-bottom {
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
 }

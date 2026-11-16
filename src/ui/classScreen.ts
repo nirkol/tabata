@@ -103,7 +103,7 @@ export function classScreen(app: App, classId: string): Screen {
     }
     if (inProgress) {
       actions.replaceChildren(
-        h('button', { type: 'button', class: 'btn btn-ghost', 'data-testid': 'end-class', onclick: () => void endClass() }, '■ End class'),
+        h('button', { type: 'button', class: 'btn btn-ghost', 'data-testid': 'end-class', onclick: () => endClass() }, '■ End class'),
         h('button', { type: 'button', class: 'btn btn-ghost', 'data-testid': 'restart-class', onclick: () => void restart() }, '↻ Restart'),
         h('button', { type: 'button', class: 'btn btn-primary btn-class-start', 'data-testid': 'continue-class', onclick: () => app.continueClass() }, '▶ Continue class'),
       );
@@ -114,8 +114,8 @@ export function classScreen(app: App, classId: string): Screen {
     }
   }
 
-  async function endClass(): Promise<void> {
-    if (!(await confirmDialog('End this class? The ✓ marks are cleared.', 'End class'))) return;
+  /** End class: no confirmation. */
+  function endClass(): void {
     app.endClass();
     render();
   }

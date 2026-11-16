@@ -143,7 +143,7 @@ Every phase (Get Ready, Work, Rest, Cycle Rest) ends with the same **5-beep coun
 |---|---|---|
 | **Start** (on the routine list) | Starts the routine with the 5 s Get Ready | `Enter` |
 | **Pause / Resume** | Freezes the countdown and all sound. Resume continues from the exact remaining time. | `Space` |
-| **Stop** | Ends the run and returns to the routine list, after an "Are you sure?" confirmation. If the routine is running, Stop **pauses it while asking**; choosing Cancel resumes it from the same second, so a routine can't be stopped by accident. | `Esc` |
+| **Stop** | Ends the run right away and returns to the routine list (**no confirmation**). | `Esc` |
 | Fullscreen | Toggles fullscreen | `F` |
 
 - The Run screen has **only Pause and Stop**. There are no Skip or Restart-phase buttons.
@@ -168,7 +168,7 @@ A routine, a timer and the stopwatch can each be **paused, left, and resumed lat
 - While running, the Run and Timer screens fill the window (no top bar) and the stopwatch locks the top bar, so a running clock can't be left by accident.
 - When **paused**, the top bar is shown and every page can be opened. The paused session is kept exactly as it was, and its tab (Classes, Routines, Timers or Stopwatch) shows a yellow **PAUSED** tag. (A routine or timer that is part of a class belongs to the Classes tab, which opens the class page with Continue class; see §5d.)
 - Opening that tab again shows the paused screen at the same second; **Resume** continues from there. (While a routine or timer is paused, its tab opens the paused run; Stop it to get back to the list.)
-- The three can be paused at the same time, independently. Stop (with confirmation), Back at the end, or Reset (stopwatch) ends a session.
+- The three can be paused at the same time, independently. Stop, Back at the end, or Reset (stopwatch) ends a session.
 - Kept sessions live only in memory: they are not restored after the app is closed.
 
 ## 5. Routines screen (list and editor)
@@ -221,7 +221,7 @@ A **Timers** tab in the top bar (between Routines and Settings) holds simple sin
 - **Timer screen** (full window, like the Run view): the duration in words at the top (e.g. “Timer: 2 minutes”), a **TIMER** label, a **large countdown** inside the same **progress ring** as the Run view (in the work color), **PAUSE / RESUME** and **■ STOP** buttons, and a volume slider with mute at the lower right.
   - Beeps: 4 short work beeps in the last 4 seconds and the finish bell at 0:00.
   - Voice: **"Start!"** when the timer starts and **"Ten!"** 10 seconds before the end (timers longer than 10 s), following the same Settings switches, volume and Mute as in a workout. At the end the label shows **TIME'S UP**, with **↻ Start over** and **← Back to timers**.
-  - Stop pauses the timer while asking for confirmation (Cancel resumes). Keyboard: Space = pause/resume, Esc = stop, F = fullscreen, Enter at the end = back.
+  - Stop ends the timer right away (no confirmation). Keyboard: Space = pause/resume, Esc = stop, F = fullscreen, Enter at the end = back.
   - Timestamp-based like the routine engine (accurate in the background); the screen is kept awake while it runs.
 - Saved under `tabata.v1.timers` (same storage as routines; in the Mac app, the app data file).
 
@@ -241,10 +241,10 @@ A **Classes** button in the top bar, the first of the main buttons (left of Rout
   - Each item shows its position, a **ROUTINE** / **TIMER** tag, its name (a timer by its duration), its details and its length.
 - **Class page** (open a saved class): “← All classes”, the class name and total, **✎ Edit class**, and the list (read-only). At the bottom: **▶ Start class**.
 - **Playing a class:** the items play in order on the normal Run and Timer screens, with a **CLASS** tag, the class name and the position (e.g. `2 / 5`) at the top. When an item ends, the screen shows **“Up next: … · starts in N”** and the next item starts by itself (8 s after a routine, so the finish bells and encouragement can play; 5 s after a timer). **▶ Next now** starts it at once. After the last item it shows **Class complete!**. In a class, Start over is not offered and Back reads **“← Back to class”**.
-- **Stop during a class** (with confirmation) pauses the item and opens the **class page**, which shows the progress:
+- **Stop during a class** (no confirmation) pauses the item and opens the **class page**, which shows the progress:
   - finished items: a green **✓** and a **DONE** tag (dimmed);
   - the item that is playing now (paused): a pulsing blue **▶**, the blue frame and a **PLAYING NOW** tag; if the class was left between two items, the next one is marked **UP NEXT**;
-  - the status line (“Paused at item 2 of 5”), and the buttons **▶ Continue class** (resumes the paused item from the same second, or starts the next one), **↻ Restart** (from the first item, with confirmation) and **■ End class** (clears the marks, with confirmation).
+  - the status line (“Paused at item 2 of 5”), and the buttons **▶ Continue class** (resumes the paused item from the same second, or starts the next one), **↻ Restart** (from the first item, with confirmation) and **■ End class** (clears the marks right away, no confirmation).
   - While a class is in progress it can't be edited.
 - Pausing an item and switching pages works as in §4.7: the **Classes** tab shows the yellow PAUSED tag, and opening it returns to the class page (with Continue). Only one class plays at a time; starting another ends the first.
 - After the last item, Back opens the class page with every item ✓ and **“✓ Class complete”**; the button reads **▶ Start class again**. Saving changes to a class clears its marks.
@@ -394,7 +394,7 @@ Both beep volumes and Mute can also be changed from the Run screen (§4.2).
 | Export / Import | Removed from Settings; routines are not moved between the web version and the Mac app |
 | Routine list | No Duplicate button (Start, Edit, Delete only); ☰ handle to reorder by drag (or ↑ / ↓); starting a routine moves it to the top (sorted by last used) |
 | Run-screen info | Cycle, Work, Rest and Rounds left in four equal boxes right under the counter; "Cycle remaining" and "Total remaining" together in the center; volume slider + mute in the top-right corner |
-| Leaving screens | A running routine/timer can't be left; paused, the top bar returns and the session is kept (§4.7). Stop pauses and asks for confirmation (Cancel resumes); the routine editor can only be left with Save or Cancel |
+| Leaving screens | A running routine/timer can't be left; paused, the top bar returns and the session is kept (§4.7). Stop, Stop during a class and End class act right away with no confirmation (only deleting and discarding changes ask first); the routine editor can only be left with Save or Cancel |
 | Run-screen controls | Only Pause and Stop (no Skip or Restart); at the end: Start over and Back to routines |
 | Mac packaging | Tauri, unsigned build accepted |
 | Beep sounds | 5 selectable styles, all variations of a workout-timer beep (Classic, Soft, High, Low beep, Gym bell), chosen separately for work and rest |

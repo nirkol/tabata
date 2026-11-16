@@ -6,7 +6,6 @@ import { formatClock, formatCountdown } from '../timer/format';
 import type { App, ClassContext, Screen } from './app';
 import { classAdvance } from './classAdvance';
 import { buildRunVariant, type RunVariant } from './runVariants';
-import { confirmDialog } from './dialog';
 import { h } from './dom';
 import { RING_STROKE, createRing } from './ring';
 import { isNative, setNativeKeepAwake, toggleFullscreen as platformToggleFullscreen } from '../platform/native';
@@ -64,7 +63,7 @@ export function runScreen(app: App, routine: Routine, ctx?: ClassContext, varian
   if (cls) stage.append(cls.line);
   const pauseBtn = h('button', { type: 'button', class: 'btn btn-run btn-primary', 'data-testid': 'pause', onclick: () => togglePause() }, 'PAUSE');
   const startOverBtn = h('button', { type: 'button', class: 'btn btn-run btn-primary', 'data-testid': 'start-over', hidden: true, onclick: () => (variant ? app.previewRunDesign(variant) : app.startRoutine(routine.id)) }, '↻ Start over');
-  const stopBtn = h('button', { type: 'button', class: 'btn btn-run', 'data-testid': 'stop', onclick: () => void requestStop() }, '■ STOP');
+  const stopBtn = h('button', { type: 'button', class: 'btn btn-run', 'data-testid': 'stop', onclick: () => requestStop() }, '■ STOP');
   const muteBtn = h('button', { type: 'button', class: 'btn btn-icon', 'data-testid': 'run-mute', onclick: () => toggleMute() });
   /** A compact volume slider for the work or rest beeps. */
   function volumeControl(key: 'volume' | 'restVolume', label: string, testId: string) {
@@ -333,20 +332,17 @@ export function runScreen(app: App, routine: Routine, ctx?: ClassContext, varian
     render();
   }
 
-  async function requestStop(): Promise<void> {
+  /** Stop: no confirmation. */
+  function requestStop(): void {
     const status = engine.getStatus();
     if (status === 'done') return leave();
-    // Stopping a running routine pauses it while asking, so it can't be stopped by accident.
-    const wasRunning = status === 'running';
-    if (wasRunning) togglePause();
     if (ctx) {
       // In a class, Stop keeps the routine paused and opens the class page; Continue class resumes it.
-      if (await confirmDialog('Stop and go back to the class? “Continue class” carries on from this second.', 'Stop')) ctx.back();
-      else if (wasRunning) togglePause();
+      if (status === 'running') togglePause();
+      ctx.back();
       return;
     }
-    if (await confirmDialog('Stop this routine and go back to the list?', 'Stop')) leave();
-    else if (wasRunning) togglePause(); // cancelled: carry on from the same second
+    leave();
   }
 
   function leave(): void {
@@ -428,7 +424,7 @@ export function runScreen(app: App, routine: Routine, ctx?: ClassContext, varian
         togglePause();
       } else if (e.key === 'Escape') {
         e.preventDefault();
-        void requestStop();
+        requestStop();
       } else if (e.key === 'f' || e.key === 'F') {
         e.preventDefault();
         toggleFullscreen();

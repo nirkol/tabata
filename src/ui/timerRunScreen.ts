@@ -5,7 +5,6 @@ import { formatCountdown } from '../timer/format';
 import { isNative, setNativeKeepAwake, toggleFullscreen as platformToggleFullscreen } from '../platform/native';
 import type { App, ClassContext, Screen } from './app';
 import { classAdvance } from './classAdvance';
-import { confirmDialog } from './dialog';
 import { h } from './dom';
 import { RING_STROKE, createRing } from './ring';
 
@@ -30,7 +29,7 @@ export function timerRunScreen(app: App, timer: PresetTimer, ctx?: ClassContext)
 
   const pauseBtn = h('button', { type: 'button', class: 'btn btn-run btn-primary', 'data-testid': 'pause', onclick: () => togglePause() }, 'PAUSE');
   const startOverBtn = h('button', { type: 'button', class: 'btn btn-run btn-primary', 'data-testid': 'start-over', hidden: true, onclick: () => app.startTimer(timer.id) }, '↻ Start over');
-  const stopBtn = h('button', { type: 'button', class: 'btn btn-run', 'data-testid': 'stop', onclick: () => void requestStop() }, '■ STOP');
+  const stopBtn = h('button', { type: 'button', class: 'btn btn-run', 'data-testid': 'stop', onclick: () => requestStop() }, '■ STOP');
   const muteBtn = h('button', { type: 'button', class: 'btn btn-icon', 'data-testid': 'run-mute', onclick: () => toggleMute() });
   const slider = h('input', { type: 'range', class: 'run-volume', min: 0, max: 100, step: 5, 'aria-label': 'Volume', 'data-testid': 'run-volume' });
   slider.value = String(Math.round(app.settings.volume * 100));
@@ -188,20 +187,17 @@ export function timerRunScreen(app: App, timer: PresetTimer, ctx?: ClassContext)
     render();
   }
 
-  async function requestStop(): Promise<void> {
+  /** Stop: no confirmation. */
+  function requestStop(): void {
     const status = countdown.getStatus();
     if (status === 'done') return leave();
-    // Pauses while asking, so the timer can't be stopped by accident.
-    const wasRunning = status === 'running';
-    if (wasRunning) togglePause();
     if (ctx) {
       // In a class, Stop keeps the timer paused and opens the class page; Continue class resumes it.
-      if (await confirmDialog('Stop and go back to the class? “Continue class” carries on from this second.', 'Stop')) ctx.back();
-      else if (wasRunning) togglePause();
+      if (status === 'running') togglePause();
+      ctx.back();
       return;
     }
-    if (await confirmDialog('Stop this timer and go back to the timers?', 'Stop')) leave();
-    else if (wasRunning) togglePause();
+    leave();
   }
 
   function leave(): void {
@@ -283,7 +279,7 @@ export function timerRunScreen(app: App, timer: PresetTimer, ctx?: ClassContext)
         togglePause();
       } else if (e.key === 'Escape') {
         e.preventDefault();
-        void requestStop();
+        requestStop();
       } else if (e.key === 'f' || e.key === 'F') {
         e.preventDefault();
         toggleFullscreen();

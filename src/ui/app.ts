@@ -136,7 +136,7 @@ export class App {
         h(
           'div',
           { class: 'design-tabs', title: 'Preview Run screen designs (temporary)' },
-          ...([1, 2, 3] as const).map((n) =>
+          ...([1, 2, 3, 4] as const).map((n) =>
             h('button', { class: 'tab tab-design', 'data-testid': `nav-design-${n}`, title: `Run design ${n}: ${RUN_VARIANT_NAMES[n]}`, onclick: () => this.previewRunDesign(n) }, String(n)),
           ),
         ),
