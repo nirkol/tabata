@@ -894,8 +894,12 @@ test('class: Cancel discards a new class; editing; stopping between items; End c
   await expect(page.getByTestId('class-card').getByTestId('edit')).toBeDisabled();
   await page.getByTestId('class-card').click();
 
-  // End class clears the marks.
+  // End class clears the marks and goes back to the list of classes.
   await page.getByTestId('end-class').click();
+  await expect(page.getByTestId('class-list')).toBeVisible();
+  await expect(page.getByTestId('class-in-progress')).toHaveCount(0);
+  await expect(page.getByTestId('class-card').getByTestId('start-class')).toHaveText('▶ Start');
+  await page.getByTestId('class-card').click();
   expect(await states()).toEqual(['todo', 'todo', 'todo']);
   await expect(page.getByTestId('start-class')).toHaveText('▶ Start class');
 

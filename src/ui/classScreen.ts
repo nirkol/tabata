@@ -115,9 +115,10 @@ export function classScreen(app: App, classId: string): Screen {
   }
 
   /** End class: no confirmation. */
+  /** End class: clears the progress and goes back to the list of classes. */
   function endClass(): void {
     app.endClass();
-    render();
+    app.go({ name: 'classes' });
   }
 
   async function restart(): Promise<void> {

@@ -253,7 +253,7 @@ A **Classes** button in the top bar, the first of the main buttons (left of Rout
 - **Stop during a class** (no confirmation) pauses the item and opens the **class page**, which shows the progress:
   - finished items: a green **✓** and a **DONE** tag (dimmed);
   - the item that is playing now (paused): a pulsing blue **▶**, the blue frame and a **PLAYING NOW** tag; if the class was left between two items, the next one is marked **UP NEXT**;
-  - the status line (“Paused at item 2 of 5”), and the buttons **▶ Continue class** (resumes the paused item from the same second, or starts the next one), **↻ Restart** (from the first item, with confirmation) and **■ End class** (clears the marks right away, no confirmation).
+  - the status line (“Paused at item 2 of 5”), and the buttons **▶ Continue class** (resumes the paused item from the same second, or starts the next one), **↻ Restart** (from the first item, with confirmation) and **■ End class** (clears the marks right away, no confirmation, and returns to the list of classes).
   - While a class is in progress it can't be edited.
 - Pausing an item and switching pages works as in §4.7: the **Classes** tab shows the yellow PAUSED tag, and opening it returns to the class page (with Continue). Only one class plays at a time; starting another ends the first.
 - After the last item, Back opens the class page with every item ✓ and **“✓ Class complete”**; the button reads **▶ Start class again**. Saving changes to a class clears its marks.
