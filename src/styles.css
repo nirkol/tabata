@@ -1671,56 +1671,181 @@ kbd {
   }
 }
 
-/* Add routines and timers. */
+/* Add routines and timers: option cards with every detail. */
 .class-add {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 14px;
-  padding: 16px 18px;
+  padding: 16px 18px 18px;
 }
 .class-add-title {
-  font-size: 16px;
-  margin: 0 0 12px;
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  font-size: 18px;
+  margin: 0 0 6px;
 }
-.class-add-groups {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 16px 28px;
+.class-add-sub {
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 400;
 }
-.class-add-group h3 {
-  margin: 0 0 8px;
+.class-add-heading {
+  margin: 14px 0 8px;
   color: var(--muted);
   font-size: 12px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
-.class-add-group .hint {
+.class-add .hint {
   margin: 0;
 }
-.chips {
+.pick-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 10px;
+}
+.pick-grid-timers {
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+}
+.pick {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-.chip {
-  min-height: 40px;
-  padding: 6px 14px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: var(--surface-2);
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  padding: 12px 14px;
+  text-align: start;
   color: var(--text);
-  font-size: 15px;
-  font-weight: 600;
+  background: linear-gradient(180deg, #1c1c22 0%, #16161b 100%);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 12px;
   cursor: pointer;
-  font-variant-numeric: tabular-nums;
+  transition:
+    border-color 0.15s ease,
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
 }
-.chip:hover {
+.pick:hover {
   border-color: var(--accent);
-  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 0 0 1px var(--accent), 0 8px 20px rgba(10, 132, 255, 0.18);
 }
-.chip:focus-visible {
+.pick:active {
+  transform: translateY(0);
+}
+.pick:focus-visible {
   outline: 3px solid var(--accent);
   outline-offset: 2px;
+}
+.pick-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+.pick-name {
+  min-width: 0;
+  font-family: 'Barlow Condensed', 'Rubik', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 700;
+  font-size: 22px;
+  line-height: 1.1;
+  letter-spacing: 0.03em;
+  overflow-wrap: anywhere;
+}
+.pick-used {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(48, 209, 88, 0.16);
+  color: #30d158;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.pick-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+}
+.pick-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.pick-stat-label {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.pick-stat-value {
+  font-family: 'Barlow Condensed', 'Rubik', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 700;
+  font-size: 20px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.pick-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+.pick-total {
+  color: var(--muted);
+  font-size: 14px;
+}
+.pick-total b {
+  color: #5eb0ff;
+  font-variant-numeric: tabular-nums;
+}
+.pick-add {
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(10, 132, 255, 0.16);
+  color: #5eb0ff;
+  font-size: 14px;
+  font-weight: 700;
+}
+.pick:hover .pick-add {
+  background: var(--accent);
+  color: #fff;
+}
+.pick-duration {
+  font-family: 'Barlow Condensed', 'Rubik', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 700;
+  font-size: 38px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+/* The item just added flashes once in the list. */
+.class-item.just-added {
+  animation: just-added 1.2s ease-out;
+}
+@keyframes just-added {
+  0% {
+    box-shadow: 0 0 0 3px #30d158;
+    background: rgba(48, 209, 88, 0.18);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(48, 209, 88, 0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .class-item.just-added {
+    animation: none;
+  }
+  .pick,
+  .pick:hover {
+    transform: none;
+  }
 }
 
 /* Start class: always at the bottom of the page. */
@@ -1767,8 +1892,11 @@ kbd {
   .item-actions {
     grid-column: 2 / -1;
   }
-  .class-add-groups {
+  .pick-grid {
     grid-template-columns: 1fr;
+  }
+  .pick-grid-timers {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   }
   .class-footer {
     background: var(--bg);

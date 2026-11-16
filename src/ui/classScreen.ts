@@ -1,7 +1,9 @@
 import { CLASS_NAME_MAX, classDurationSec, createClassItem, resolveItem, type ClassItem, type WorkoutClass } from '../classes/model';
 import { routineStats } from '../routines/model';
+import { totalDurationSec } from '../timer/engine';
 import { formatClock } from '../timer/format';
-import { timerTitle } from '../timers/model';
+import { timerTitle, type PresetTimer } from '../timers/model';
+import type { Routine } from '../routines/model';
 import type { App, Screen } from './app';
 import { confirmDialog } from './dialog';
 import { h, isTyping } from './dom';
@@ -72,7 +74,9 @@ export function classScreen(app: App, classId: string): Screen {
 
   function add(kind: ClassItem['kind'], refId: string): void {
     update((c) => ({ ...c, items: [...c.items, createClassItem(kind, refId)] }));
-    items.lastElementChild?.scrollIntoView({ block: 'nearest' });
+    const added = items.lastElementChild as HTMLElement | null;
+    added?.classList.add('just-added');
+    added?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }
 
   function render(): void {
@@ -99,28 +103,17 @@ export function classScreen(app: App, classId: string): Screen {
 
     // --- Add routines and timers ---
     addPanel.hidden = inProgress;
+    const uses = (kind: ClassItem['kind'], id: string) => c.items.filter((x) => x.kind === kind && x.refId === id).length;
     addPanel.replaceChildren(
-      h('h2', { class: 'class-add-title' }, 'Add to the class'),
-      h(
-        'div',
-        { class: 'class-add-groups' },
-        h(
-          'div',
-          { class: 'class-add-group' },
-          h('h3', {}, 'Routines'),
-          app.routines.length
-            ? h('div', { class: 'chips' }, ...app.routines.map((r) => h('button', { type: 'button', class: 'chip', dir: 'auto', 'data-testid': 'add-routine', 'data-id': r.id, onclick: () => add('routine', r.id) }, '+ ', h('bdi', {}, r.name))))
-            : h('p', { class: 'hint' }, 'No routines yet.'),
-        ),
-        h(
-          'div',
-          { class: 'class-add-group' },
-          h('h3', {}, 'Timers'),
-          app.timers.length
-            ? h('div', { class: 'chips' }, ...app.timers.map((t) => h('button', { type: 'button', class: 'chip', 'data-testid': 'add-timer', 'data-id': t.id, onclick: () => add('timer', t.id) }, `+ ${formatClock(t.durationSec)}`)))
-            : h('p', { class: 'hint' }, 'No timers yet.'),
-        ),
-      ),
+      h('h2', { class: 'class-add-title' }, 'Add to the class', h('span', { class: 'class-add-sub' }, 'Click a routine or timer to add it to the end of the list')),
+      h('h3', { class: 'class-add-heading' }, `Routines (${app.routines.length})`),
+      app.routines.length
+        ? h('div', { class: 'pick-grid' }, ...app.routines.map((r) => routineOption(r, uses('routine', r.id))))
+        : h('p', { class: 'hint' }, 'No routines yet. Create them on the Routines tab.'),
+      h('h3', { class: 'class-add-heading' }, `Timers (${app.timers.length})`),
+      app.timers.length
+        ? h('div', { class: 'pick-grid pick-grid-timers' }, ...app.timers.map((t) => timerOption(t, uses('timer', t.id))))
+        : h('p', { class: 'hint' }, 'No timers yet. Create them on the Timers tab.'),
     );
 
     // --- Status line and buttons ---
@@ -144,6 +137,35 @@ export function classScreen(app: App, classId: string): Screen {
         h('button', { type: 'button', class: 'btn btn-primary btn-class-start', 'data-testid': 'start-class', disabled: total === 0, onclick: () => app.startClass(classId) }, complete ? '▶ Start class again' : '▶ Start class'),
       );
     }
+  }
+
+  /** "In class ×2" when the routine or timer is already in the list. */
+  const usedBadge = (n: number) => (n ? h('span', { class: 'pick-used', 'data-testid': 'pick-used' }, n === 1 ? 'In class' : `In class ×${n}`) : null);
+
+  /** A routine to add: its name, every value and its total time. */
+  function routineOption(r: Routine, used: number): HTMLElement {
+    return h(
+      'button',
+      { type: 'button', class: 'pick' + (used ? ' pick-in' : ''), 'data-testid': 'add-routine', 'data-id': r.id, 'aria-label': `Add “${r.name}” to the class`, onclick: () => add('routine', r.id) },
+      h('span', { class: 'pick-head' }, h('span', { class: 'pick-name', dir: 'auto' }, r.name), usedBadge(used)),
+      h(
+        'span',
+        { class: 'pick-stats' },
+        ...routineStats(r).map(({ label, value }) => h('span', { class: 'pick-stat' }, h('span', { class: 'pick-stat-label' }, label), h('span', { class: 'pick-stat-value' }, value))),
+      ),
+      h('span', { class: 'pick-foot' }, h('span', { class: 'pick-total' }, 'Total ', h('b', {}, formatClock(totalDurationSec(r)))), h('span', { class: 'pick-add' }, '+ Add')),
+    );
+  }
+
+  /** A timer to add: its duration, large. */
+  function timerOption(t: PresetTimer, used: number): HTMLElement {
+    return h(
+      'button',
+      { type: 'button', class: 'pick pick-timer' + (used ? ' pick-in' : ''), 'data-testid': 'add-timer', 'data-id': t.id, 'aria-label': `Add the ${timerTitle(t)} timer to the class`, onclick: () => add('timer', t.id) },
+      h('span', { class: 'pick-head' }, h('span', { class: 'item-kind kind-timer' }, 'Timer'), usedBadge(used)),
+      h('span', { class: 'pick-duration' }, formatClock(t.durationSec)),
+      h('span', { class: 'pick-foot' }, h('span', { class: 'pick-total' }, timerTitle(t)), h('span', { class: 'pick-add' }, '+ Add')),
+    );
   }
 
   function row(item: ClassItem, i: number, state: ItemState, locked: boolean, total: number): HTMLElement {
