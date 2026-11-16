@@ -1886,33 +1886,6 @@ kbd {
   gap: 14px;
   min-width: 0;
 }
-.run-class {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 4px 12px 4px 4px;
-  border-radius: 999px;
-  background: rgba(10, 132, 255, 0.16);
-  color: var(--text);
-  white-space: nowrap;
-}
-.run-class-tag {
-  padding: 2px 9px;
-  border-radius: 999px;
-  background: var(--accent);
-  color: #fff;
-  font-size: 0.6em;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-.run-class-name {
-  font-weight: 700;
-}
-.run-class-pos {
-  color: #5eb0ff;
-  font-variant-numeric: tabular-nums;
-}
 .run-class-next {
   text-align: center;
   font-size: clamp(18px, 3vh, 30px);
@@ -2178,4 +2151,155 @@ kbd {
   font-size: 0.5em;
   vertical-align: 0.35em;
   letter-spacing: 0.08em;
+}
+
+/* ---------- Class progress band (top 10% of the Run / Timer screen in a class) ---------- */
+.run-screen.in-class {
+  /* The band and the divider sit above everything else. */
+  padding-top: 10px;
+}
+.class-band {
+  flex: 0 0 auto;
+  height: 10vh;
+  min-height: 56px;
+  display: flex;
+  align-items: stretch;
+  gap: 16px;
+  padding-bottom: 10px;
+  margin-bottom: 4px;
+  /* The divider between the class and the routine / timer. */
+  border-bottom: 2px solid rgba(255, 255, 255, 0.16);
+  font-size: clamp(13px, 1.9vh, 20px);
+}
+.class-band-head {
+  flex: 0 0 auto;
+  max-width: 22%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 0;
+}
+.class-band-tag {
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.65em;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.class-band-title {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: 'Barlow Condensed', 'Rubik', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 700;
+  font-size: 1.35em;
+  line-height: 1.1;
+}
+.class-band-pos {
+  color: #5eb0ff;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.class-band-items {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.class-band-item {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #141418;
+  overflow: hidden;
+}
+.class-band-marker {
+  flex: 0 0 auto;
+  width: 1.8em;
+  height: 1.8em;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--border);
+  color: var(--muted);
+  font-weight: 800;
+  font-size: 0.9em;
+  font-variant-numeric: tabular-nums;
+}
+.class-band-text {
+  position: relative;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+.class-band-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 700;
+}
+.class-band-time {
+  color: var(--muted);
+  font-size: 0.85em;
+  font-variant-numeric: tabular-nums;
+}
+/* Done: green check, dimmed. */
+.class-band-item.state-done {
+  opacity: 0.6;
+}
+.class-band-item.state-done .class-band-marker {
+  background: var(--work-color);
+  border-color: var(--work-color);
+  color: #000;
+}
+/* Playing now: the blue frame, and a fill that grows as the item runs. */
+.class-band-item.state-now {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent), 0 0 18px rgba(10, 132, 255, 0.35);
+  background: #12203a;
+}
+.class-band-item.state-now .class-band-marker {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.class-band-item.state-now .class-band-time {
+  color: #9ccbff;
+}
+.class-band-fill {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 4px;
+  width: 0;
+  background: var(--accent);
+}
+/* Upcoming: plain. */
+.class-band-item.state-todo .class-band-name {
+  color: var(--muted);
+}
+@media (max-width: 900px) {
+  .class-band-head {
+    display: none;
+  }
+  .class-band-time {
+    display: none;
+  }
 }

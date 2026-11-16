@@ -2,6 +2,7 @@ import { Beeper } from '../audio/beeper';
 import type { Routine } from '../routines/model';
 import { sortTimers, type PresetTimer } from '../timers/model';
 import { pruneClass, resolveItem, type WorkoutClass } from '../classes/model';
+import { formatClock } from '../timer/format';
 import type { AppStorage, Settings } from '../storage/storage';
 import { h } from './dom';
 import { prepareNativeCues } from '../platform/voice';
@@ -62,6 +63,9 @@ export interface ClassContext {
   name: string;
   /** "2 / 5" */
   position: string;
+  /** Every item of the class, for the progress band at the top; `index` is the one playing. */
+  items: { kind: 'routine' | 'timer'; label: string; durationSec: number }[];
+  index: number;
   /** The item that plays after this one, or null if this is the last. */
   next: string | null;
   /** Marks this item as played (called once, when it finishes). */
@@ -322,6 +326,11 @@ export class App {
     return {
       name: c.name,
       position: `${index + 1} / ${c.items.length}`,
+      items: c.items.flatMap((item) => {
+        const r = resolveItem(item, this.routines, this.timers);
+        return r ? [{ kind: r.kind, label: r.kind === 'routine' ? r.routine.name : formatClock(r.timer.durationSec), durationSec: r.durationSec }] : [];
+      }),
+      index,
       next,
       finished: () => {
         if (same() && run.done === index) run.done = index + 1;

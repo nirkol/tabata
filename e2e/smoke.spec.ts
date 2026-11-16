@@ -810,9 +810,15 @@ test('class: create and save a class, then start it from the list, stop, see pro
   await page.getByTestId('class-card').getByTestId('start-class').click();
   await expect(page.getByTestId('run-screen')).toBeVisible();
   await expect(page.getByTestId('run-class-pos')).toHaveText('1 / 3');
+  await expect(page.getByTestId('class-band-item')).toHaveCount(3);
+  await expect(page.getByTestId('class-band-item').first()).toHaveAttribute('data-state', 'now');
   await expect(page.getByTestId('class-next-line')).toContainText('Up next: Timer 1 minute', { timeout: 10000 });
   await expect(page.getByTestId('timer-run-screen')).toBeVisible({ timeout: 10000 });
   await expect(page.getByTestId('run-class-pos')).toHaveText('2 / 3');
+  // The class band at the top: Warm up done, the timer playing, Finisher to come.
+  const bandStates = () => page.getByTestId('class-band-item').evaluateAll((els) => els.map((e) => (e as HTMLElement).dataset.state));
+  expect(await bandStates()).toEqual(['done', 'now', 'todo']);
+  await expect(page.getByTestId('class-band-item')).toHaveText([/Warm up/, /Timer 1:00/, /Finisher/]);
 
   // Stop goes back to the class page: Warm up is done, the timer is playing now.
   await page.getByTestId('stop').click();

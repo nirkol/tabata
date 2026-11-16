@@ -47,7 +47,7 @@ export function timerRunScreen(app: App, timer: PresetTimer, ctx?: ClassContext)
     h(
       'div',
       { class: 'run-top' },
-      h('div', { class: 'run-top-left' }, cls?.banner, h('div', { class: 'run-name' }, 'Timer: ', h('span', { 'data-testid': 'timer-run-name' }, title))),
+      h('div', { class: 'run-top-left' }, h('div', { class: 'run-name' }, 'Timer: ', h('span', { 'data-testid': 'timer-run-name' }, title))),
       app.speed !== 1 ? h('div', { class: 'speed-badge' }, `×${app.speed} speed (dev)`) : null,
       h('div', { class: 'run-top-right' }, fullscreenBtn),
     ),
@@ -70,6 +70,12 @@ export function timerRunScreen(app: App, timer: PresetTimer, ctx?: ClassContext)
     ),
   );
 
+  // In a class: the class progress band takes the top 10% of the screen.
+  if (cls) {
+    el.prepend(cls.band);
+    el.classList.add('in-class');
+  }
+
   // --- Rendering ---
   let lastDigitsText = '';
   let lastStatus = '';
@@ -79,6 +85,7 @@ export function timerRunScreen(app: App, timer: PresetTimer, ctx?: ClassContext)
   function render(): void {
     const status = countdown.getStatus();
     const elapsed = countdown.elapsedMs();
+    cls?.setProgress(elapsed / (timer.durationSec * 1000));
     app.beeper.sync(elapsed);
     // Voice cues, as in a workout: "Start!" when the timer starts, "Ten!" 10 s before the end.
     if (timerStartCallDue(countdown, startCalled)) {

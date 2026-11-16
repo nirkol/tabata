@@ -38,7 +38,6 @@ export function runScreen(app: App, routine: Routine, ctx?: ClassContext): Scree
   if (cls) stage.append(cls.line);
   // Right: Next, Rounds left, Cycle, each round's Work / Rest and the remaining times.
   const panel = runPanel(routine, app.settings.showRemaining);
-  if (cls) stage.append(cls.line);
   const pauseBtn = h('button', { type: 'button', class: 'btn btn-run btn-primary', 'data-testid': 'pause', onclick: () => togglePause() }, 'PAUSE');
   const startOverBtn = h('button', { type: 'button', class: 'btn btn-run btn-primary', 'data-testid': 'start-over', hidden: true, onclick: () => app.startRoutine(routine.id) }, '↻ Start over');
   const stopBtn = h('button', { type: 'button', class: 'btn btn-run', 'data-testid': 'stop', onclick: () => requestStop() }, '■ STOP');
@@ -83,7 +82,7 @@ export function runScreen(app: App, routine: Routine, ctx?: ClassContext): Scree
     tlMarker,
   );
 
-  const topLeft = h('div', { class: 'run-top-left' }, cls?.banner, h('div', { class: 'run-name' }, 'Routine: “', h('bdi', {}, routine.name), '”'));
+  const topLeft = h('div', { class: 'run-top-left' }, h('div', { class: 'run-name' }, 'Routine: “', h('bdi', {}, routine.name), '”'));
   const speedBadge = app.speed !== 1 ? h('div', { class: 'speed-badge' }, `×${app.speed} speed (dev)`) : null;
   const controls = h('div', { class: 'run-controls' }, pauseBtn, startOverBtn, cls?.nextBtn, stopBtn);
   const volumeGroup = h('div', { class: 'run-volume-group', 'data-testid': 'run-volume-group' }, muteBtn, h('div', { class: 'run-volume-stack' }, workVolume.el, restVolume.el));
@@ -99,6 +98,12 @@ export function runScreen(app: App, routine: Routine, ctx?: ClassContext): Scree
     // Bottom row: Pause / Stop in the center, volume controls on the right.
     h('div', { class: 'run-bottom' }, h('div', { class: 'run-bottom-side' }), controls, h('div', { class: 'run-bottom-side run-bottom-right' }, volumeGroup)),
   );
+
+  // In a class: the class progress band takes the top 10% of the screen.
+  if (cls) {
+    el.prepend(cls.band);
+    el.classList.add('in-class');
+  }
 
   // --- Rendering ---
   let lastDigitsText = '';
@@ -185,6 +190,7 @@ export function runScreen(app: App, routine: Routine, ctx?: ClassContext): Scree
     tlMarker.style.left = `${pct}%`;
 
     panel.update(s);
+    cls?.setProgress(s.elapsedMs / s.totalMs);
     muteBtn.textContent = app.settings.muted ? '🔇' : '🔊';
     muteBtn.setAttribute('aria-label', app.settings.muted ? 'Unmute' : 'Mute');
     workVolume.update();
