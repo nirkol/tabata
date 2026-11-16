@@ -216,6 +216,11 @@ export class App {
   startRoutine(id: string): void {
     this.beeper.unlock();
     this.setLastUsed(id);
+    // Most recently used first: the started routine moves to the top of the list (SPEC §5.1).
+    const started = this.routines.find((r) => r.id === id);
+    if (started && this.routines[0] !== started) {
+      this.saveRoutines([started, ...this.routines.filter((r) => r !== started)]);
+    }
     this.go({ name: 'run', routineId: id });
   }
 

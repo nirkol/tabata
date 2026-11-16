@@ -180,6 +180,7 @@ A routine, a timer and the stopwatch can each be **paused, left, and resumed lat
 - A **"+ New Routine"** button opens the editor, prefilled with the defaults and the next free `Routine N` name.
 - On first launch, the app creates one sample routine: "Classic Tabata" (20/10 × 8 × 1).
 - The last-used routine is highlighted (blue edge and a "LAST USED" tag).
+- **Sorted by last used:** starting a routine moves it to the **top** of the list, so the most recently used routines are always first. The new order is saved (routines that were never started keep their relative order below).
 - Visual style: premium dark cards with soft depth and a hover lift; values in the display font with thin dividers; the total in accent blue; **Start** is the prominent button while Edit and Delete are quiet (Delete turns red on hover); the header shows the number of routines.
 - **Reorder routines:** each card has a ☰ drag handle on its right edge. Drag it with the mouse to move the routine up or down (the list scrolls when dragging near its top or bottom edge), or focus the handle and press ↑ / ↓. The new order is saved.
   - While dragging, the card lifts, follows the pointer and is shifted ~1 cm to the right; a dashed **“Drop here”** slot marks where it will land, the other cards slide out of the way, and on release the card glides into the slot. Keyboard moves are animated too. (No animation when the system asks for reduced motion.)
@@ -372,7 +373,7 @@ Both beep volumes and Mute can also be changed from the Run screen (§4.2).
 | Hebrew names | Routine names are right-to-left by default |
 | Admin | No PIN |
 | Export / Import | Removed from Settings; routines are not moved between the web version and the Mac app |
-| Routine list | No Duplicate button (Start, Edit, Delete only); ☰ handle to reorder by drag (or ↑ / ↓) |
+| Routine list | No Duplicate button (Start, Edit, Delete only); ☰ handle to reorder by drag (or ↑ / ↓); starting a routine moves it to the top (sorted by last used) |
 | Run-screen info | Cycle, Work, Rest and Rounds left in four equal boxes right under the counter; "Cycle remaining" and "Total remaining" together in the center; volume slider + mute in the top-right corner |
 | Leaving screens | A running routine/timer can't be left; paused, the top bar returns and the session is kept (§4.7). Stop pauses and asks for confirmation (Cancel resumes); the routine editor can only be left with Save or Cancel |
 | Run-screen controls | Only Pause and Stop (no Skip or Restart); at the end: Start over and Back to routines |

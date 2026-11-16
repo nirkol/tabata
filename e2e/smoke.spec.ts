@@ -459,6 +459,32 @@ test('routines can be reordered by dragging the handle or with the keyboard', as
   expect(await names()).toEqual(['Routine D', 'Routine B', 'Routine C', 'Routine A']);
 });
 
+test('routine list is sorted by last used: starting a routine moves it to the top', async ({ page }) => {
+  await fresh(page);
+  await page.evaluate(() => {
+    const now = new Date().toISOString();
+    const routines = ['A', 'B', 'C'].map((n) => ({ id: n, name: `Routine ${n}`, workSec: 20, restSec: 10, intervals: 8, sets: 1, setRestSec: 60, createdAt: now, updatedAt: now }));
+    localStorage.setItem('tabata.v1.routines', JSON.stringify({ version: 1, routines }));
+  });
+  await page.reload();
+  const names = () => page.getByTestId('routine-name').allTextContents();
+  expect(await names()).toEqual(['Routine A', 'Routine B', 'Routine C']);
+
+  // Selecting a card doesn't move it; starting it does.
+  await page.locator('[data-id="C"]').click();
+  expect(await names()).toEqual(['Routine A', 'Routine B', 'Routine C']);
+  await page.locator('[data-id="C"]').getByTestId('start').click();
+  await expect(page.getByTestId('run-phase')).toBeVisible();
+  await page.reload();
+  expect(await names()).toEqual(['Routine C', 'Routine A', 'Routine B']);
+  await expect(page.locator('[data-id="C"]')).toHaveClass(/selected/);
+
+  await page.locator('[data-id="B"]').getByTestId('start').click();
+  await expect(page.getByTestId('run-phase')).toBeVisible();
+  await page.reload();
+  expect(await names()).toEqual(['Routine B', 'Routine C', 'Routine A']);
+});
+
 test('long routine list scrolls while the header stays visible', async ({ page }) => {
   await fresh(page);
   await page.evaluate(() => {
