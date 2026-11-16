@@ -1,7 +1,7 @@
 import { Beeper } from '../audio/beeper';
 import type { Routine } from '../routines/model';
 import { sortTimers, type PresetTimer } from '../timers/model';
-import { createClass, nextClassName, pruneClass, resolveItem, type WorkoutClass } from '../classes/model';
+import { pruneClass, resolveItem, type WorkoutClass } from '../classes/model';
 import type { AppStorage, Settings } from '../storage/storage';
 import { h } from './dom';
 import { prepareNativeCues } from '../platform/voice';
@@ -17,7 +17,7 @@ import { timerEditorScreen } from './timerEditorScreen';
 import { timerRunScreen } from './timerRunScreen';
 import { stopwatchScreen } from './stopwatchScreen';
 import { classesScreen } from './classesScreen';
-import { classScreen } from './classScreen';
+import { classEditorScreen, classScreen } from './classScreen';
 
 export interface Screen {
   el: HTMLElement;
@@ -85,6 +85,7 @@ type Route =
   | { name: 'stopwatch' }
   | { name: 'classes' }
   | { name: 'class'; classId: string }
+  | { name: 'classEditor'; classId: string | null }
   | { name: 'classResume' };
 
 export class App {
@@ -126,7 +127,7 @@ export class App {
       h(
         'nav',
         { class: 'tabs tabs-main' },
-        h('button', { class: 'tab tab-main', 'data-route': 'classes', 'data-testid': 'nav-classes', onclick: () => this.openClasses() }, 'Class'),
+        h('button', { class: 'tab tab-main', 'data-route': 'classes', 'data-testid': 'nav-classes', onclick: () => this.openClasses() }, 'Classes'),
         h('button', { class: 'tab tab-main', 'data-route': 'list', 'data-testid': 'nav-routines', onclick: () => this.go({ name: 'list' }) }, 'Routines'),
         h('button', { class: 'tab tab-main', 'data-route': 'timers', 'data-testid': 'nav-timers', onclick: () => this.go({ name: 'timers' }) }, 'Timers'),
         h('button', { class: 'tab tab-main', 'data-route': 'stopwatch', 'data-testid': 'nav-stopwatch', onclick: () => this.go({ name: 'stopwatch' }) }, 'Stopwatch'),
@@ -221,6 +222,9 @@ export class App {
         screen = classScreen(this, route.classId);
         break;
       }
+      case 'classEditor':
+        screen = classEditorScreen(this, route.classId);
+        break;
       case 'classResume': {
         const kept = resume('class');
         if (!kept) return this.continueClass();
@@ -232,7 +236,7 @@ export class App {
     this.nav.hidden = !!screen.fullWindow;
     const section = screen.session
       ? SESSION_TABS[screen.session]
-      : route.name === 'editor' ? 'list' : route.name === 'timerEditor' ? 'timers' : route.name === 'class' ? 'classes' : route.name;
+      : route.name === 'editor' ? 'list' : route.name === 'timerEditor' ? 'timers' : route.name === 'class' || route.name === 'classEditor' ? 'classes' : route.name;
     for (const tab of this.nav.querySelectorAll<HTMLButtonElement>('.tab')) tab.classList.toggle('active', tab.dataset.route === section);
     this.setNavLock(screen.lockNav ?? null);
     // A "paused" mark on the tabs whose section has a paused session waiting.
@@ -266,11 +270,9 @@ export class App {
     this.storage.saveClasses(classes);
   }
 
-  /** Creates a class with the next free "Class N" name and opens its page. */
+  /** Opens the class editor for a new class (saved only with Save class). */
   newClass(): void {
-    const c = createClass(nextClassName(this.classes));
-    this.saveClasses([...this.classes, c]);
-    this.go({ name: 'class', classId: c.id });
+    this.go({ name: 'classEditor', classId: null });
   }
 
   /** Starts a class from its first item. Must be called from a user gesture so audio can start. */

@@ -69,11 +69,12 @@ const SECTIONS: { title: string; items: Block[] }[] = [
   {
     title: '7. Classes',
     items: [
-      'A class is a list of routines and timers that play one after the other. Open the Class tab and click “+ New Class”.',
-      ['Build it', ' – name the class, then click a routine or timer under “Add to the class”. Use ↑ / ↓ to change the order and ✕ to remove one. The same routine can be added more than once.'],
-      ['▶ Start class', ' – plays the first item. When an item ends, the next one starts by itself a few seconds later (or click ▶ Next now).'],
+      'A class is a list of routines and timers that play one after the other. Open the Classes tab and click “+ New Class”.',
+      ['Build it', ' – name the class, then click routines (left) and timers (right) under “Add to the class”. Use ↑ / ↓ to change the order and ✕ to remove one. The same routine can be added more than once.'],
+      ['✓ Save class', ' – stores the class and shows it in the list. Only a saved class can be started; Cancel discards the changes.'],
+      ['▶ Start', ' – on the class card, or ▶ Start class on the class page. When an item ends, the next one starts by itself a few seconds later (or click ▶ Next now).'],
       ['Stop', ' – pauses the item and takes you back to the class page: ✓ marks the items that are done and the blue item is the one playing now. ▶ Continue class carries on from the same second.'],
-      ['End class / Restart', ' – End class clears the ✓ marks; Restart starts again from the first item. The list can only be changed when the class is not in progress.'],
+      ['End class / Restart', ' – End class clears the ✓ marks; Restart starts again from the first item. A class can be edited only when it is not in progress.'],
     ],
   },
   {

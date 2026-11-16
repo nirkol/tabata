@@ -3,7 +3,7 @@ import { formatClock } from '../timer/format';
 import type { App, Screen } from './app';
 import { confirmDialog } from './dialog';
 import { h } from './dom';
-import { ICON_TRASH, iconButton } from './listScreen';
+import { ICON_PENCIL, ICON_TRASH, iconButton } from './listScreen';
 
 /** The list of classes (SPEC §5d). */
 export function classesScreen(app: App): Screen {
@@ -19,7 +19,7 @@ export function classesScreen(app: App): Screen {
       h('button', { class: 'btn btn-primary btn-pill', 'data-testid': 'new-class', onclick: () => app.newClass() }, '+ New Class'),
     ),
     list,
-    h('p', { class: 'hint list-hint' }, 'A class plays its routines and timers one after the other'),
+    h('p', { class: 'hint list-hint' }, 'Click a class to see its list; ▶ Start plays its routines and timers one after the other'),
   );
 
   function render(): void {
@@ -63,13 +63,37 @@ export function classesScreen(app: App): Screen {
       h(
         'div',
         { class: 'card-actions' },
-        h('button', { class: 'btn btn-primary btn-pill btn-start', 'data-testid': 'open-class', onclick: (e: Event) => (e.stopPropagation(), open()) }, 'Open'),
+        h(
+          'button',
+          {
+            class: 'btn btn-primary btn-pill btn-start',
+            'data-testid': inProgress ? 'continue-class' : 'start-class',
+            disabled: c.items.length === 0,
+            onclick: (e: Event) => {
+              e.stopPropagation();
+              if (inProgress) app.continueClass();
+              else app.startClass(c.id);
+            },
+          },
+          inProgress ? '▶ Continue' : '▶ Start',
+        ),
+        editButton(c.id, inProgress),
         iconButton('delete', 'Delete', ICON_TRASH, 'btn-ghost btn-ghost-danger', (e) => {
           e.stopPropagation();
           void remove(c);
         }),
       ),
     );
+  }
+
+  /** Edit (disabled while the class is in progress: its list can't change then). */
+  function editButton(id: string, inProgress: boolean): HTMLButtonElement {
+    const b = iconButton('edit', inProgress ? 'End the class to edit it' : 'Edit', ICON_PENCIL, 'btn-ghost', (e) => {
+      e.stopPropagation();
+      app.go({ name: 'classEditor', classId: id });
+    });
+    b.disabled = inProgress;
+    return b;
   }
 
   async function remove(c: WorkoutClass): Promise<void> {

@@ -757,7 +757,7 @@ test('paused routine and timer can be left and resumed later', async ({ page }) 
   await expect(page.getByTestId('run-digits')).toHaveText(timerTime!);
 });
 
-test('class: build a list of routines and timers, play it through, stop, see progress and continue', async ({ page }) => {
+test('class: create and save a class, then start it from the list, stop, see progress and continue', async ({ page }) => {
   await fresh(page, '?speed=10');
   await page.evaluate(() => {
     const now = new Date().toISOString();
@@ -767,14 +767,24 @@ test('class: build a list of routines and timers, play it through, stop, see pro
   });
   await page.reload();
 
-  // The Class tab is the first of the main tabs.
-  const mainTabs = page.locator('.tabs-main .tab');
-  await expect(mainTabs).toHaveText(['Class', 'Routines', 'Timers', 'Stopwatch']);
+  // The Classes tab is the first of the main tabs.
+  await expect(page.locator('.tabs-main .tab')).toHaveText(['Classes', 'Routines', 'Timers', 'Stopwatch']);
   await page.getByTestId('nav-classes').click();
   await expect(page.getByTestId('class-count')).toHaveText('0 classes');
+
+  // New class: an editor with Save class (disabled until something is added); the top bar is locked.
   await page.getByTestId('new-class').click();
   await expect(page.getByTestId('class-name-input')).toHaveValue('Class 1');
-  await expect(page.getByTestId('start-class')).toBeDisabled();
+  await expect(page.getByTestId('save-class')).toHaveText('✓ Save class');
+  await expect(page.getByTestId('save-class')).toBeDisabled();
+  await expect(page.getByTestId('start-class')).toHaveCount(0);
+  await expect(page.getByTestId('nav-routines')).toBeDisabled();
+
+  // Routines on the left, timers on the right, each with its details.
+  const routinesBox = await page.getByTestId('pick-routines').boundingBox();
+  const timersBox = await page.getByTestId('pick-timers').boundingBox();
+  expect(timersBox!.x).toBeGreaterThan(routinesBox!.x + routinesBox!.width - 1);
+  await expect(page.locator('[data-testid="add-routine"][data-id="A"]')).toContainText('Rounds');
 
   // Add Finisher, the timer and Warm up, then move Warm up to the top.
   await page.locator('[data-testid="add-routine"][data-id="B"]').click();
@@ -782,6 +792,7 @@ test('class: build a list of routines and timers, play it through, stop, see pro
   await page.locator('[data-testid="add-routine"][data-id="A"]').click();
   const itemNames = () => page.getByTestId('item-name').allTextContents();
   expect(await itemNames()).toEqual(['Finisher', '1:00', 'Warm up']);
+  await expect(page.locator('[data-testid="add-routine"][data-id="A"]').getByTestId('pick-used')).toHaveText('In class');
   await page.getByTestId('item-up').nth(2).click();
   await page.getByTestId('item-up').nth(1).click();
   expect(await itemNames()).toEqual(['Warm up', 'Finisher', '1:00']);
@@ -789,15 +800,24 @@ test('class: build a list of routines and timers, play it through, stop, see pro
   expect(await itemNames()).toEqual(['Warm up', '1:00', 'Finisher']);
   await page.getByTestId('class-name-input').fill('Monday class');
 
-  // The class is saved.
+  // Save class: back to the list, where the class appears with ▶ Start.
+  await page.getByTestId('save-class').click();
+  await expect(page.getByTestId('class-list')).toBeVisible();
+  await expect(page.getByTestId('class-name')).toHaveText('Monday class');
   await page.reload();
   await page.getByTestId('nav-classes').click();
   await expect(page.getByTestId('class-name')).toHaveText('Monday class');
-  await page.getByTestId('class-card').click();
-  expect(await itemNames()).toEqual(['Warm up', '1:00', 'Finisher']);
 
-  // Start: the first routine plays, then the timer starts by itself.
-  await page.getByTestId('start-class').click();
+  // Clicking the card opens the class page: the saved list and Start class (no editing there).
+  await page.getByTestId('class-card').click();
+  await expect(page.getByTestId('class-title')).toHaveText('Monday class');
+  expect(await itemNames()).toEqual(['Warm up', '1:00', 'Finisher']);
+  await expect(page.getByTestId('item-up')).toHaveCount(0);
+  await expect(page.getByTestId('class-add')).toHaveCount(0);
+  await page.getByTestId('all-classes').click();
+
+  // ▶ Start on the card: the first routine plays, then the timer starts by itself.
+  await page.getByTestId('class-card').getByTestId('start-class').click();
   await expect(page.getByTestId('run-screen')).toBeVisible();
   await expect(page.getByTestId('run-class-pos')).toHaveText('1 / 3');
   await expect(page.getByTestId('class-next-line')).toContainText('Up next: Timer 1 minute', { timeout: 10000 });
@@ -812,17 +832,16 @@ test('class: build a list of routines and timers, play it through, stop, see pro
   expect(await states()).toEqual(['done', 'now', 'todo']);
   await expect(page.getByTestId('item-state')).toHaveText(['Done', 'Playing now']);
   await expect(page.getByTestId('class-status')).toHaveText('Paused at item 2 of 3');
-  await expect(page.getByTestId('class-add')).toBeHidden();
-  await expect(page.getByTestId('item-up')).toHaveCount(0);
+  await expect(page.getByTestId('edit-class')).toBeDisabled();
   await expect(page.getByTestId('nav-classes')).toHaveClass(/tab-paused/);
 
-  // Other pages can be opened; the Class tab comes back to this class.
+  // Other pages can be opened; the Classes tab comes back to this class.
   await page.getByTestId('nav-routines').click();
   await expect(page.getByTestId('routine-list')).toBeVisible();
   await page.getByTestId('nav-classes').click();
   await expect(page.getByTestId('class-screen')).toBeVisible();
 
-  // Continue resumes the timer from the same second; then Finisher plays and the class is complete.
+  // Continue resumes the timer; then Finisher plays and the class is complete.
   await page.getByTestId('continue-class').click();
   await expect(page.getByTestId('timer-run-screen')).toBeVisible();
   await expect(page.getByTestId('pause')).toHaveText('PAUSE');
@@ -838,7 +857,7 @@ test('class: build a list of routines and timers, play it through, stop, see pro
   await expect(page.getByTestId('nav-classes')).not.toHaveClass(/tab-paused/);
 });
 
-test('class: stopping between items, End class, and deleting a routine removes it from classes', async ({ page }) => {
+test('class: Cancel discards a new class; editing; stopping between items; End class; deleting a routine', async ({ page }) => {
   await fresh(page, '?speed=10');
   await page.evaluate(() => {
     const now = new Date().toISOString();
@@ -849,16 +868,36 @@ test('class: stopping between items, End class, and deleting a routine removes i
   });
   await page.reload();
   await page.getByTestId('nav-classes').click();
-  await expect(page.getByTestId('class-stats')).toContainText('Routines3');
-  await page.getByTestId('class-card').click();
+
+  // A new class that isn't saved never appears in the list.
+  await page.getByTestId('new-class').click();
+  await page.locator('[data-testid="add-routine"][data-id="A"]').click();
+  await page.getByTestId('cancel-class').click();
+  await page.getByTestId('confirm-yes').click();
+  await expect(page.getByTestId('class-card')).toHaveCount(1);
+
+  // Editing a saved class changes it only on Save class.
+  await page.getByTestId('class-card').getByTestId('edit').click();
+  await expect(page.getByTestId('class-name-input')).toHaveValue('Short');
+  await page.getByTestId('item-remove').nth(2).click();
+  await page.getByTestId('cancel-class').click();
+  await page.getByTestId('confirm-yes').click();
+  await expect(page.getByTestId('class-screen')).toBeVisible();
+  await expect(page.getByTestId('item-name')).toHaveText(['One', 'Two', 'One']);
+
+  // Start from the class page; back to the class while "Up next" counts down.
   await page.getByTestId('start-class').click();
-  // Back to the class while "Up next" counts down: the first item is done, the second is up next.
   await expect(page.getByTestId('class-next')).toBeVisible({ timeout: 10000 });
   await page.getByTestId('stop').click();
   const states = () => page.getByTestId('class-item').evaluateAll((els) => els.map((e) => (e as HTMLElement).dataset.state));
   expect(await states()).toEqual(['done', 'next', 'todo']);
   await expect(page.getByTestId('item-state')).toHaveText(['Done', 'Up next']);
   await expect(page.getByTestId('class-status')).toHaveText('1 of 3 done');
+  await page.getByTestId('all-classes').click();
+  await expect(page.getByTestId('class-in-progress')).toBeVisible();
+  await expect(page.getByTestId('class-card').getByTestId('continue-class')).toHaveText('▶ Continue');
+  await expect(page.getByTestId('class-card').getByTestId('edit')).toBeDisabled();
+  await page.getByTestId('class-card').click();
 
   // End class clears the marks.
   await page.getByTestId('end-class').click();

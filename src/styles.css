@@ -2009,3 +2009,25 @@ kbd {
   padding: 0;
   border: 0;
 }
+/* Class page title (read-only) and the editor heading. */
+.class-title {
+  font-family: 'Barlow Condensed', 'Rubik', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 40px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.05;
+  overflow-wrap: anywhere;
+}
+.class-head-name .list-count {
+  margin: 6px 0 0;
+}
+.class-screen:not(.class-editor) .class-head {
+  align-items: center;
+}
+.class-editor-title {
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}

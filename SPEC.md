@@ -166,7 +166,7 @@ Implementation requirements:
 ### 4.7 Paused sessions: switch pages and come back
 A routine, a timer and the stopwatch can each be **paused, left, and resumed later**:
 - While running, the Run and Timer screens fill the window (no top bar) and the stopwatch locks the top bar, so a running clock can't be left by accident.
-- When **paused**, the top bar is shown and every page can be opened. The paused session is kept exactly as it was, and its tab (Class, Routines, Timers or Stopwatch) shows a yellow **PAUSED** tag. (A routine or timer that is part of a class belongs to the Class tab, which opens the class page with Continue class; see §5d.)
+- When **paused**, the top bar is shown and every page can be opened. The paused session is kept exactly as it was, and its tab (Classes, Routines, Timers or Stopwatch) shows a yellow **PAUSED** tag. (A routine or timer that is part of a class belongs to the Classes tab, which opens the class page with Continue class; see §5d.)
 - Opening that tab again shows the paused screen at the same second; **Resume** continues from there. (While a routine or timer is paused, its tab opens the paused run; Stop it to get back to the list.)
 - The three can be paused at the same time, independently. Stop (with confirmation), Back at the end, or Reset (stopwatch) ends a session.
 - Kept sessions live only in memory: they are not restored after the app is closed.
@@ -233,25 +233,26 @@ A **Stopwatch** button in the top bar, next to Routines and Timers, opens a stop
 - Timestamp-based (exact in the background); the screen is kept awake while it runs. No sounds.
 
 ## 5d. Classes
-A **Class** button in the top bar, the first of the main buttons (left of Routines), opens the classes. A class is a list of routines and timers that play one after the other.
-- **Class list:** each class is a card with its name, the number of routines and timers, and the total time; **Open** and **Delete** (asks for confirmation; the routines and timers themselves are kept). **“+ New Class”** creates a class named with the next free `Class N` and opens its page. A class being played shows an **IN PROGRESS** tag and the blue frame.
-- **Class page:** “← All classes” at the top, then the class name (editable in place, automatic direction for Hebrew), the item count and total time, and the ordered list. Each item shows its position, a **ROUTINE** / **TIMER** tag, its name (a timer by its duration), its details (Work, Rest, Rounds… or the duration in words) and its length.
+A **Classes** button in the top bar, the first of the main buttons (left of Routines), opens the classes. A class is a list of routines and timers that play one after the other.
+- **Class list:** each saved class is a card with its name, the number of routines and timers, and the total time; **▶ Start** (or **▶ Continue** while it is in progress), **Edit** (pencil; disabled while in progress) and **Delete** (asks for confirmation; the routines and timers themselves are kept). Clicking the card opens the class page. A class being played shows an **IN PROGRESS** tag and the blue frame. **“+ New Class”** opens the class editor.
+- **Class editor** (new or Edit): the class name (prefilled with the next free `Class N`, automatic direction for Hebrew), the ordered list, and **Add to the class**. At the bottom: **Cancel** and **✓ Save class**. **Nothing is stored until Save class**; only a saved class appears in the list and can be started. Save class is disabled until the class has a name and at least one routine or timer. Cancel asks before discarding changes. Like the routine editor, the top bar is locked until Save or Cancel. Save returns to the class list.
   - **Add to the class:** two lists side by side, **routines on the left** and **timers on the right** (stacked on narrow windows; a long list scrolls inside its column). Every routine and every timer is an option card; clicking one adds it at the end of the list (the new item flashes green). A routine card shows its name, every value (Work, Rest, Rounds, Cycles and, with 2+ cycles, Rest between cycles), its total time and **+ Add**; a timer card shows its duration large and in words. Cards already in the class show an **IN CLASS** (or **IN CLASS ×2**) tag. The same routine or timer can be added more than once.
-  - **Reorder** with ↑ / ↓ on each item; **✕** removes it from the class. Changes are saved right away.
-  - At the bottom: **▶ Start class** (disabled while the class is empty). It stays at the bottom of the window when the list is long.
+  - **Reorder** with ↑ / ↓ on each item; **✕** removes it.
+  - Each item shows its position, a **ROUTINE** / **TIMER** tag, its name (a timer by its duration), its details and its length.
+- **Class page** (open a saved class): “← All classes”, the class name and total, **✎ Edit class**, and the list (read-only). At the bottom: **▶ Start class**.
 - **Playing a class:** the items play in order on the normal Run and Timer screens, with a **CLASS** tag, the class name and the position (e.g. `2 / 5`) at the top. When an item ends, the screen shows **“Up next: … · starts in N”** and the next item starts by itself (8 s after a routine, so the finish bells and encouragement can play; 5 s after a timer). **▶ Next now** starts it at once. After the last item it shows **Class complete!**. In a class, Start over is not offered and Back reads **“← Back to class”**.
-- **Stop during a class** (with confirmation) pauses the item and opens the **class page**. The page shows the progress:
+- **Stop during a class** (with confirmation) pauses the item and opens the **class page**, which shows the progress:
   - finished items: a green **✓** and a **DONE** tag (dimmed);
   - the item that is playing now (paused): a pulsing blue **▶**, the blue frame and a **PLAYING NOW** tag; if the class was left between two items, the next one is marked **UP NEXT**;
   - the status line (“Paused at item 2 of 5”), and the buttons **▶ Continue class** (resumes the paused item from the same second, or starts the next one), **↻ Restart** (from the first item, with confirmation) and **■ End class** (clears the marks, with confirmation).
-  - While a class is in progress its list can't be changed (the Add panel and the ↑ / ↓ / ✕ buttons are hidden).
-- Pausing an item and switching pages works as in §4.7: the **Class** tab shows the yellow PAUSED tag, and opening it returns to the class page (with Continue). Only one class plays at a time; starting another ends the first.
-- After the last item, Back opens the class page with every item ✓ and **“✓ Class complete”**; the button reads **▶ Start class again**.
+  - While a class is in progress it can't be edited.
+- Pausing an item and switching pages works as in §4.7: the **Classes** tab shows the yellow PAUSED tag, and opening it returns to the class page (with Continue). Only one class plays at a time; starting another ends the first.
+- After the last item, Back opens the class page with every item ✓ and **“✓ Class complete”**; the button reads **▶ Start class again**. Saving changes to a class clears its marks.
 - Deleting a routine or timer removes it from every class (a class that was playing is ended).
 - Classes are saved under `tabata.v1.classes` (`{ "version": 1, "classes": [{ "id", "name", "items": [{ "id", "kind": "routine" | "timer", "refId" }], "createdAt", "updatedAt" }] }`). Progress through a class is kept in memory only.
 
 ## 5a. Instructions and About
-Top bar layout: the app name on the left; **Class**, **Routines**, **Timers** and **Stopwatch** as large buttons in the center (the current one highlighted in blue); **Settings**, **Instructions** and **About** as text links on the right:
+Top bar layout: the app name on the left; **Classes**, **Routines**, **Timers** and **Stopwatch** as large buttons in the center (the current one highlighted in blue); **Settings**, **Instructions** and **About** as text links on the right:
 - **Instructions**: how to use the timer — creating routines, running a workout, sounds and voice, managing routines, settings, tips.
 - **About**: app icon and name, **version number** (from the app version in `src-tauri/tauri.conf.json`) and **“Created by yFit · © 2026”**.
 
@@ -405,5 +406,5 @@ Both beep volumes and Mute can also be changed from the Run screen (§4.2).
 | Timers | Top-bar **Timers** tab with preset countdown timers (default 2/3/5/10 min on a new installation) as square tiles, 4 per row, sorted short to long from the top left; each has Start, Edit, Delete; the Timer screen has a large countdown with the progress ring, Pause and Stop |
 | Top bar | Routines and Timers as large centered buttons; Settings, Instructions and About as text on the right (no icon tabs) |
 | Stopwatch | Third main tab: counts up hh:mm:ss with Start/Pause, Reset and Stop; navigation locked until Stop |
-| Classes | First main tab (**Class**): lists of routines and timers that play one after the other, reordered with ↑ / ↓; Start class at the bottom; Stop returns to the class page, which marks done items ✓ and the one playing now, with Continue class |
+| Classes | First main tab (**Classes**): lists of routines and timers that play one after the other, built in an editor (routines left, timers right; reorder with ↑ / ↓) and stored only with **Save class**; a saved class is started from the list or its page; Stop returns to the class page, which marks done items ✓ and the one playing now, with Continue class |
 | Paused sessions | Routine, timer and stopwatch can each be paused, left for other pages (tab shows PAUSED), and resumed later from the same second |
