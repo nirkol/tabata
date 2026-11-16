@@ -1988,7 +1988,7 @@ kbd {
 .routine-run.paused .run-counter {
   opacity: 0.5;
 }
-/* Empties as the period runs down. */
+/* Fills from left to right as the period runs. */
 .run-progress {
   width: min(90%, 1000px);
   height: clamp(10px, 1.6vh, 18px);

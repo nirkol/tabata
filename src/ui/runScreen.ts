@@ -26,7 +26,7 @@ export function runScreen(app: App, routine: Routine, ctx?: ClassContext): Scree
   const beeps = beepSchedule(engine.phases, { voiceStart: app.settings.startCall && !app.settings.muted });
 
   // --- Elements ---
-  // Center: the period, the large counter and a bar under it that empties as the period runs down.
+  // Center: the period, the large counter and a bar under it that fills from left to right as the period runs.
   const phaseLabel = h('div', { class: 'run-phase', 'data-testid': 'run-phase' });
   const digits = h('div', { class: 'run-digits', 'data-testid': 'run-digits' });
   // Encouraging statement shown under the digits during the Rest between cycles (and at the end).
@@ -182,7 +182,7 @@ export function runScreen(app: App, routine: Routine, ctx?: ClassContext): Scree
     el.classList.toggle('phase-rest', !done && phase !== null && phase.kind !== 'work');
     el.classList.toggle('paused', s.status === 'paused');
     el.classList.toggle('done', done);
-    progressFill.style.width = `${done ? 0 : s.phaseFractionRemaining * 100}%`;
+    progressFill.style.width = `${done ? 100 : (1 - s.phaseFractionRemaining) * 100}%`;
     const pct = Math.min(100, (s.elapsedMs / s.totalMs) * 100);
     const clip = `inset(0 ${100 - pct}% 0 0)`;
     tlDone.style.clipPath = clip;

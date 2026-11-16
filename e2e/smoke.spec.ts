@@ -911,3 +911,20 @@ test('class: Cancel discards a new class; editing; stopping between items; End c
   await page.getByTestId('class-card').click();
   await expect(page.getByTestId('item-name')).toHaveText(['Two']);
 });
+
+test('run screen: the progress bar under the counter fills from left to right', async ({ page }) => {
+  await fresh(page, '?speed=5');
+  await page.getByTestId('start').click();
+  await expect(page.getByTestId('run-phase')).toHaveText('WORK', { timeout: 7000 });
+  const fill = page.getByTestId('run-progress');
+  const width = () => fill.evaluate((el) => el.getBoundingClientRect().width);
+  const track = await fill.evaluate((el) => el.parentElement!.getBoundingClientRect());
+  const box1 = await fill.boundingBox();
+  const w1 = await width();
+  await page.waitForTimeout(800);
+  const w2 = await width();
+  // It grows as the period runs, and starts at the left edge of the bar.
+  expect(w2).toBeGreaterThan(w1);
+  expect(Math.abs(box1!.x - track.left)).toBeLessThan(1);
+  expect(w2).toBeLessThan(track.width);
+});

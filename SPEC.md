@@ -103,7 +103,7 @@ This screen is used mid-workout, often from several meters away, so readability 
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
-- The **counter is centered on the page**: the period name (WORK, REST…) in the period's color, the huge digits under it, and under them a thick **progress bar** that empties as the period runs down.
+- The **counter is centered on the page**: the period name (WORK, REST…) in the period's color, the huge digits under it, and under them a thick **progress bar** that fills from left to right as the period runs.
 - The **info panel** is a column of cards on the right, centered top to bottom. An empty column of the same width on the left keeps the counter in the middle of the page.
 - **Pause / Stop** are centered at the bottom of the page; the volume controls are at the lower right.
 - Narrow windows: the panel moves under the counter (cards 2 per row).
@@ -127,7 +127,7 @@ The **volume controls** sit at the **lower right**, on the same row as Pause / S
 
 ### 4.3 Colors and progress indicator
 - **Color by phase:** during **Work** the period name, the digits and the progress bar use the **work color** chosen in Settings (default **green**). During **Rest, Cycle Rest and Get Ready** they are always **red**. The color stays the same for the whole phase; the last 5 seconds are announced by the beeps.
-- The progress indicator is a thick bar under the digits that empties as the phase elapses. It animates smoothly and does not jump once per second. (The Timer screen keeps its ring around the digits.)
+- The progress indicator is a thick bar under the digits that fills from left to right as the phase elapses (empty when a period starts, full when it ends). It animates smoothly and does not jump once per second. (The Timer screen keeps its ring around the digits.)
 
 ### 4.4 Audio cues
 Every phase (Get Ready, Work, Rest, Cycle Rest) ends with the same **5-beep countdown**:
