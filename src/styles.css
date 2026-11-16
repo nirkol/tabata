@@ -306,23 +306,33 @@ h2 {
   border-color: rgba(255, 255, 255, 0.14);
   transform: translateY(-1px);
 }
+/* The highlighted routine: a solid 3 px blue frame, a blue-tinted fill and a glow. */
 .card.selected {
-  border-color: rgba(10, 132, 255, 0.6);
+  background: linear-gradient(180deg, #16253d 0%, #121c2e 100%);
+  border-color: var(--accent);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.05),
-    0 0 0 1px rgba(10, 132, 255, 0.35),
-    0 12px 32px rgba(10, 132, 255, 0.14);
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 0 0 2px var(--accent),
+    0 0 28px rgba(10, 132, 255, 0.45),
+    0 12px 32px rgba(0, 0, 0, 0.4);
 }
-/* Accent bar on the left edge of the highlighted routine. */
+.card.selected:hover {
+  border-color: var(--accent);
+}
+/* Wide accent bar along the whole left edge of the highlighted routine. */
 .card.selected::before {
   content: '';
   position: absolute;
   left: -1px;
-  top: 18px;
-  bottom: 18px;
-  width: 4px;
-  border-radius: 0 4px 4px 0;
+  top: -1px;
+  bottom: -1px;
+  width: 8px;
+  border-radius: 16px 0 0 16px;
   background: var(--accent);
+}
+.card.selected .badge {
+  background: var(--accent);
+  color: #fff;
 }
 .card-title-row {
   display: flex;

@@ -179,7 +179,7 @@ A routine, a timer and the stopwatch can each be **paused, left, and resumed lat
 - **Delete** asks for confirmation.
 - A **"+ New Routine"** button opens the editor, prefilled with the defaults and the next free `Routine N` name.
 - On first launch, the app creates one sample routine: "Classic Tabata" (20/10 × 8 × 1).
-- The last-used routine is highlighted (blue edge and a "LAST USED" tag).
+- The last-used routine is clearly highlighted: a thick solid blue frame with a blue glow, a blue-tinted card, a wide blue bar along its left edge and a solid blue "LAST USED" tag.
 - **Sorted by last used:** starting a routine moves it to the **top** of the list, so the most recently used routines are always first. The new order is saved (routines that were never started keep their relative order below).
 - Visual style: premium dark cards with soft depth and a hover lift; values in the display font with thin dividers; the total in accent blue; **Start** is the prominent button while Edit and Delete are quiet (Delete turns red on hover); the header shows the number of routines.
 - **Reorder routines:** each card has a ☰ drag handle on its right edge. Drag it with the mouse to move the routine up or down (the list scrolls when dragging near its top or bottom edge), or focus the handle and press ↑ / ↓. The new order is saved.
