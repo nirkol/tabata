@@ -65,11 +65,11 @@ test('smoke: create a routine, run it, pause, resume and finish (speed flag)', a
   // Run.
   await page.getByTestId('routine-card').filter({ hasText: 'Smoke' }).getByTestId('start').click();
   await expect(page.getByTestId('run-screen')).toBeVisible();
-  await expect(page.getByTestId('run-set-info')).toHaveText('Cycle 1 / 2');
+  await expect(page.getByTestId('run-set-info')).toHaveText('1 of 2');
   await expect(page.getByTestId('run-phase')).toHaveText('WORK', { timeout: 5000 });
-  await expect(page.getByTestId('run-intervals')).toHaveText('Rounds left: 3 / 3');
-  await expect(page.getByTestId('run-set-info')).toHaveText('Cycle 1 / 2');
-  await expect(page.getByTestId('run-set-remaining')).toContainText('Cycle remaining: ');
+  await expect(page.getByTestId('run-intervals')).toHaveText('3 of 3');
+  await expect(page.getByTestId('run-set-info')).toHaveText('1 of 2');
+  await expect(page.getByTestId('run-set-remaining')).toHaveText(/^\d+:\d\d$/);
 
   // Pause: the display freezes.
   await page.keyboard.press('Space');
@@ -83,8 +83,8 @@ test('smoke: create a routine, run it, pause, resume and finish (speed flag)', a
   await page.getByTestId('pause').click();
   await expect(page.getByTestId('pause')).toHaveText('PAUSE');
   await expect(page.getByTestId('run-phase')).toHaveText('CYCLE REST', { timeout: 10000 });
-  await expect(page.getByTestId('run-set-info')).toHaveText('Cycle 1 / 2');
-  await expect(page.getByTestId('run-set-info')).toHaveText('Cycle 2 / 2', { timeout: 10000 });
+  await expect(page.getByTestId('run-set-info')).toHaveText('1 of 2');
+  await expect(page.getByTestId('run-set-info')).toHaveText('2 of 2', { timeout: 10000 });
   await expect(page.getByTestId('run-phase')).toHaveText('DONE', { timeout: 15000 });
   await expect(page.getByTestId('run-digits')).toHaveText('0:00');
   await expect(page).toHaveTitle('DONE – yFit Workout Timer');
@@ -97,7 +97,7 @@ test('smoke: create a routine, run it, pause, resume and finish (speed flag)', a
   await expect(page.getByTestId('pause')).toBeHidden();
   await page.getByTestId('start-over').click();
   await expect(page.getByTestId('run-phase')).toHaveText(/GET READY|WORK/);
-  await expect(page.getByTestId('run-set-info')).toHaveText('Cycle 1 / 2');
+  await expect(page.getByTestId('run-set-info')).toHaveText('1 of 2');
   await expect(page.getByTestId('start-over')).toBeHidden();
   await expect(page.getByTestId('pause')).toBeVisible();
   await expect(page.getByTestId('run-phase')).toHaveText('DONE', { timeout: 15000 });
@@ -109,10 +109,12 @@ test('smoke: create a routine, run it, pause, resume and finish (speed flag)', a
 test('run screen: no set counter at the top, volume control works', async ({ page }) => {
   await fresh(page);
   await page.getByTestId('start').click();
-  await expect(page.locator('.run-top')).not.toContainText('Cycle 1');
-  await expect(page.getByTestId('run-set-info')).toHaveText('Cycle 1 / 1');
-  await expect(page.locator('.run-remaining')).toContainText('Cycle remaining');
-  await expect(page.locator('.run-remaining')).toContainText('Total remaining');
+  await expect(page.locator('.run-top')).not.toContainText('Cycle');
+  await expect(page.getByTestId('run-set-info')).toHaveText('1 of 1');
+  // The info panel: Next, Rounds left, Cycle, Each round and Remaining.
+  await expect(page.getByTestId('run-info').locator('.run-card-label')).toHaveText(['Next', 'Rounds left', 'Cycle', 'Each round', 'Remaining']);
+  await expect(page.getByTestId('run-remaining')).toContainText('Cycle');
+  await expect(page.getByTestId('run-remaining')).toContainText('Total');
 
   await expect(page.getByTestId('run-volume-value')).toHaveText('70%');
   await page.getByTestId('run-volume').fill('40');
@@ -361,11 +363,11 @@ test('colors: work is green (the chosen work color), rest is always red', async 
   // Get Ready counts as rest: red.
   await expect(page.getByTestId('run-phase')).toHaveText('GET READY');
   await expect(page.getByTestId('run-digits')).toHaveCSS('color', red);
-  await expect(page.getByTestId('run-ring')).toHaveCSS('stroke', red);
+  await expect(page.getByTestId('run-progress')).toHaveCSS('background-color', red);
   // Work: green for the whole phase, including its last 5 seconds.
   await expect(page.getByTestId('run-phase')).toHaveText('WORK', { timeout: 7000 });
   await expect(page.getByTestId('run-digits')).toHaveCSS('color', green);
-  await expect(page.getByTestId('run-ring')).toHaveCSS('stroke', green);
+  await expect(page.getByTestId('run-progress')).toHaveCSS('background-color', green);
   await expect(page.getByTestId('run-screen')).toHaveClass(/warning/, { timeout: 7000 });
   await expect(page.getByTestId('run-digits')).toHaveCSS('color', green);
   // Rest: red.
@@ -898,20 +900,4 @@ test('class: Cancel discards a new class; editing; stopping between items; End c
   await page.getByTestId('nav-classes').click();
   await page.getByTestId('class-card').click();
   await expect(page.getByTestId('item-name')).toHaveText(['Two']);
-});
-
-// TEMPORARY: remove with the design preview buttons.
-test('design preview buttons 1–4 run the highlighted routine with each Run screen design', async ({ page }) => {
-  await fresh(page, '?speed=10');
-  for (const n of [1, 2, 3, 4]) {
-    await page.getByTestId(`nav-design-${n}`).click();
-    await expect(page.locator(`.run-screen.run-v${n}`)).toBeVisible();
-    await expect(page.getByTestId('run-phase')).toHaveText(/GET READY|WORK/);
-    await expect(page.getByTestId('run-next')).not.toHaveText('');
-    await page.getByTestId('stop').click();
-    await expect(page.getByTestId('routine-list')).toBeVisible();
-  }
-  // The normal Start still uses the current design.
-  await page.getByTestId('start').click();
-  await expect(page.locator('.run-screen')).not.toHaveClass(/run-v/);
 });

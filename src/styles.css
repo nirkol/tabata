@@ -1079,16 +1079,6 @@ kbd {
 .run-praise[hidden] {
   display: none;
 }
-.run-next {
-  position: absolute;
-  left: calc(100% + 18px);
-  top: 6px;
-  white-space: nowrap;
-  color: var(--muted);
-  font-size: clamp(16px, 2.8vh, 28px);
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-}
 .ring {
   position: absolute;
   inset: 0;
@@ -1132,54 +1122,6 @@ kbd {
   content: ' · PAUSED';
   color: var(--muted);
 }
-.run-details {
-  /* Routine progress right under the counter. */
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  margin-top: 1.6vh;
-  max-width: 100%;
-}
-.run-info-boxes {
-  /* Equal columns sized to the widest box, so all four boxes are the same size. */
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: 1fr;
-  gap: 12px;
-  max-width: 100%;
-  font-size: clamp(18px, 3.4vh, 34px);
-  font-variant-numeric: tabular-nums;
-}
-.run-info-box {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  white-space: nowrap;
-  padding: 0.35em 0.8em;
-  background: linear-gradient(180deg, #1c1c22 0%, #141418 100%);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 14px;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 6px 18px rgba(0, 0, 0, 0.35);
-}
-@media (max-width: 900px) {
-  .run-info-boxes {
-    grid-auto-flow: row;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-.run-remaining {
-  display: flex;
-  justify-content: center;
-  gap: 16px;
-  color: var(--text);
-  font-size: clamp(17.5px, 3vh, 30px);
-  font-variant-numeric: tabular-nums;
-}
-.run-remaining[hidden] {
-  display: none;
-}
 .run-volume-group {
   display: flex;
   align-items: center;
@@ -1211,9 +1153,6 @@ kbd {
   min-width: 3.2em;
   color: var(--muted);
   font-variant-numeric: tabular-nums;
-}
-.run-remaining .sep {
-  color: var(--border);
 }
 .run-bottom {
   display: grid;
@@ -2032,206 +1971,76 @@ kbd {
   text-transform: uppercase;
 }
 
-/* ======================================================================
-   TEMPORARY: Run screen design options 1 / 2 / 3 (runVariants.ts).
-   Remove once a design is chosen.
-   ====================================================================== */
-.design-tabs {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  margin-left: 6px;
-  padding: 3px;
-  border: 1px dashed #ffd60a;
-  border-radius: 12px;
-}
-.tab.tab-design {
-  min-width: 34px;
-  padding: 6px 0;
-  border-radius: 8px;
-  font-weight: 800;
-  color: #ffd60a;
-}
-.tab.tab-design:hover:not(:disabled) {
-  background: rgba(255, 214, 10, 0.14);
-  color: #ffd60a;
-}
-.rv-badge {
-  padding: 3px 10px;
-  border: 1px dashed #ffd60a;
-  border-radius: 999px;
-  color: #ffd60a;
-  font-size: 13px;
-  font-weight: 700;
-  white-space: nowrap;
-}
-.run-screen [hidden] {
-  display: none !important;
-}
-.run-screen.phase-work {
+/* ---------- Run screen layout (SPEC §4.1) ----------
+   The counter in the middle of the page with a progress bar under it; the info panel on the
+   right; an empty column of the same width on the left keeps the counter centered. */
+.routine-run.phase-work {
   --phase-color: var(--work-color);
 }
-.run-screen.phase-rest {
+.routine-run.phase-rest {
   --phase-color: var(--rest-color);
 }
-
-/* ---------- Option 1: Clear stack ---------- */
-/* The period as a solid colored label; every value labeled; the current period highlighted. */
-.run-v1 .run-phase {
-  align-self: center;
-  padding: 0.08em 0.7em;
-  border-radius: 0.3em;
-  background: var(--phase-color, var(--surface-2));
-  color: #000;
-  font-size: clamp(26px, 6.5vh, 80px);
-}
-.run-v1.paused .run-phase,
-.run-v1.done .run-phase {
-  background: var(--surface-2);
-  color: var(--text);
-}
-.run-v1 .rv-next-pill {
-  display: flex;
-  align-items: baseline;
-  gap: 14px;
-  margin-top: 1.4vh;
-  padding: 0.3em 1em;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  font-size: clamp(18px, 3.2vh, 34px);
-  font-variant-numeric: tabular-nums;
-}
-.rv-next-label {
-  color: var(--muted);
-  font-size: 0.6em;
-  font-weight: 800;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-.rv-next-value {
-  font-weight: 700;
-}
-.rv-info {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1.2vh;
-}
-.rv-tiles {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-  width: min(100%, 1100px);
-}
-.rv-tile {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.2em;
-  padding: 0.5em 0.6em 0.55em;
-  background: linear-gradient(180deg, #1c1c22 0%, #141418 100%);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 14px;
-  font-size: clamp(16px, 2.6vh, 30px);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-.rv-tile-label {
-  color: var(--muted);
-  font-size: 0.5em;
-  font-weight: 800;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-.rv-tile-value {
-  font-family: 'Barlow Condensed', 'Rubik', -apple-system, BlinkMacSystemFont, sans-serif;
-  font-weight: 700;
-  font-size: 1.6em;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-}
-.rv-tile-work.active {
-  border-color: var(--work-color);
-  box-shadow: 0 0 0 2px var(--work-color), 0 0 22px color-mix(in srgb, var(--work-color) 35%, transparent);
-}
-.rv-tile-work.active .rv-tile-value {
-  color: var(--work-color);
-}
-.rv-tile-rest.active {
-  border-color: var(--rest-color);
-  box-shadow: 0 0 0 2px var(--rest-color), 0 0 22px rgba(255, 59, 48, 0.35);
-}
-.rv-tile-rest.active .rv-tile-value {
-  color: var(--rest-color);
-}
-.rv-bars {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 24px;
-  width: min(100%, 1100px);
-}
-.rv-bar {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.rv-bar-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  font-size: clamp(15px, 2.4vh, 26px);
-  font-variant-numeric: tabular-nums;
-}
-.rv-bar-label {
-  color: var(--muted);
-}
-.rv-bar-value {
-  font-weight: 700;
-}
-.rv-bar-track {
-  height: 10px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.1);
-  overflow: hidden;
-}
-.rv-bar-fill {
-  height: 100%;
-  border-radius: 999px;
-  background: var(--accent);
-  transition: width 0.25s linear;
-}
-@media (max-width: 900px) {
-  .rv-tiles {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .rv-bars {
-    grid-template-columns: 1fr;
-    gap: 10px;
-  }
-}
-
-/* ---------- Option 2: Side panel ---------- */
-/* Counter on the left; Next, rounds, cycles, round timing and remaining time as cards on the right. */
-.rv-main {
+.run-main {
   flex: 1;
   min-height: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) clamp(260px, 26vw, 400px);
+  grid-template-columns: clamp(260px, 24vw, 380px) minmax(0, 1fr) clamp(260px, 24vw, 380px);
   gap: 20px;
 }
-.run-v2 .run-stage,
-.run-v4 .run-stage {
+.run-main > .run-stage {
+  grid-column: 2;
+  grid-row: 1;
   min-width: 0;
 }
-.rv-panel {
+.run-main > .run-panel {
+  grid-column: 3;
+  grid-row: 1;
+}
+/* The period in its color (green for work, red for rest), above the counter. */
+.routine-run .run-phase {
+  color: var(--phase-color, var(--text));
+  font-size: clamp(32px, 9vh, 110px);
+  letter-spacing: 0.1em;
+}
+.routine-run.paused .run-phase,
+.routine-run.done .run-phase {
+  color: var(--text);
+}
+.run-counter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 12px;
+}
+.routine-run.paused .run-counter {
+  opacity: 0.5;
+}
+/* Empties as the period runs down. */
+.run-progress {
+  width: min(90%, 1000px);
+  height: clamp(10px, 1.6vh, 18px);
+  margin-top: 1vh;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+.run-progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--phase-color, var(--text));
+}
+
+/* Info panel: cards, centered top to bottom. */
+.run-panel {
+  align-self: center;
+  max-height: 100%;
+  overflow: auto;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  min-height: 0;
-  overflow: auto;
   font-size: clamp(15px, 2.3vh, 24px);
 }
-.rv-card {
+.run-card {
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -2240,50 +2049,51 @@ kbd {
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 14px;
 }
-.rv-card-label {
+.run-card-label {
   color: var(--muted);
   font-size: 0.6em;
   font-weight: 800;
   letter-spacing: 0.14em;
   text-transform: uppercase;
 }
-.rv-card-big {
+.run-card-big {
   font-family: 'Barlow Condensed', 'Rubik', -apple-system, BlinkMacSystemFont, sans-serif;
   font-weight: 700;
   font-size: 1.7em;
   line-height: 1;
   font-variant-numeric: tabular-nums;
 }
-.rv-dots {
+.run-dots {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
 }
-.rv-dot {
+.run-dot {
   width: 0.7em;
   height: 0.7em;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.14);
 }
-.rv-dot.done {
+.run-dot.done {
   background: var(--work-color);
 }
-.rv-dot.current {
+.run-dot.current {
   background: transparent;
   box-shadow: 0 0 0 3px var(--work-color);
 }
-.rv-dots-cycles .rv-dot.done {
+.run-dots-cycles .run-dot.done {
   background: var(--accent);
 }
-.rv-dots-cycles .rv-dot.current {
+.run-dots-cycles .run-dot.current {
   box-shadow: 0 0 0 3px var(--accent);
 }
-.rv-split {
+.run-split {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
 }
-.rv-split-part {
+.run-split-part {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -2291,208 +2101,81 @@ kbd {
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
-.rv-split-part span {
+.run-split-part span {
   color: var(--muted);
   font-size: 0.7em;
 }
-.rv-split-part b {
+.run-split-part b {
   font-size: 1.35em;
   font-variant-numeric: tabular-nums;
 }
-.rv-split-work.active {
-  border-color: var(--work-color);
-  background: color-mix(in srgb, var(--work-color) 16%, transparent);
+/* The current period: its color as the border and a light tint behind it. */
+.run-split-part.active::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  opacity: 0.16;
+  pointer-events: none;
 }
-.rv-split-work.active b {
+.run-split-work.active {
+  border-color: var(--work-color);
+}
+.run-split-work.active::before {
+  background: var(--work-color);
+}
+.run-split-work.active b {
   color: var(--work-color);
 }
-.rv-split-rest.active {
+.run-split-rest.active {
   border-color: var(--rest-color);
-  background: rgba(255, 59, 48, 0.16);
 }
-.rv-split-rest.active b {
+.run-split-rest.active::before {
+  background: var(--rest-color);
+}
+.run-split-rest.active b {
   color: var(--rest-color);
 }
-.rv-rem {
+.run-rem {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
-.rv-rem div {
+.run-rem div {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
 }
-.rv-rem span {
+.run-rem span {
   color: var(--muted);
 }
-.rv-rem b {
+.run-rem b {
   font-size: 1.25em;
   font-variant-numeric: tabular-nums;
 }
+.run-card[hidden] {
+  display: none;
+}
 @media (max-width: 900px) {
-  .rv-main {
+  .run-main {
     grid-template-columns: 1fr;
   }
-  .rv-panel {
+  .run-main > .run-stage,
+  .run-main > .run-panel {
+    grid-column: 1;
+    grid-row: auto;
+  }
+  .run-panel {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
-
-/* ---------- Option 3: Big screen ---------- */
-/* The whole screen glows in the period's color; a bar under the counter replaces the ring frame;
-   rounds as a segmented strip; remaining time in the top corner. */
-.run-v3 {
-  background:
-    radial-gradient(120% 80% at 50% 45%, color-mix(in srgb, var(--phase-color, #000) 20%, transparent) 0%, transparent 70%),
-    #000;
-  transition: background 0.4s ease;
+/* Paused: "WORK · PAUSED" stays on one line; the added "· PAUSED" is smaller. */
+.routine-run .run-phase {
+  white-space: nowrap;
 }
-.run-v3.paused,
-.run-v3.done {
-  background: #000;
-}
-.run-v3 .ring,
-.run-v4 .ring {
-  display: none;
-}
-.run-v3 .ring-box,
-.run-v4 .ring-box {
-  padding: 0 24px;
-}
-.run-v3 .run-phase,
-.run-v4 .run-phase {
-  color: var(--phase-color, var(--text));
-  font-size: clamp(32px, 9vh, 110px);
-  letter-spacing: 0.1em;
-}
-.rv-phasebar {
-  width: min(80%, 1100px);
-  height: clamp(10px, 1.6vh, 18px);
-  margin-top: 1vh;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.12);
-  overflow: hidden;
-}
-.rv-phasebar-fill {
-  height: 100%;
-  border-radius: 999px;
-  background: var(--phase-color, var(--text));
-}
-.rv-next-line {
-  display: flex;
-  align-items: baseline;
-  gap: 14px;
-  margin-top: 1.6vh;
-  font-size: clamp(20px, 3.6vh, 40px);
-  font-variant-numeric: tabular-nums;
-}
-.rv-corner-rem {
-  display: flex;
-  gap: 28px;
-  margin-left: auto;
-  font-size: clamp(15px, 2.4vh, 26px);
-  font-variant-numeric: tabular-nums;
-}
-.rv-corner-rem div {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-}
-.rv-corner-rem span {
-  color: var(--muted);
-  font-size: 0.75em;
-  text-transform: uppercase;
+.routine-run.paused .run-phase::after {
+  font-size: 0.5em;
+  vertical-align: 0.35em;
   letter-spacing: 0.08em;
-}
-.rv-strip {
-  display: flex;
-  align-items: center;
-  gap: 18px;
-  font-size: clamp(16px, 2.8vh, 30px);
-  font-variant-numeric: tabular-nums;
-}
-.rv-strip-cycle {
-  font-weight: 700;
-  white-space: nowrap;
-}
-.rv-strip-text {
-  color: var(--muted);
-  white-space: nowrap;
-}
-.rv-segs {
-  flex: 1;
-  display: flex;
-  gap: 6px;
-  min-width: 0;
-}
-.rv-seg {
-  flex: 1;
-  height: clamp(12px, 2vh, 22px);
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.12);
-}
-.rv-seg.done {
-  background: var(--work-color);
-}
-.rv-seg.current {
-  background: color-mix(in srgb, var(--work-color) 45%, transparent);
-  box-shadow: 0 0 0 2px var(--work-color);
-}
-.rv-plan {
-  display: flex;
-  gap: 20px;
-  font-size: clamp(16px, 2.6vh, 28px);
-  font-variant-numeric: tabular-nums;
-}
-.rv-plan span {
-  color: var(--muted);
-}
-.rv-plan-work b {
-  color: var(--work-color);
-}
-.rv-plan-rest b {
-  color: var(--rest-color);
-}
-@media (max-width: 1000px) {
-  .rv-corner-rem {
-    display: none;
-  }
-}
-
-/* ---------- Option 4: option 3's counter and bar + option 2's panel ---------- */
-/* The panel sits in the vertical middle of the screen, next to the counter. */
-.run-v4 .rv-panel {
-  align-self: center;
-  max-height: 100%;
-}
-.run-v4 .rv-phasebar {
-  width: min(90%, 1000px);
-}
-/* Pause / Stop centered on the page (the two sides take equal room). */
-.run-v4 .run-bottom {
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-}
-/* Option 4: an empty column on the left as wide as the panel, so the counter is centered on the page. */
-.run-v4 .rv-main {
-  grid-template-columns: clamp(260px, 24vw, 380px) minmax(0, 1fr) clamp(260px, 24vw, 380px);
-}
-.run-v4 .rv-main > .run-stage {
-  grid-column: 2;
-  grid-row: 1;
-}
-.run-v4 .rv-main > .rv-panel {
-  grid-column: 3;
-  grid-row: 1;
-}
-@media (max-width: 900px) {
-  .run-v4 .rv-main {
-    grid-template-columns: 1fr;
-  }
-  .run-v4 .rv-main > .run-stage,
-  .run-v4 .rv-main > .rv-panel {
-    grid-column: 1;
-    grid-row: auto;
-  }
 }

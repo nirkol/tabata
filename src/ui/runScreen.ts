@@ -5,9 +5,8 @@ import { sayCue, sayText } from '../platform/voice';
 import { formatClock, formatCountdown } from '../timer/format';
 import type { App, ClassContext, Screen } from './app';
 import { classAdvance } from './classAdvance';
-import { buildRunVariant, type RunVariant } from './runVariants';
+import { runPanel } from './runPanel';
 import { h } from './dom';
-import { RING_STROKE, createRing } from './ring';
 import { isNative, setNativeKeepAwake, toggleFullscreen as platformToggleFullscreen } from '../platform/native';
 
 /** How often the screen refreshes when the tab is hidden (rAF doesn't run then). */
@@ -20,49 +19,28 @@ const FINISH_LAST_STRIKE_MS = 1700;
 const CLASS_NEXT_DELAY_SEC = 8;
 
 /** The Run view (SPEC §4). */
-export function runScreen(app: App, routine: Routine, ctx?: ClassContext, variant?: RunVariant): Screen {
+export function runScreen(app: App, routine: Routine, ctx?: ClassContext): Screen {
   const cls = ctx ? classAdvance(ctx, CLASS_NEXT_DELAY_SEC, app.speed) : null;
   const engine = new TimerEngine(routine, () => performance.now(), app.speed);
   // With "Start!" on (and not muted), the voice replaces the long beep at the end of rest.
   const beeps = beepSchedule(engine.phases, { voiceStart: app.settings.startCall && !app.settings.muted });
 
   // --- Elements ---
+  // Center: the period, the large counter and a bar under it that empties as the period runs down.
   const phaseLabel = h('div', { class: 'run-phase', 'data-testid': 'run-phase' });
   const digits = h('div', { class: 'run-digits', 'data-testid': 'run-digits' });
-  const ring = createRing();
   // Encouraging statement shown under the digits during the Rest between cycles (and at the end).
   const praiseLine = h('div', { class: 'run-praise', dir: 'auto', hidden: true, 'data-testid': 'run-praise' });
-  const ringBox = h('div', { class: 'ring-box' }, h('div', { class: 'ring-content' }, digits, praiseLine));
-  ringBox.prepend(ring.svg);
-  // The phase label sits right above the counter, so the two read as one unit.
-  const stage = h('div', { class: 'run-stage' }, phaseLabel, ringBox);
-
-  const setInfo = h('span', { 'data-testid': 'run-set-info' });
-  const intervalsLeft = h('span', { 'data-testid': 'run-intervals' });
-  const setRemaining = h('span', { 'data-testid': 'run-set-remaining' });
-  const next = h('span', { class: 'run-next', 'data-testid': 'run-next' });
-  // "Next: …" sits just outside the counter box, at its top-right corner.
-  ringBox.append(next);
-  const totalRemaining = h('span', { 'data-testid': 'run-total' });
-  // Routine progress right under the counter: four boxes of equal size, text centered.
-  const infoBox = (content: HTMLElement) => h('div', { class: 'run-info-box' }, content);
-  const details = h(
-    'div',
-    { class: 'run-details' },
-    h(
-      'div',
-      { class: 'run-info-boxes', 'data-testid': 'run-info' },
-      infoBox(setInfo),
-      infoBox(h('span', {}, `Work ${formatClock(routine.workSec)}`)),
-      infoBox(h('span', {}, `Rest ${formatClock(routine.restSec)}`)),
-      infoBox(intervalsLeft),
-    ),
-    h('div', { class: 'run-remaining', 'data-testid': 'run-remaining', hidden: !app.settings.showRemaining }, setRemaining, h('span', { class: 'sep' }, '│'), totalRemaining),
-  );
-  stage.append(details);
+  const counter = h('div', { class: 'run-counter' }, digits, praiseLine);
+  const progressFill = h('div', { class: 'run-progress-fill', 'data-testid': 'run-progress' });
+  const progress = h('div', { class: 'run-progress', 'aria-hidden': 'true' }, progressFill);
+  const stage = h('div', { class: 'run-stage' }, phaseLabel, counter, progress);
+  if (cls) stage.append(cls.line);
+  // Right: Next, Rounds left, Cycle, each round's Work / Rest and the remaining times.
+  const panel = runPanel(routine, app.settings.showRemaining);
   if (cls) stage.append(cls.line);
   const pauseBtn = h('button', { type: 'button', class: 'btn btn-run btn-primary', 'data-testid': 'pause', onclick: () => togglePause() }, 'PAUSE');
-  const startOverBtn = h('button', { type: 'button', class: 'btn btn-run btn-primary', 'data-testid': 'start-over', hidden: true, onclick: () => (variant ? app.previewRunDesign(variant) : app.startRoutine(routine.id)) }, '↻ Start over');
+  const startOverBtn = h('button', { type: 'button', class: 'btn btn-run btn-primary', 'data-testid': 'start-over', hidden: true, onclick: () => app.startRoutine(routine.id) }, '↻ Start over');
   const stopBtn = h('button', { type: 'button', class: 'btn btn-run', 'data-testid': 'stop', onclick: () => requestStop() }, '■ STOP');
   const muteBtn = h('button', { type: 'button', class: 'btn btn-icon', 'data-testid': 'run-mute', onclick: () => toggleMute() });
   /** A compact volume slider for the work or rest beeps. */
@@ -110,38 +88,17 @@ export function runScreen(app: App, routine: Routine, ctx?: ClassContext, varian
   const controls = h('div', { class: 'run-controls' }, pauseBtn, startOverBtn, cls?.nextBtn, stopBtn);
   const volumeGroup = h('div', { class: 'run-volume-group', 'data-testid': 'run-volume-group' }, muteBtn, h('div', { class: 'run-volume-stack' }, workVolume.el, restVolume.el));
 
-  // TEMPORARY: design options 1 / 2 / 3 arrange the same parts differently (runVariants.ts).
-  const vui = variant
-    ? buildRunVariant(variant, {
-        routine,
-        phases: engine.phases,
-        showRemaining: app.settings.showRemaining,
-        topLeft,
-        speedBadge,
-        fullscreenBtn,
-        timeline,
-        phaseLabel,
-        ringBox,
-        next,
-        controls,
-        volumeGroup,
-        extras: [cls?.line],
-      })
-    : null;
-  /** The area that holds the counter (the digits are sized to fit it). */
-  const counterArea = vui?.stage ?? stage;
-
-  const el =
-    vui?.el ??
-    h(
-      'section',
-      { class: 'run-screen', 'data-testid': 'run-screen' },
-      h('div', { class: 'run-top' }, topLeft, speedBadge, h('div', { class: 'run-top-right' }, fullscreenBtn)),
-      timeline,
-      stage,
-      // Bottom row: Pause / Stop in the center, volume controls on the right.
-      h('div', { class: 'run-bottom' }, h('div', { class: 'run-bottom-side' }), controls, h('div', { class: 'run-bottom-side run-bottom-right' }, volumeGroup)),
-    );
+  // Layout (SPEC §4.1): the counter in the middle of the page, the info panel on the right
+  // (an empty column of the same width on the left keeps the counter centered).
+  const el = h(
+    'section',
+    { class: 'run-screen routine-run', 'data-testid': 'run-screen' },
+    h('div', { class: 'run-top' }, topLeft, h('div', { class: 'run-top-right' }, speedBadge, fullscreenBtn)),
+    timeline,
+    h('div', { class: 'run-main' }, stage, panel.el),
+    // Bottom row: Pause / Stop in the center, volume controls on the right.
+    h('div', { class: 'run-bottom' }, h('div', { class: 'run-bottom-side' }), controls, h('div', { class: 'run-bottom-side run-bottom-right' }, volumeGroup)),
+  );
 
   // --- Rendering ---
   let lastDigitsText = '';
@@ -204,9 +161,6 @@ export function runScreen(app: App, routine: Routine, ctx?: ClassContext, varian
     const done = s.status === 'done';
     const phase = s.phase;
     const label = done ? PHASE_LABELS.done : PHASE_LABELS[phase!.kind];
-    const setNo = phase ? phase.set : routine.sets;
-
-    setInfo.textContent = `Cycle ${setNo} / ${routine.sets}`;
     phaseLabel.textContent = label;
     const text = done ? '0:00' : formatCountdown(s.phaseRemainingMs);
     if (text !== digits.textContent) digits.textContent = text;
@@ -223,18 +177,14 @@ export function runScreen(app: App, routine: Routine, ctx?: ClassContext, varian
     el.classList.toggle('phase-rest', !done && phase !== null && phase.kind !== 'work');
     el.classList.toggle('paused', s.status === 'paused');
     el.classList.toggle('done', done);
-    ring.setFraction(done ? 0 : s.phaseFractionRemaining);
+    progressFill.style.width = `${done ? 0 : s.phaseFractionRemaining * 100}%`;
     const pct = Math.min(100, (s.elapsedMs / s.totalMs) * 100);
     const clip = `inset(0 ${100 - pct}% 0 0)`;
     tlDone.style.clipPath = clip;
     tlDone.style.setProperty('-webkit-clip-path', clip); // older macOS WebKit
     tlMarker.style.left = `${pct}%`;
 
-    intervalsLeft.textContent = `Rounds left: ${s.intervalsLeft} / ${routine.intervals}`;
-    vui?.update(s);
-    next.textContent = done ? '' : `Next: ${s.nextPhase ? `${PHASE_LABELS[s.nextPhase.kind]} ${formatClock(s.nextPhase.durationSec)}` : PHASE_LABELS.done}`;
-    setRemaining.textContent = `Cycle remaining: ${formatCountdown(s.setRemainingMs)}`;
-    totalRemaining.textContent = `Total remaining: ${formatCountdown(s.totalRemainingMs)}`;
+    panel.update(s);
     muteBtn.textContent = app.settings.muted ? '🔇' : '🔊';
     muteBtn.setAttribute('aria-label', app.settings.muted ? 'Unmute' : 'Mute');
     workVolume.update();
@@ -270,17 +220,16 @@ export function runScreen(app: App, routine: Routine, ctx?: ClassContext, varian
   function fit(): void {
     const target = (app.settings.digitSizePct / 100) * window.innerHeight * (smallDigits ? 0.8 : 1);
     digits.style.fontSize = `${target}px`;
-    const pad = RING_STROKE * 2 + 24;
-    const maxW = counterArea.clientWidth - pad;
-    // Everything else in the counter area (phase label, details, …) and the encouragement take room too.
+    const pad = 24;
+    const maxW = stage.clientWidth - pad;
+    // Everything else in the counter area (period, progress bar, …) and the encouragement take room too.
     let others = praiseLine.hidden ? 0 : praiseLine.offsetHeight;
-    for (const child of counterArea.children) if (child !== ringBox) others += (child as HTMLElement).offsetHeight;
-    const maxH = counterArea.clientHeight - pad - others;
+    for (const child of stage.children) if (child !== counter) others += (child as HTMLElement).offsetHeight;
+    const maxH = stage.clientHeight - pad - others;
     if (maxW > 0 && maxH > 0) {
       const scale = Math.min(1, maxW / digits.scrollWidth, maxH / digits.offsetHeight);
       if (scale < 1) digits.style.fontSize = `${Math.floor(target * scale)}px`;
     }
-    ring.draw(ringBox);
   }
 
   // --- Loop: rAF for smooth animation while visible, an interval for the background.

@@ -81,23 +81,32 @@ This screen is used mid-workout, often from several meters away, so readability 
 ### 4.1 Layout (desktop, landscape)
 
 ```
-┌───────────────────────────────────────────────────────────┐
-│  Routine: "Morning HIIT"          🔊 ━━━●━━ 70%   ⛶      │
-│                                                           │
-│                        WORK                               │  ← phase label
-│                  ╭───────────────╮                        │
-│                  │               │                        │
-│                  │     0:17      │  ← HUGE digits         │
-│                  │               │                        │
-│                  ╰───────────────╯  ← progress ring       │
-│                                                           │
-│  Cycle 1 / 2 │ Work 0:20 │ Rest 0:10 │ Rounds left: 5 / 8 │
-│                                                           │
-│ Next: REST 0:10   Cycle remaining: 2:05 │ Total remaining: 6:42 │
-│                                                           │
-│              [ ⏯ PAUSE ]            [ ■ STOP ]            │
-└───────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────┐
+│  Routine: "Morning HIIT"                                       ⛶    │
+│  ▓▓▓▓░░▓▓▓▓░░▓▓▓▓░░░░░░▓▓▓▓░░▓▓▓▓░░  ← workout timeline            │
+│                                                   ┌──────────────┐   │
+│                       WORK   ← period, in green/red│ NEXT         │   │
+│                                                   │ REST 0:10    │   │
+│                       0:17   ← HUGE digits        ├──────────────┤   │
+│                                                   │ ROUNDS LEFT  │   │
+│              ━━━━━━━━━━━━━━━━━━  ← progress bar   │ 5 of 8 ●●●○○○│   │
+│                                                   ├──────────────┤   │
+│   (empty column, same width                       │ CYCLE 1 of 2 │   │
+│    as the panel, so the                           ├──────────────┤   │
+│    counter is centered)                           │ EACH ROUND   │   │
+│                                                   │ Work │ Rest  │   │
+│                                                   ├──────────────┤   │
+│                                                   │ REMAINING    │   │
+│                                                   │ Cycle / Total│   │
+│                                                   └──────────────┘   │
+│              [ PAUSE ]   [ ■ STOP ]               🔊 Work/Rest vol. │
+└──────────────────────────────────────────────────────────────────────┘
 ```
+
+- The **counter is centered on the page**: the period name (WORK, REST…) in the period's color, the huge digits under it, and under them a thick **progress bar** that empties as the period runs down.
+- The **info panel** is a column of cards on the right, centered top to bottom. An empty column of the same width on the left keeps the counter in the middle of the page.
+- **Pause / Stop** are centered at the bottom of the page; the volume controls are at the lower right.
+- Narrow windows: the panel moves under the counter (cards 2 per row).
 
 ### 4.1a Workout timeline
 A bar across the top of the Run screen (22.5 px thick) shows the **whole workout plan** as one segment per phase, sized by its duration: **Work** in the work color (default green), **Get Ready, Rest and Rest between cycles** in red. The finished part is shown bright and the rest dimmed, and a white marker shows the current position. It moves smoothly and freezes while paused.
@@ -105,20 +114,20 @@ A bar across the top of the Run screen (22.5 px thick) shows the **whole workout
 ### 4.2 Required display elements
 1. **Countdown for the current phase** in very large digits, formatted `m:ss` (for example `0:17`, `2:30`).
 2. **Phase label**: GET READY / WORK / REST / CYCLE REST / DONE, in large capital letters.
-3. **Current cycle and the Work and Rest durations** of the routine, in one row: `Cycle 1 / 2 │ Work 0:20 │ Rest 0:10 │ Rounds left: 5 / 8`.
-4. **Rounds remaining** in the current cycle, for example `5 / 8`.
-5. **Current cycle**, for example `Cycle 1 / 2`, shown once, at the start of the Work/Rest row (not in the top corner).
-6. **Next phase** preview, for example "Next: REST 0:10".
+3. **The Work and Rest durations** of the routine, with the current one highlighted.
+4. **Rounds remaining** in the current cycle, for example `5 of 8`.
+5. **Current cycle**, for example `1 of 2`, shown once, in the panel (not in the top corner).
+6. **Next phase** preview, for example `REST 0:10`.
 7. **Cycle remaining**: time left in the current cycle. A cycle runs from its first Work period until the next cycle starts, so it includes the Rest between cycles. During Get Ready it shows the full length of cycle 1.
 8. **Total time remaining** for the whole routine.
 
-**Next** (e.g. `Next: REST 0:10`) sits just outside the counter box, at its top-right corner. Directly under the counter box, the routine progress is shown in **four boxes of the same size with centered text**: `Cycle 1 / 2` · `Work 0:20` · `Rest 0:10` · `Rounds left: 8 / 8` (2 × 2 in narrow windows). Cycle remaining and Total remaining are shown together, centered, right below the boxes.
+The info panel shows, as cards with a small label over a large value: **Next** (e.g. `REST 0:10`); **Rounds left** (`5 of 8`, with a row of dots: finished rounds filled, the round being worked ringed); **Cycle** (`1 of 2`, with dots); **Each round** (Work and Rest side by side, the current one highlighted in its color); and **Remaining** (Cycle and Total; hidden when "Show remaining times" is off in Settings).
 
 The **volume controls** sit at the **lower right**, on the same row as Pause / Stop: a mute button and two volume sliders stacked on top of each other, labeled **Work volume** (top) and **Rest volume** (beneath it), each 0–100 % in 5 % steps with its current value. Changes apply immediately and are saved to Settings. Moving a slider above 0 % while muted unmutes. The fullscreen button stays in the top-right corner.
 
 ### 4.3 Colors and progress indicator
-- **Color by phase:** during **Work** the digits and ring use the **work color** chosen in Settings (default **green**). During **Rest, Cycle Rest and Get Ready** they are always **red**. The color stays the same for the whole phase; the last 5 seconds are announced by the beeps.
-- The progress indicator is a ring around the digits that empties as the phase elapses. It animates smoothly and does not jump once per second.
+- **Color by phase:** during **Work** the period name, the digits and the progress bar use the **work color** chosen in Settings (default **green**). During **Rest, Cycle Rest and Get Ready** they are always **red**. The color stays the same for the whole phase; the last 5 seconds are announced by the beeps.
+- The progress indicator is a thick bar under the digits that empties as the phase elapses. It animates smoothly and does not jump once per second. (The Timer screen keeps its ring around the digits.)
 
 ### 4.4 Audio cues
 Every phase (Get Ready, Work, Rest, Cycle Rest) ends with the same **5-beep countdown**:
